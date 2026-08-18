@@ -2,7 +2,7 @@ export const ROLES = {
   SSD_CENTRE_ADMIN: {
     name: "Lee Wai Ling",
     canCreateWO: true,
-    defaultTab: "Drafts",
+    defaultTab: "Draft",
     canSubmitWO: false,
     canEditTaskDetails: false,
     canAddMapAssets: false,
@@ -13,7 +13,7 @@ export const ROLES = {
   OIC: {
     name: "Chan Siu Ming",
     canCreateWO: true,
-    defaultTab: "Drafts",
+    defaultTab: "Draft",
     canSubmitWO: true,
     canEditTaskDetails: false,
     canAddMapAssets: false,

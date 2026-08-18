@@ -136,7 +136,7 @@ export default function WorkOrders({ onCreateWorkOrder }) {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid var(--border)', marginBottom: 16, overflowX: 'auto', whiteSpace: 'nowrap' }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid var(--border)', marginBottom: 16, overflowX: 'auto', whiteSpace: 'nowrap', scrollbarWidth: 'thin', scrollbarColor: '#CBD5E1 transparent', WebkitOverflowScrolling: 'touch', maskImage: 'linear-gradient(to right, black 92%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 92%, transparent 100%)' }} className="tabs-scroll">
         {tabs.map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '10px 18px', fontSize: 13, fontWeight: activeTab === tab ? 700 : 500, color: activeTab === tab ? 'var(--primary)' : '#64748B', background: 'none', border: 'none', borderBottom: activeTab === tab ? '2px solid var(--primary)' : '2px solid transparent', marginBottom: -2, cursor: 'pointer', transition: 'color 0.15s', whiteSpace: 'nowrap', flexShrink: 0 }}>
             {tab} <span style={{ fontSize: 11, color: '#94A3B8', marginLeft: 4 }}>({tab === 'All' ? WORK_ORDERS.length : WORK_ORDERS.filter((w) => w.status === tab).length})</span>

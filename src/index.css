@@ -46,6 +46,7 @@ input, button, select, textarea {
 
 ::-webkit-scrollbar {
   width: 6px;
+  height: 4px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -56,4 +57,15 @@ input, button, select, textarea {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
+}
+
+.tabs-scroll::-webkit-scrollbar {
+  height: 3px;
+}
+.tabs-scroll::-webkit-scrollbar-thumb {
+  background: #E2E8F0;
+  border-radius: 2px;
+}
+.tabs-scroll::-webkit-scrollbar-thumb:hover {
+  background: #CBD5E1;
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../i18n/LanguageContext';
 import { ROLES } from '../data/constants';
 import {
   LayoutDashboard, Building2, ClipboardList, Package, Map,
@@ -8,18 +9,19 @@ import {
 } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: 'Dashboard' },
-  { icon: Building2, label: 'Properties' },
-  { icon: ClipboardList, label: 'Work Orders', badge: 42 },
-  { icon: Package, label: 'Assets' },
-  { icon: Map, label: 'Floor Plan' },
-  { icon: ShieldCheck, label: 'Compliance Vault', badge: 3, badgeCritical: true },
-  { icon: ChartColumn, label: 'Reports' },
-  { icon: Settings, label: 'Settings' },
+  { icon: LayoutDashboard, label: 'Dashboard', key: 'sidebar.dashboard' },
+  { icon: Building2, label: 'Properties', key: 'sidebar.properties' },
+  { icon: ShieldCheck, label: 'Compliance Vault', key: 'sidebar.complianceVault', badge: 3, badgeCritical: true },
+  { icon: ClipboardList, label: 'Work Orders', key: 'sidebar.workOrders', badge: 42 },
+  { icon: Package, label: 'Assets', key: 'sidebar.assets' },
+  { icon: Map, label: 'Floor Plan', key: 'sidebar.floorPlan' },
+  { icon: ChartColumn, label: 'Reports', key: 'sidebar.reports' },
+  { icon: Settings, label: 'Settings', key: 'sidebar.settings' },
 ];
 
 export default function Sidebar({ collapsed, onToggle, activeTab, onNavigate }) {
   const { role, logout } = useAuth();
+  const { t } = useTranslation();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   return (
@@ -46,7 +48,8 @@ export default function Sidebar({ collapsed, onToggle, activeTab, onNavigate }) 
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto' }}>
-        {NAV_ITEMS.map(({ icon: Icon, label, badge, badgeCritical }) => {
+        {NAV_ITEMS.map(({ icon: Icon, label, key, badge, badgeCritical }) => {
+          const displayLabel = t(key);
           const isActive = label === activeTab;
           return (
             <button
@@ -69,7 +72,7 @@ export default function Sidebar({ collapsed, onToggle, activeTab, onNavigate }) 
               onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(226,232,240,0.65)'; } }}
             >
               <Icon size={16} style={{ flexShrink: 0 }} />
-              {!collapsed && <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, whiteSpace: 'nowrap', flex: 1, textAlign: 'left' }}>{label}</span>}
+              {!collapsed && <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, whiteSpace: 'nowrap', flex: 1, textAlign: 'left' }}>{displayLabel}</span>}
               {!collapsed && badge !== undefined && (
                 <span style={{ fontSize: 11, fontWeight: 600, padding: '1px 6px', borderRadius: 10, background: badgeCritical ? 'var(--critical)' : 'rgba(255,255,255,0.12)', color: badgeCritical ? '#fff' : 'rgba(226,232,240,0.9)', lineHeight: 1.6 }}>{badge}</span>
               )}

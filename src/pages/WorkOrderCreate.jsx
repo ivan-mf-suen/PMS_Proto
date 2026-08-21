@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { CENTERS } from '../data/constants';
+import { useWorkOrders } from '../context/WorkOrderContext';
+import { useTranslation } from '../i18n/LanguageContext';
 import {
   ArrowLeft, Save, X, MapPin, Plus, Pencil, Image, Paperclip, Trash2,
-  ChevronDown, ChevronRight, Map, AlertTriangle, Info,
+  ChevronDown, Map, AlertTriangle, Send, Zap,
 } from 'lucide-react';
 
 const PRIORITY_OPTIONS = [
@@ -34,10 +34,11 @@ const MOCK_ASSETS = [
   },
 ];
 
-export default function WorkOrderCreate({ onBack }) {
-  const { permissions } = useAuth();
+export default function WorkOrderCreate({ onBack, onViewWO }) {
+  const { addWorkOrder, getNextWoId } = useWorkOrders();
+  const { t } = useTranslation();
   const today = 'Tuesday, 18 August 2026';
-  const portfolio = '\u5029\u6587\u73B2(\u6DF1\u6C34\u57D7)\u5152\u7AE5\u53D1\u5C55\u4E2D\u5FC3';
+  const portfolio = 'PLK Shek Kip Mei Community Services Centre';
 
   const [form, setForm] = useState({
     title: '',
@@ -49,15 +50,60 @@ export default function WorkOrderCreate({ onBack }) {
     pwdInvolvement: 'without',
   });
 
-  const [assets, setAssets] = useState(MOCK_ASSETS);
+  const [assets] = useState(MOCK_ASSETS);
   const [editingTask, setEditingTask] = useState(null);
   const [priorityOpen, setPriorityOpen] = useState(false);
   const [fundingOpen, setFundingOpen] = useState(false);
   const [section1Open, setSection1Open] = useState(true);
   const [section2Open, setSection2Open] = useState(true);
-  const [iasHovered, setIasHovered] = useState(false);
 
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const simulateInput = () => {
+    update('title', 'Urgent Air Conditioner Repair Request');
+    update('priority', 'high');
+    update('startDate', '2026-08-20');
+    update('endDate', '2026-08-25');
+    update('budget', '35000');
+    update('fundingSource', 1);
+    update('pwdInvolvement', 'without');
+  };
+
+  const generateWO = (status) => {
+    const now = new Date();
+    const id = getNextWoId();
+    return {
+      id,
+      title: form.title || 'Untitled Work Order',
+      center: portfolio,
+      priority: form.priority === 'critical' ? 'Critical' : form.priority === 'high' ? 'High' : form.priority === 'medium' ? 'Medium' : 'Low',
+      status,
+      assignee: 'Chan Siu Ming',
+      createdBy: 'Chan Siu Ming',
+      created: now.toISOString().slice(0, 10),
+      budget: parseInt(form.budget) || 0,
+      category: 'MEP',
+      dueDate: form.endDate || 'TBD',
+      description: `Work order: ${form.title || 'Untitled'}. Priority: ${form.priority}. Budget: $${form.budget || 0}.`,
+      fundingSource: FUNDING_SOURCES[form.fundingSource],
+      pwdInvolvement: form.pwdInvolvement,
+      assets: assets.map((a) => a.tag),
+      attachments: [],
+      comments: [],
+    };
+  };
+
+  const handleSave = () => {
+    const wo = generateWO('Draft');
+    addWorkOrder(wo);
+    onBack();
+  };
+
+  const handleSubmitToSM = () => {
+    const wo = generateWO('Pending SSD Service Manager Endorsement');
+    addWorkOrder(wo);
+    onViewWO(wo.id);
+  };
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
@@ -79,7 +125,7 @@ export default function WorkOrderCreate({ onBack }) {
               cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#475569',
             }}
           >
-            <ArrowLeft size={14} /> Back to Dashboard
+            <ArrowLeft size={14} /> {t('woCreate.back')}
           </button>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>Work Order Tracking</div>
@@ -125,47 +171,19 @@ export default function WorkOrderCreate({ onBack }) {
             >
               <X size={14} /> Cancel
             </button>
-            <div
-              onMouseEnter={() => setIasHovered(true)}
-              onMouseLeave={() => setIasHovered(false)}
-              style={{ position: 'relative' }}
-            >
-              <button
-                style={{
-                  padding: '7px 16px', borderRadius: 6,
-                  border: '1px solid #7C3AED', background: '#F5F3FF',
-                  fontSize: 13, fontWeight: 600, color: '#7C3AED', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                }}
-              >
-                <Info size={14} /> Create in IAS
-              </button>
-              {iasHovered && (
-                <div style={{
-                  position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-                  width: 420, padding: '14px 18px', borderRadius: 8,
-                  background: '#0F172A', color: '#CBD5E1',
-                  fontSize: 12, lineHeight: 1.6, zIndex: 200,
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
-                }}>
-                  <div style={{ fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6, color: '#F8FAFC' }}>
-                    <Info size={14} color="#A78BFA" /> IAS Integration
-                  </div>
-                  <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <li>After all parties have endorsed the work order, this button will appear.</li><li>Once clicked, the WO status updates to <span style={{ color: '#A78BFA', fontWeight: 600 }}>"Submitted to IAS for Tendering"</span> and the WO becomes <span style={{ color: '#F87171', fontWeight: 600 }}>read-only</span>.</li>
-                    <li>When clicked, it sends an API call to IAS with the endorsed WO details, so the user can continue input in IAS for the approval process (e.g. Tender analysis, quotation, etc.).</li>
-                    <li>When the WO is approved in IAS, the user can return to this system to continue the WO process (e.g. assign tasks, schedule, etc.).</li>
-                    
-                  </ul>
-                  <div style={{
-                    position: 'absolute', top: -5, right: 16,
-                    width: 10, height: 10, background: '#0F172A',
-                    transform: 'rotate(45deg)',
-                  }} />
-                </div>
-              )}
-            </div>
             <button
+              onClick={simulateInput}
+              style={{
+                padding: '7px 16px', borderRadius: 6,
+                border: '1px solid #F59E0B', background: '#FFFBEB',
+                fontSize: 13, fontWeight: 600, color: '#B45309', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}
+            >
+              <Zap size={14} /> Simulate Input Data
+            </button>
+            <button
+              onClick={handleSave}
               style={{
                 padding: '7px 16px', borderRadius: 6,
                 border: 'none', background: 'var(--primary)',
@@ -173,12 +191,23 @@ export default function WorkOrderCreate({ onBack }) {
                 display: 'flex', alignItems: 'center', gap: 6,
               }}
             >
-              <Save size={14} /> Save & Exit
+              <Save size={14} /> Save
+            </button>
+            <button
+              onClick={handleSubmitToSM}
+              style={{
+                padding: '7px 16px', borderRadius: 6,
+                border: 'none', background: '#059669',
+                fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}
+            >
+              <Send size={14} /> Submit to SM
             </button>
           </div>
         </div>
 
-        {/* Scrollable Form Area */}
+        {/* Scrollable Form Area **/}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }}>
 
           {/* Section 1: Administrative Details */}
@@ -187,7 +216,7 @@ export default function WorkOrderCreate({ onBack }) {
             border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)',
             marginBottom: 24, overflow: 'hidden',
           }}>
-            {/* Section Header - Collapsible */}
+            {/* Section Header - Collapsible 1 */}
             <div
               onClick={() => setSection1Open(!section1Open)}
               style={{

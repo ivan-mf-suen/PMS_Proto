@@ -35,7 +35,7 @@ export default function Dashboard() {
 
   return (
     <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1400 }}>
-      {/* KPIs */}
+      {/* KPIs v*/}
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
         <KPICard title="Occupancy Rate" value="94.2%" icon={Building2} iconBg="var(--info-bg)" change={1.3} trend="up" subtitle="Across all centers" />
         <KPICard title="Monthly Revenue" value="$2.85M" icon={DollarSign} iconBg="var(--success-bg)" change={5.8} trend="up" subtitle="Aug 2026" />

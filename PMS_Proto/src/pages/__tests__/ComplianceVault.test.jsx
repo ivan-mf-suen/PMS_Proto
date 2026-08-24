@@ -1,0 +1,128 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import ComplianceVault from '../../pages/ComplianceVault';
+import { ComplianceProvider } from '../../context/ComplianceContext';
+import { LanguageProvider } from '../../i18n/LanguageContext';
+
+function renderVault(selectedCenter) {
+  return render(
+    <LanguageProvider>
+      <ComplianceProvider>
+        <ComplianceVault selectedCenter={selectedCenter || 'All'} />
+      </ComplianceProvider>
+    </LanguageProvider>
+  );
+}
+
+describe('ComplianceVault', () => {
+  it('renders the page title', () => {
+    renderVault();
+    expect(screen.getByText('Compliance Vault')).toBeInTheDocument();
+  });
+
+  it('displays summary bar with compliance rate and document counts', () => {
+    renderVault();
+    expect(screen.getByText('Compliance Rate')).toBeInTheDocument();
+    const validLabels = screen.getAllByText('Valid');
+    expect(validLabels.length).toBeGreaterThanOrEqual(1);
+    const expiringLabels = screen.getAllByText('Expiring');
+    expect(expiringLabels.length).toBeGreaterThanOrEqual(1);
+    const expiredLabels = screen.getAllByText('Expired');
+    expect(expiredLabels.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('shows Coverage by Category section', () => {
+    renderVault();
+    expect(screen.getByText('Coverage by Category')).toBeInTheDocument();
+  });
+
+  it('renders category cards in the coverage grid', () => {
+    renderVault();
+    const fireElements = screen.getAllByText('Fire Safety');
+    expect(fireElements.length).toBeGreaterThanOrEqual(1);
+    const electricalElements = screen.getAllByText('Electrical');
+    expect(electricalElements.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('renders table with expected columns', () => {
+    renderVault();
+    expect(screen.getByText('Category')).toBeInTheDocument();
+    expect(screen.getByText('Certificate Name')).toBeInTheDocument();
+    expect(screen.getByText('Property')).toBeInTheDocument();
+    expect(screen.getByText('Next Due')).toBeInTheDocument();
+    expect(screen.getByText('Cycle')).toBeInTheDocument();
+    expect(screen.getByText('Last Inspected')).toBeInTheDocument();
+    expect(screen.getByText('Actions')).toBeInTheDocument();
+  });
+
+  it('renders doc rows in the table', () => {
+    renderVault();
+    const rows = screen.getAllByRole('row');
+    expect(rows.length).toBeGreaterThan(1);
+  });
+
+  it('search filters the table', async () => {
+    const user = userEvent.setup();
+    renderVault();
+    const searchInput = screen.getByPlaceholderText('Search certificates, property, or reference...');
+    const rowsBefore = screen.getAllByRole('row').length;
+    await user.type(searchInput, 'ZZZZNONEXISTENT');
+    const rowsAfter = screen.getAllByRole('row').length;
+    expect(rowsAfter).toBeLessThan(rowsBefore);
+  });
+
+  it('status card click toggles status filter', async () => {
+    const user = userEvent.setup();
+    renderVault();
+    const expiringText = screen.getAllByText('Expiring')[0];
+    await user.click(expiringText);
+    const clearBtn = screen.getByText('Clear all');
+    expect(clearBtn).toBeInTheDocument();
+  });
+
+  it('category card click toggles category filter', async () => {
+    const user = userEvent.setup();
+    renderVault();
+    const fireCards = screen.getAllByText('Fire Safety');
+    const categoryCard = fireCards.find((el) => el.closest('[style*="cursor"]'));
+    if (categoryCard) {
+      await user.click(categoryCard);
+      const clearBtns = screen.getAllByText('Clear all');
+      expect(clearBtns.length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('Add Alert button opens add modal', async () => {
+    const user = userEvent.setup();
+    renderVault();
+    await user.click(screen.getByText('Add Alert'));
+    expect(screen.getByText('Category *')).toBeInTheDocument();
+    expect(screen.getByText('Property *')).toBeInTheDocument();
+  });
+
+  it('view button opens view modal', async () => {
+    const user = userEvent.setup();
+    renderVault();
+    const viewBtns = document.querySelectorAll('table tbody tr button');
+    if (viewBtns.length > 0) {
+      await user.click(viewBtns[0]);
+      expect(screen.getByText('Compliance Document Details')).toBeInTheDocument();
+    }
+  });
+
+  it('hides property column when global centre is set', () => {
+    renderVault('PLK Main');
+    expect(screen.queryByText('Property')).not.toBeInTheDocument();
+  });
+
+  it('shows property column when no global centre', () => {
+    renderVault('All');
+    expect(screen.getByText('Property')).toBeInTheDocument();
+  });
+
+  it('renders the subtitle text', () => {
+    renderVault();
+    expect(screen.getByText(/Track and manage/)).toBeInTheDocument();
+  });
+});

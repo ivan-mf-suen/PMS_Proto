@@ -51,9 +51,9 @@ export default function ComplianceVault({ selectedCenter }) {
 
   const activeDocs = useMemo(() => docs.filter((d) => !d.removed), [docs]);
 
-  const filtered = useMemo(() => {
-    let list = activeDocs.filter((d) => {
-      if (selectedCategories.length > 0 && !selectedCategories.includes(d.category)) return false;
+  // Summary stats computed from ALL active docs (not filtered by category)
+  const summaryDocs = useMemo(() => {
+    return activeDocs.filter((d) => {
       if (statusFilter !== 'All' && d.status !== statusFilter) return false;
       if (effectiveCenter !== 'All' && d.center !== effectiveCenter) return false;
       if (search) {
@@ -62,24 +62,33 @@ export default function ComplianceVault({ selectedCenter }) {
       }
       return true;
     });
-    list.sort((a, b) => { const va = a[sortCol] ?? ''; const vb = b[sortCol] ?? ''; const cmp = typeof va === 'string' ? va.localeCompare(vb) : va - vb; return sortDir === 'asc' ? cmp : -cmp; });
-    return list;
-  }, [activeDocs, selectedCategories, statusFilter, effectiveCenter, search, sortCol, sortDir]);
+  }, [activeDocs, statusFilter, effectiveCenter, search]);
 
-  const validCount = filtered.filter((d) => d.status === 'Valid').length;
-  const expiringCount = filtered.filter((d) => d.status === 'Expiring').length;
-  const expiredCount = filtered.filter((d) => d.status === 'Expired').length;
-  const totalFiltered = filtered.length;
+  const validCount = summaryDocs.filter((d) => d.status === 'Valid').length;
+  const expiringCount = summaryDocs.filter((d) => d.status === 'Expiring').length;
+  const expiredCount = summaryDocs.filter((d) => d.status === 'Expired').length;
+  const totalFiltered = summaryDocs.length;
   const complianceRate = totalFiltered > 0 ? Math.round((validCount / totalFiltered) * 100) : 0;
 
+  // Table: applies ALL filters including category
+  const filtered = useMemo(() => {
+    let list = summaryDocs.filter((d) => {
+      if (selectedCategories.length > 0 && !selectedCategories.includes(d.category)) return false;
+      return true;
+    });
+    list.sort((a, b) => { const va = a[sortCol] ?? ''; const vb = b[sortCol] ?? ''; const cmp = typeof va === 'string' ? va.localeCompare(vb) : va - vb; return sortDir === 'asc' ? cmp : -cmp; });
+    return list;
+  }, [summaryDocs, selectedCategories, sortCol, sortDir]);
+
+  // Coverage grid: computed from summaryDocs (ignores category filter so all categories always show)
   const categoryCoverage = useMemo(() => {
     return COMPLIANCE_CATEGORIES.map((cat) => {
-      const catDocs = filtered.filter((d) => d.category === cat);
+      const catDocs = summaryDocs.filter((d) => d.category === cat);
       const catValid = catDocs.filter((d) => d.status === 'Valid').length;
       const pct = catDocs.length > 0 ? Math.round((catValid / catDocs.length) * 100) : 0;
       return { cat, total: catDocs.length, valid: catValid, pct };
     }).filter((c) => c.total > 0);
-  }, [filtered]);
+  }, [summaryDocs]);
 
   const centerOptions = useMemo(() => ['All', ...PROPERTIES.map((p) => p.name)], []);
 
@@ -124,23 +133,20 @@ export default function ComplianceVault({ selectedCenter }) {
         </button>
       </div>
 
-      {/* Top Row: Compliance Rate */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-        <div style={{ flex: 1, background: '#fff', borderRadius: 12, padding: '22px 24px', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 20 }}>
-          <ComplianceRateSVG rate={complianceRate} />
+      {/* ── Summary Bar: Rate + Status Counts ── */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 20, alignItems: 'stretch' }}>
+        {/* Compliance Rate — compact */}
+        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14, minWidth: 200 }}>
+          <ComplianceRateBar rate={complianceRate} />
           <div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--foreground)' }}>{complianceRate}%</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#475569', marginTop: 2 }}>{t('compliance.complianceRate')}</div>
-            <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>{totalFiltered} {t('compliance.documents')} &middot; {t('compliance.complianceDesc')}</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>{t('compliance.complianceRate')}</div>
+            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{totalFiltered} {t('compliance.documents')}</div>
           </div>
         </div>
-      </div>
-
-      {/* Second Row: Status Cards */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
-        <SummaryCard icon={<CheckCircle size={22} color="var(--success)" />} iconBg="var(--success-bg)" value={validCount} label={t('compliance.valid')} desc={t('compliance.validDesc')} />
-        <SummaryCard icon={<AlertTriangle size={22} color="#B45309" />} iconBg="#FEF3C7" value={expiringCount} label={t('compliance.expiringSoon')} desc={t('compliance.expiringDesc')} />
-        <SummaryCard icon={<Clock size={22} color="#DC2626" />} iconBg="#FEE2E2" value={expiredCount} label={t('compliance.expired')} desc={t('compliance.expiredDesc')} />
+        {/* Status counts — inline */}
+        <StatusCount icon={<CheckCircle size={16} color="var(--success)" />} value={validCount} label={t('compliance.valid')} color="var(--success)" bg="var(--success-bg)" />
+        <StatusCount icon={<AlertTriangle size={16} color="#B45309" />} value={expiringCount} label={t('compliance.expiringSoon')} color="#B45309" bg="#FEF3C7" />
+        <StatusCount icon={<Clock size={16} color="#DC2626" />} value={expiredCount} label={t('compliance.expired')} color="#DC2626" bg="#FEE2E2" />
       </div>
 
       {/* Coverage by Category */}
@@ -280,28 +286,29 @@ export default function ComplianceVault({ selectedCenter }) {
 
 // ── SUB-COMPONENTS ──────────────────────────────────────
 
-function ComplianceRateSVG({ rate }) {
-  const size = 72, stroke = 6, radius = (size - stroke) / 2, circ = 2 * Math.PI * radius, offset = circ - (rate / 100) * circ;
+function ComplianceRateBar({ rate }) {
   const color = rate >= 90 ? 'var(--success)' : rate >= 70 ? '#F59E0B' : '#EF4444';
   return (
-    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
-      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E2E8F0" strokeWidth={stroke} />
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth={stroke} strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
+    <div style={{ position: 'relative', width: 44, height: 44, flexShrink: 0 }}>
+      <svg width={44} height={44} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={22} cy={22} r={18} fill="none" stroke="#E2E8F0" strokeWidth={4} />
+        <circle cx={22} cy={22} r={18} fill="none" stroke={color} strokeWidth={4}
+          strokeDasharray={2 * Math.PI * 18}
+          strokeDashoffset={2 * Math.PI * 18 - (rate / 100) * 2 * Math.PI * 18}
+          strokeLinecap="round" style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
       </svg>
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, color }}>{rate}%</div>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color }}>{rate}%</div>
     </div>
   );
 }
 
-function SummaryCard({ icon, iconBg, value, label, desc }) {
+function StatusCount({ icon, value, label, bg }) {
   return (
-    <div style={{ flex: 1, background: '#fff', borderRadius: 12, padding: '18px 20px', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 14 }}>
-      <div style={{ width: 44, height: 44, borderRadius: 10, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
+    <div style={{ flex: 1, background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ width: 34, height: 34, borderRadius: 8, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
       <div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', lineHeight: 1.1 }}>{value}</div>
-        <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginTop: 2 }}>{label}</div>
-        <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{desc}</div>
+        <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--foreground)', lineHeight: 1.1 }}>{value}</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: '#475569', marginTop: 1 }}>{label}</div>
       </div>
     </div>
   );

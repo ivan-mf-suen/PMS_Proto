@@ -8,8 +8,6 @@ import {
   Leaf, HardHat, TriangleAlert,
 } from 'lucide-react';
 
-const STATUS_OPTIONS = ['Valid', 'Expiring', 'Expired'];
-
 const CATEGORY_KEY_MAP = {
   'Fire Safety': 'compliance.cat.FireSafety',
   'Electrical': 'compliance.cat.Electrical',
@@ -47,6 +45,7 @@ export default function ComplianceVault({ selectedCenter }) {
 
   const toggleCategory = (cat) => setSelectedCategories((prev) => prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]);
   const clearCategories = () => setSelectedCategories([]);
+  const toggleStatusFilter = (status) => setStatusFilter((prev) => prev === status ? 'All' : status);
 
   const activeDocs = useMemo(() => docs.filter((d) => !d.removed), [docs]);
 
@@ -142,9 +141,9 @@ export default function ComplianceVault({ selectedCenter }) {
           </div>
         </div>
         {/* Status counts — inline */}
-        <StatusCount icon={<CheckCircle size={16} color="var(--success)" />} value={validCount} label={t('compliance.valid')} color="var(--success)" bg="var(--success-bg)" />
-        <StatusCount icon={<AlertTriangle size={16} color="#B45309" />} value={expiringCount} label={t('compliance.expiringSoon')} color="#B45309" bg="#FEF3C7" />
-        <StatusCount icon={<Clock size={16} color="#DC2626" />} value={expiredCount} label={t('compliance.expired')} color="#DC2626" bg="#FEE2E2" />
+        <StatusCount icon={<CheckCircle size={16} color="var(--success)" />} value={validCount} label={t('compliance.valid')} bg="var(--success-bg)" active={statusFilter === 'Valid'} onClick={() => toggleStatusFilter('Valid')} />
+        <StatusCount icon={<AlertTriangle size={16} color="#B45309" />} value={expiringCount} label={t('compliance.expiringSoon')} bg="#FEF3C7" active={statusFilter === 'Expiring'} onClick={() => toggleStatusFilter('Expiring')} />
+        <StatusCount icon={<Clock size={16} color="#DC2626" />} value={expiredCount} label={t('compliance.expired')} bg="#FEE2E2" active={statusFilter === 'Expired'} onClick={() => toggleStatusFilter('Expired')} />
       </div>
 
       {/* Coverage by Category */}
@@ -190,7 +189,6 @@ export default function ComplianceVault({ selectedCenter }) {
           <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('compliance.searchPlaceholder')} style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none' }} />
         </div>
-        <MultiDropdown label="Status" options={STATUS_OPTIONS} selected={statusFilter} onSelect={setStatusFilter} />
       </div>
 
       {/* Active Filter Pills */}
@@ -218,7 +216,7 @@ export default function ComplianceVault({ selectedCenter }) {
                   ...(!isGlobalCentre ? [{ key: 'center', label: t('compliance.col.property'), width: 200 }] : []),
                   { key: 'nextInspection', label: t('compliance.col.nextDue'), width: 110 },
                   { key: 'cycleMonths', label: t('compliance.col.cycle'), width: 80 },
-                  { key: 'responsible', label: t('compliance.col.responsible'), width: 130 },
+                  { key: 'inspectionDate', label: t('compliance.col.lastInspect'), width: 110 },
                   { key: 'status', label: t('compliance.col.status'), width: 100 },
                   { key: '_actions', label: t('compliance.col.actions'), width: 90 },
                 ].map((col) => (
@@ -247,7 +245,7 @@ export default function ComplianceVault({ selectedCenter }) {
                     {!isGlobalCentre && <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748B', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.center}</td>}
                     <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748B' }}>{doc.nextInspection}</td>
                     <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748B', fontWeight: 600 }}>{formatCycle(doc.cycleMonths || 12)}</td>
-                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748B' }}>{doc.responsible || '—'}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748B' }}>{doc.inspectionDate}</td>
                     <td style={{ padding: '10px 14px' }}>
                       <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: statusColors[doc.status]?.bg, color: statusColors[doc.status]?.color }}>{doc.status}</span>
                     </td>
@@ -299,9 +297,11 @@ function ComplianceRateBar({ rate }) {
   );
 }
 
-function StatusCount({ icon, value, label, bg }) {
+function StatusCount({ icon, value, label, bg, active, onClick }) {
   return (
-    <div style={{ flex: 1, background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+    <div onClick={onClick} style={{ flex: 1, background: active ? bg : '#fff', borderRadius: 12, border: `2px solid ${active ? 'var(--info)' : 'var(--border)'}`, boxShadow: active ? '0 0 0 3px rgba(37,99,235,0.12)' : 'var(--card-shadow)', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', transition: 'all 0.15s' }}
+      onMouseEnter={(e) => { if (!active) e.currentTarget.style.borderColor = 'var(--info)'; }}
+      onMouseLeave={(e) => { if (!active) e.currentTarget.style.borderColor = 'var(--border)'; }}>
       <div style={{ width: 34, height: 34, borderRadius: 8, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
       <div>
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--foreground)', lineHeight: 1.1 }}>{value}</div>
@@ -321,23 +321,6 @@ function ActionBtn({ icon, color, danger, onClick }) {
   );
 }
 
-
-function MultiDropdown({ label, options, selected, onSelect }) {
-  const [open, setOpen] = useState(false);
-  const isActive = selected !== 'All';
-  return (
-    <div style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(!open)} style={{ padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 8, border: `1px solid ${isActive ? 'var(--info)' : 'var(--border)'}`, background: isActive ? 'var(--info-bg)' : '#fff', color: isActive ? 'var(--info)' : '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-        {label}: {isActive ? selected : 'All'} <ChevronDown size={12} />
-      </button>
-      {open && (<><div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 90 }} />
-        <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 160, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 100, padding: 4 }}>
-          <button onClick={() => { onSelect('All'); setOpen(false); }} style={{ display: 'block', width: '100%', padding: '7px 10px', fontSize: 12, border: 'none', background: selected === 'All' ? 'var(--info-bg)' : 'transparent', color: selected === 'All' ? 'var(--info)' : '#475569', cursor: 'pointer', borderRadius: 4, textAlign: 'left' }}>All</button>
-          {options.map((opt) => (<button key={opt} onClick={() => { onSelect(opt); setOpen(false); }} style={{ display: 'block', width: '100%', padding: '7px 10px', fontSize: 12, border: 'none', background: selected === opt ? 'var(--info-bg)' : 'transparent', color: selected === opt ? 'var(--info)' : '#475569', cursor: 'pointer', borderRadius: 4, textAlign: 'left' }}>{opt}</button>))}
-        </div></>)}
-    </div>
-  );
-}
 
 // ── MODALS ──────────────────────────────────────────────
 

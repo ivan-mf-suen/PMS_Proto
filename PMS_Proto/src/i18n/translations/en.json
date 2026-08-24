@@ -260,6 +260,7 @@
   "compliance.clearAll": "Clear all",
 
   "compliance.col.cycle": "Cycle",
+  "compliance.col.lastInspect": "Last Inspected",
   "compliance.col.responsible": "Responsible",
   "compliance.col.notes": "Notes",
 

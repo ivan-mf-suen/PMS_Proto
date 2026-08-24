@@ -260,6 +260,7 @@
   "compliance.clearAll": "清除全部",
 
   "compliance.col.cycle": "週期",
+  "compliance.col.lastInspect": "上次檢查",
   "compliance.col.responsible": "負責人",
   "compliance.col.notes": "備註",
 

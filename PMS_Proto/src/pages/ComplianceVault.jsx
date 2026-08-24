@@ -37,21 +37,21 @@ export default function ComplianceVault({ selectedCenter }) {
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [statusFilter, setStatusFilter] = useState('All');
-  const [centerFilter, setCenterFilter] = useState('All');
   const [sortCol, setSortCol] = useState('nextInspection');
   const [sortDir, setSortDir] = useState('asc');
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
   const isGlobalCentre = selectedCenter && selectedCenter !== 'All';
-  const effectiveCenter = isGlobalCentre ? selectedCenter : centerFilter;
+  const effectiveCenter = selectedCenter || 'All';
 
   const toggleCategory = (cat) => setSelectedCategories((prev) => prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]);
   const clearCategories = () => setSelectedCategories([]);
 
   const activeDocs = useMemo(() => docs.filter((d) => !d.removed), [docs]);
 
-  // Summary stats computed from ALL active docs (not filtered by category)
+  // Summary docs: status/center/search only (no category filter)
+  // Used by categoryCoverage grid so all categories always remain visible
   const summaryDocs = useMemo(() => {
     return activeDocs.filter((d) => {
       if (statusFilter !== 'All' && d.status !== statusFilter) return false;
@@ -64,12 +64,6 @@ export default function ComplianceVault({ selectedCenter }) {
     });
   }, [activeDocs, statusFilter, effectiveCenter, search]);
 
-  const validCount = summaryDocs.filter((d) => d.status === 'Valid').length;
-  const expiringCount = summaryDocs.filter((d) => d.status === 'Expiring').length;
-  const expiredCount = summaryDocs.filter((d) => d.status === 'Expired').length;
-  const totalFiltered = summaryDocs.length;
-  const complianceRate = totalFiltered > 0 ? Math.round((validCount / totalFiltered) * 100) : 0;
-
   // Table: applies ALL filters including category
   const filtered = useMemo(() => {
     let list = summaryDocs.filter((d) => {
@@ -80,7 +74,14 @@ export default function ComplianceVault({ selectedCenter }) {
     return list;
   }, [summaryDocs, selectedCategories, sortCol, sortDir]);
 
-  // Coverage grid: computed from summaryDocs (ignores category filter so all categories always show)
+  // Summary bar counts: from filtered so they match the table when categories are selected
+  const validCount = filtered.filter((d) => d.status === 'Valid').length;
+  const expiringCount = filtered.filter((d) => d.status === 'Expiring').length;
+  const expiredCount = filtered.filter((d) => d.status === 'Expired').length;
+  const totalFiltered = filtered.length;
+  const complianceRate = totalFiltered > 0 ? Math.round((validCount / totalFiltered) * 100) : 0;
+
+  // Coverage grid: from summaryDocs (ignores category filter so all categories always show)
   const categoryCoverage = useMemo(() => {
     return COMPLIANCE_CATEGORIES.map((cat) => {
       const catDocs = summaryDocs.filter((d) => d.category === cat);
@@ -89,8 +90,6 @@ export default function ComplianceVault({ selectedCenter }) {
       return { cat, total: catDocs.length, valid: catValid, pct };
     }).filter((c) => c.total > 0);
   }, [summaryDocs]);
-
-  const centerOptions = useMemo(() => ['All', ...PROPERTIES.map((p) => p.name)], []);
 
   const handleSort = (col) => { if (sortCol === col) setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortCol(col); setSortDir('asc'); } };
 
@@ -114,9 +113,8 @@ export default function ComplianceVault({ selectedCenter }) {
   const activeFilterPills = [];
   selectedCategories.forEach((cat) => activeFilterPills.push({ key: `cat-${cat}`, label: `${t('compliance.col.category')}: ${t(CATEGORY_KEY_MAP[cat] || cat)}`, clear: () => toggleCategory(cat) }));
   if (statusFilter !== 'All') activeFilterPills.push({ key: 'status', label: `Status: ${statusFilter}`, clear: () => setStatusFilter('All') });
-  if (!isGlobalCentre && centerFilter !== 'All') activeFilterPills.push({ key: 'center', label: centerFilter, clear: () => setCenterFilter('All') });
   const hasFilters = activeFilterPills.length > 0;
-  const clearAllFilters = () => { clearCategories(); setStatusFilter('All'); if (!isGlobalCentre) setCenterFilter('All'); setSearch(''); };
+  const clearAllFilters = () => { clearCategories(); setStatusFilter('All'); setSearch(''); };
 
   const formUpdate = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
 
@@ -193,7 +191,6 @@ export default function ComplianceVault({ selectedCenter }) {
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('compliance.searchPlaceholder')} style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none' }} />
         </div>
         <MultiDropdown label="Status" options={STATUS_OPTIONS} selected={statusFilter} onSelect={setStatusFilter} />
-        {!isGlobalCentre && <SingleDropdown label="Property" options={centerOptions} selected={centerFilter} onSelect={setCenterFilter} />}
       </div>
 
       {/* Active Filter Pills */}
@@ -324,20 +321,6 @@ function ActionBtn({ icon, color, danger, onClick }) {
   );
 }
 
-function SingleDropdown({ label, options, selected, onSelect }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(!open)} style={{ padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 8, border: `1px solid ${selected !== 'All' ? 'var(--info)' : 'var(--border)'}`, background: selected !== 'All' ? 'var(--info-bg)' : '#fff', color: selected !== 'All' ? 'var(--info)' : '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-        {label}: {selected === 'All' ? 'All' : selected.length > 20 ? selected.slice(0, 18) + '...' : selected} <ChevronDown size={12} />
-      </button>
-      {open && (<><div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 90 }} />
-        <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 220, maxHeight: 280, overflowY: 'auto', background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 100, padding: 4 }}>
-          {options.map((opt) => (<button key={opt} onClick={() => { onSelect(opt); setOpen(false); }} style={{ display: 'block', width: '100%', padding: '7px 10px', fontSize: 12, border: 'none', background: selected === opt ? 'var(--info-bg)' : 'transparent', color: selected === opt ? 'var(--info)' : '#475569', cursor: 'pointer', borderRadius: 4, textAlign: 'left' }}>{opt === 'All' ? 'All' : opt}</button>))}
-        </div></>)}
-    </div>
-  );
-}
 
 function MultiDropdown({ label, options, selected, onSelect }) {
   const [open, setOpen] = useState(false);

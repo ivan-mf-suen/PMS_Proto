@@ -21,7 +21,7 @@ const CATEGORY_KEY_MAP = {
 export default function ComplianceVault({ selectedCenter }) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('All');
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [statusFilter, setStatusFilter] = useState('All');
   const [centerFilter, setCenterFilter] = useState('All');
   const [sortCol, setSortCol] = useState('nextInspection');
@@ -30,9 +30,14 @@ export default function ComplianceVault({ selectedCenter }) {
   const isGlobalCentre = selectedCenter && selectedCenter !== 'All';
   const effectiveCenter = isGlobalCentre ? selectedCenter : centerFilter;
 
+  const toggleCategory = (cat) => {
+    setSelectedCategories((prev) => prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]);
+  };
+  const clearCategories = () => setSelectedCategories([]);
+
   const filtered = useMemo(() => {
     let list = COMPLIANCE_DOCS.filter((d) => {
-      if (categoryFilter !== 'All' && d.category !== categoryFilter) return false;
+      if (selectedCategories.length > 0 && !selectedCategories.includes(d.category)) return false;
       if (statusFilter !== 'All' && d.status !== statusFilter) return false;
       if (effectiveCenter !== 'All' && d.center !== effectiveCenter) return false;
       if (search) {
@@ -48,7 +53,7 @@ export default function ComplianceVault({ selectedCenter }) {
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return list;
-  }, [search, categoryFilter, statusFilter, effectiveCenter, sortCol, sortDir]);
+  }, [search, selectedCategories, statusFilter, effectiveCenter, sortCol, sortDir]);
 
   const totalDocs = filtered.length;
   const validCount = filtered.filter((d) => d.status === 'Valid').length;
@@ -79,7 +84,9 @@ export default function ComplianceVault({ selectedCenter }) {
   };
 
   const activeFilters = [];
-  if (categoryFilter !== 'All') activeFilters.push({ key: 'cat', label: `Category: ${t(CATEGORY_KEY_MAP[categoryFilter] || categoryFilter)}`, clear: () => setCategoryFilter('All') });
+  selectedCategories.forEach((cat) => {
+    activeFilters.push({ key: `cat-${cat}`, label: `${t('compliance.col.category')}: ${t(CATEGORY_KEY_MAP[cat] || cat)}`, clear: () => toggleCategory(cat) });
+  });
   if (statusFilter !== 'All') activeFilters.push({ key: 'status', label: `Status: ${statusFilter}`, clear: () => setStatusFilter('All') });
   if (!isGlobalCentre && centerFilter !== 'All') activeFilters.push({ key: 'center', label: centerFilter, clear: () => setCenterFilter('All') });
 
@@ -103,13 +110,20 @@ export default function ComplianceVault({ selectedCenter }) {
       </div>
 
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', padding: 20, marginBottom: 20 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', marginBottom: 16 }}>{t('compliance.coverageCategory')}</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>{t('compliance.coverageCategory')}</div>
+          {selectedCategories.length > 0 && (
+            <button onClick={clearCategories} style={{ fontSize: 12, fontWeight: 600, color: 'var(--primary)', background: 'var(--info-bg)', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <X size={12} /> {t('compliance.clearAll')}
+            </button>
+          )}
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
           {categoryCoverage.map(({ cat, total, valid, pct }) => {
-            const isActive = categoryFilter === cat;
+            const isActive = selectedCategories.includes(cat);
             return (
               <div key={cat}
-                onClick={() => setCategoryFilter(isActive ? 'All' : cat)}
+                onClick={() => toggleCategory(cat)}
                 style={{
                   padding: '14px 16px', borderRadius: 10, cursor: 'pointer',
                   border: `1.5px solid ${isActive ? 'var(--info)' : 'var(--border)'}`,
@@ -125,7 +139,10 @@ export default function ComplianceVault({ selectedCenter }) {
                 <div style={{ height: 8, borderRadius: 4, background: '#E2E8F0', overflow: 'hidden', marginBottom: 8 }}>
                   <div style={{ height: '100%', width: `${pct}%`, borderRadius: 4, background: pct === 100 ? 'var(--success)' : pct >= 80 ? '#F59E0B' : '#EF4444', transition: 'width 0.3s ease' }} />
                 </div>
-                <div style={{ fontSize: 11, color: '#94A3B8' }}>{t('compliance.validCount', { valid, total })}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: 11, color: '#94A3B8' }}>{t('compliance.validCount', { valid, total })}</div>
+                  {isActive && <div style={{ width: 18, height: 18, borderRadius: 4, background: 'var(--info)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg></div>}
+                </div>
               </div>
             );
           })}
@@ -137,7 +154,7 @@ export default function ComplianceVault({ selectedCenter }) {
           <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('compliance.searchPlaceholder')} style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none' }} />
         </div>
-        <FilterDropdown label="Category" options={['All', ...COMPLIANCE_CATEGORIES]} selected={categoryFilter} onSelect={setCategoryFilter} t={t} categoryKeyMap={CATEGORY_KEY_MAP} />
+        <FilterDropdown label="Category" options={COMPLIANCE_CATEGORIES} selected={selectedCategories} onSelect={setSelectedCategories} t={t} categoryKeyMap={CATEGORY_KEY_MAP} multi />
         <FilterDropdown label="Status" options={STATUS_OPTIONS} selected={statusFilter} onSelect={setStatusFilter} />
         {!isGlobalCentre && <FilterDropdown label="Property" options={centerOptions} selected={centerFilter} onSelect={setCenterFilter} />}
       </div>
@@ -150,7 +167,7 @@ export default function ComplianceVault({ selectedCenter }) {
               <button onClick={f.clear} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: 'var(--primary)' }}><X size={12} /></button>
             </span>
           ))}
-          <button onClick={() => { setCategoryFilter('All'); setStatusFilter('All'); if (!isGlobalCentre) setCenterFilter('All'); }} style={{ fontSize: 12, color: '#64748B', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>{t('compliance.clearAll')}</button>
+          <button onClick={() => { clearCategories(); setStatusFilter('All'); if (!isGlobalCentre) setCenterFilter('All'); }} style={{ fontSize: 12, color: '#64748B', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>{t('compliance.clearAll')}</button>
         </div>
       )}
 
@@ -267,27 +284,52 @@ function ActionBtn({ icon, color, danger }) {
   );
 }
 
-function FilterDropdown({ label, options, selected, onSelect, t, categoryKeyMap }) {
+function FilterDropdown({ label, options, selected, onSelect, t, categoryKeyMap, multi }) {
   const [open, setOpen] = useState(false);
   const displayLabel = (opt) => {
-    if (opt === 'All') return opt;
     if (t && categoryKeyMap && categoryKeyMap[opt]) return t(categoryKeyMap[opt]);
     return opt;
   };
+  const isActive = multi ? (Array.isArray(selected) && selected.length > 0) : selected !== 'All';
+  const displayText = multi
+    ? (Array.isArray(selected) && selected.length > 0 ? `${selected.length} selected` : 'All')
+    : displayLabel(selected);
+
+  const handleMultiToggle = (opt) => {
+    const current = Array.isArray(selected) ? selected : [];
+    onSelect(current.includes(opt) ? current.filter((c) => c !== opt) : [...current, opt]);
+  };
+
   return (
     <div style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(!open)} style={{ padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 8, border: '1px solid var(--border)', background: selected !== 'All' ? 'var(--info-bg)' : '#fff', color: selected !== 'All' ? 'var(--info)' : '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {label}: {displayLabel(selected)}
+      <button onClick={() => setOpen(!open)} style={{ padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 8, border: `1px solid ${isActive ? 'var(--info)' : 'var(--border)'}`, background: isActive ? 'var(--info-bg)' : '#fff', color: isActive ? 'var(--info)' : '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {label}: {displayText}
       </button>
       {open && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 90 }} />
-          <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 220, maxHeight: 300, overflowY: 'auto', background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 100, padding: 4 }}>
-            {options.map((opt) => (
-              <button key={opt} onClick={() => { onSelect(opt); setOpen(false); }} style={{ display: 'block', width: '100%', padding: '7px 10px', fontSize: 12, border: 'none', background: selected === opt ? 'var(--info-bg)' : 'transparent', color: selected === opt ? 'var(--info)' : '#475569', cursor: 'pointer', borderRadius: 4, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {displayLabel(opt)}
-              </button>
-            ))}
+          <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 240, maxHeight: 320, overflowY: 'auto', background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 100, padding: 4 }}>
+            {multi && (
+              <div style={{ padding: '6px 10px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>{selected.length} selected</span>
+                {selected.length > 0 && (
+                  <button onClick={(e) => { e.stopPropagation(); onSelect([]); }} style={{ fontSize: 11, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Clear</button>
+                )}
+              </div>
+            )}
+            {options.map((opt) => {
+              const checked = multi ? (Array.isArray(selected) && selected.includes(opt)) : selected === opt;
+              return (
+                <button key={opt} onClick={() => multi ? handleMultiToggle(opt) : (onSelect(opt), setOpen(false))} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', fontSize: 12, border: 'none', background: checked ? 'var(--info-bg)' : 'transparent', color: checked ? 'var(--info)' : '#475569', cursor: 'pointer', borderRadius: 4, textAlign: 'left' }}>
+                  {multi && (
+                    <span style={{ width: 16, height: 16, borderRadius: 3, border: `1.5px solid ${checked ? 'var(--info)' : '#CBD5E1'}`, background: checked ? 'var(--info)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {checked && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                    </span>
+                  )}
+                  <span>{displayLabel(opt)}</span>
+                </button>
+              );
+            })}
           </div>
         </>
       )}

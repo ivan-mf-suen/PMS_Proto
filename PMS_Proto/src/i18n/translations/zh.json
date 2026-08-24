@@ -196,6 +196,17 @@
   "compliance.remove": "移除",
   "compliance.clearAll": "清除全部",
 
+  "compliance.cat.FireSafety": "消防安全",
+  "compliance.cat.Electrical": "電力",
+  "compliance.cat.Gas": "氣體",
+  "compliance.cat.WaterHygiene": "水質衛生",
+  "compliance.cat.Lifts": "升降機",
+  "compliance.cat.Structural": "結構",
+  "compliance.cat.Insurance": "保險",
+  "compliance.cat.Environmental": "環境",
+  "compliance.cat.OccupationalSafety": "職業安全",
+  "compliance.cat.Asbestos": "石棉",
+
   "assets.title": "資產",
   "assets.count": "項資產遍佈所有中心",
   "assets.add": "新增資產",

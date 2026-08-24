@@ -5,6 +5,19 @@ import { Search, AlertTriangle, CheckCircle, Clock, Bell, X, Eye, Pencil, Trash2
 
 const STATUS_OPTIONS = ['All', 'Valid', 'Expiring', 'Expired'];
 
+const CATEGORY_KEY_MAP = {
+  'Fire Safety': 'compliance.cat.FireSafety',
+  'Electrical': 'compliance.cat.Electrical',
+  'Gas': 'compliance.cat.Gas',
+  'Water Hygiene': 'compliance.cat.WaterHygiene',
+  'Lifts': 'compliance.cat.Lifts',
+  'Structural': 'compliance.cat.Structural',
+  'Insurance': 'compliance.cat.Insurance',
+  'Environmental': 'compliance.cat.Environmental',
+  'Occupational Safety': 'compliance.cat.OccupationalSafety',
+  'Asbestos': 'compliance.cat.Asbestos',
+};
+
 export default function ComplianceVault({ selectedCenter }) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
@@ -66,7 +79,7 @@ export default function ComplianceVault({ selectedCenter }) {
   };
 
   const activeFilters = [];
-  if (categoryFilter !== 'All') activeFilters.push({ key: 'cat', label: `Category: ${categoryFilter}`, clear: () => setCategoryFilter('All') });
+  if (categoryFilter !== 'All') activeFilters.push({ key: 'cat', label: `Category: ${t(CATEGORY_KEY_MAP[categoryFilter] || categoryFilter)}`, clear: () => setCategoryFilter('All') });
   if (statusFilter !== 'All') activeFilters.push({ key: 'status', label: `Status: ${statusFilter}`, clear: () => setStatusFilter('All') });
   if (!isGlobalCentre && centerFilter !== 'All') activeFilters.push({ key: 'center', label: centerFilter, clear: () => setCenterFilter('All') });
 
@@ -92,20 +105,30 @@ export default function ComplianceVault({ selectedCenter }) {
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', padding: 20, marginBottom: 20 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', marginBottom: 16 }}>{t('compliance.coverageCategory')}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
-          {categoryCoverage.map(({ cat, total, valid, pct }) => (
-            <div key={cat} style={{ padding: '14px 16px', borderRadius: 10, border: '1px solid var(--border)', background: '#FAFBFC', transition: 'border-color 0.15s' }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--info)')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{cat}</span>
-                <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: pct === 100 ? 'var(--success-bg)' : pct >= 80 ? '#FEF3C7' : '#FEE2E2', color: pct === 100 ? 'var(--success)' : pct >= 80 ? '#B45309' : '#DC2626' }}>{pct}%</span>
+          {categoryCoverage.map(({ cat, total, valid, pct }) => {
+            const isActive = categoryFilter === cat;
+            return (
+              <div key={cat}
+                onClick={() => setCategoryFilter(isActive ? 'All' : cat)}
+                style={{
+                  padding: '14px 16px', borderRadius: 10, cursor: 'pointer',
+                  border: `1.5px solid ${isActive ? 'var(--info)' : 'var(--border)'}`,
+                  background: isActive ? 'var(--info-bg)' : '#FAFBFC',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.borderColor = 'var(--info)'; }}
+                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.borderColor = 'var(--border)'; }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: isActive ? 'var(--info)' : 'var(--foreground)' }}>{t(CATEGORY_KEY_MAP[cat] || cat)}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: pct === 100 ? 'var(--success-bg)' : pct >= 80 ? '#FEF3C7' : '#FEE2E2', color: pct === 100 ? 'var(--success)' : pct >= 80 ? '#B45309' : '#DC2626' }}>{pct}%</span>
+                </div>
+                <div style={{ height: 8, borderRadius: 4, background: '#E2E8F0', overflow: 'hidden', marginBottom: 8 }}>
+                  <div style={{ height: '100%', width: `${pct}%`, borderRadius: 4, background: pct === 100 ? 'var(--success)' : pct >= 80 ? '#F59E0B' : '#EF4444', transition: 'width 0.3s ease' }} />
+                </div>
+                <div style={{ fontSize: 11, color: '#94A3B8' }}>{t('compliance.validCount', { valid, total })}</div>
               </div>
-              <div style={{ height: 8, borderRadius: 4, background: '#E2E8F0', overflow: 'hidden', marginBottom: 8 }}>
-                <div style={{ height: '100%', width: `${pct}%`, borderRadius: 4, background: pct === 100 ? 'var(--success)' : pct >= 80 ? '#F59E0B' : '#EF4444', transition: 'width 0.3s ease' }} />
-              </div>
-              <div style={{ fontSize: 11, color: '#94A3B8' }}>{t('compliance.validCount', { valid, total })}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -114,7 +137,7 @@ export default function ComplianceVault({ selectedCenter }) {
           <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('compliance.searchPlaceholder')} style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none' }} />
         </div>
-        <FilterDropdown label="Category" options={['All', ...COMPLIANCE_CATEGORIES]} selected={categoryFilter} onSelect={setCategoryFilter} />
+        <FilterDropdown label="Category" options={['All', ...COMPLIANCE_CATEGORIES]} selected={categoryFilter} onSelect={setCategoryFilter} t={t} categoryKeyMap={CATEGORY_KEY_MAP} />
         <FilterDropdown label="Status" options={STATUS_OPTIONS} selected={statusFilter} onSelect={setStatusFilter} />
         {!isGlobalCentre && <FilterDropdown label="Property" options={centerOptions} selected={centerFilter} onSelect={setCenterFilter} />}
       </div>
@@ -162,7 +185,7 @@ export default function ComplianceVault({ selectedCenter }) {
               {filtered.map((doc) => (
                 <tr key={doc.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
                   <td style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{doc.name}</td>
-                  <td style={{ padding: '10px 16px' }}><span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: '#F1F5F9', color: '#475569' }}>{doc.category}</span></td>
+                  <td style={{ padding: '10px 16px' }}><span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: '#F1F5F9', color: '#475569' }}>{t(CATEGORY_KEY_MAP[doc.category] || doc.category)}</span></td>
                   {!isGlobalCentre && <td style={{ padding: '10px 16px', fontSize: 12, color: '#64748B', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.center}</td>}
                   <td style={{ padding: '10px 16px', fontSize: 12, color: '#94A3B8', fontFamily: 'monospace' }}>{doc.documentRef}</td>
                   <td style={{ padding: '10px 16px', fontSize: 12, color: '#64748B' }}>{doc.inspectionDate}</td>
@@ -244,12 +267,17 @@ function ActionBtn({ icon, color, danger }) {
   );
 }
 
-function FilterDropdown({ label, options, selected, onSelect }) {
+function FilterDropdown({ label, options, selected, onSelect, t, categoryKeyMap }) {
   const [open, setOpen] = useState(false);
+  const displayLabel = (opt) => {
+    if (opt === 'All') return opt;
+    if (t && categoryKeyMap && categoryKeyMap[opt]) return t(categoryKeyMap[opt]);
+    return opt;
+  };
   return (
     <div style={{ position: 'relative' }}>
       <button onClick={() => setOpen(!open)} style={{ padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 8, border: '1px solid var(--border)', background: selected !== 'All' ? 'var(--info-bg)' : '#fff', color: selected !== 'All' ? 'var(--info)' : '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {label}: {selected}
+        {label}: {displayLabel(selected)}
       </button>
       {open && (
         <>
@@ -257,7 +285,7 @@ function FilterDropdown({ label, options, selected, onSelect }) {
           <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 220, maxHeight: 300, overflowY: 'auto', background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 100, padding: 4 }}>
             {options.map((opt) => (
               <button key={opt} onClick={() => { onSelect(opt); setOpen(false); }} style={{ display: 'block', width: '100%', padding: '7px 10px', fontSize: 12, border: 'none', background: selected === opt ? 'var(--info-bg)' : 'transparent', color: selected === opt ? 'var(--info)' : '#475569', cursor: 'pointer', borderRadius: 4, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {opt}
+                {displayLabel(opt)}
               </button>
             ))}
           </div>

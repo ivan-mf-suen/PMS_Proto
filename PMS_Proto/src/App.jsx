@@ -44,7 +44,9 @@ function AppLayout() {
 
   const handleCenterChange = (center) => {
     setSelectedCenter(center);
-    setActiveTab('Dashboard');
+    if (activeTab !== 'Compliance Vault') {
+      setActiveTab('Dashboard');
+    }
     setSubView(null);
     setViewWOId(null);
     setViewPropertyId(null);

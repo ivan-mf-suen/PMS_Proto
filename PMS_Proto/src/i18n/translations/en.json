@@ -196,6 +196,17 @@
   "compliance.remove": "Remove",
   "compliance.clearAll": "Clear all",
 
+  "compliance.cat.FireSafety": "Fire Safety",
+  "compliance.cat.Electrical": "Electrical",
+  "compliance.cat.Gas": "Gas",
+  "compliance.cat.WaterHygiene": "Water Hygiene",
+  "compliance.cat.Lifts": "Lifts",
+  "compliance.cat.Structural": "Structural",
+  "compliance.cat.Insurance": "Insurance",
+  "compliance.cat.Environmental": "Environmental",
+  "compliance.cat.OccupationalSafety": "Occupational Safety",
+  "compliance.cat.Asbestos": "Asbestos",
+
   "assets.title": "Assets",
   "assets.count": "assets across all centres",
   "assets.add": "Add Asset",

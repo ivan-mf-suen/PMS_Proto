@@ -689,3 +689,93 @@ export const REPORTS_DATA = [
   { id: 5, name: "Asset Maintenance Schedule — Sep 2026", date: "2026-08-16", status: "Ready" },
   { id: 6, name: "IAS Tender Status Report", date: "2026-08-14", status: "Ready" },
 ];
+
+export const CONTRACTORS = [
+  { id: "CTR-001", name: "Best Maintenance Co. Ltd", specialties: ["HVAC", "Electrical", "Power"], rating: 4.5, phone: "+852 2345 6789", email: "info@bestmaintenance.hk" },
+  { id: "CTR-002", name: "Sun Wah Engineering Ltd", specialties: ["Plumbing", "Fire Safety", "Water Hygiene"], rating: 4.2, phone: "+852 2789 0123", email: "contact@sunwah-eng.hk" },
+  { id: "CTR-003", name: "Pacific Building Services Ltd", specialties: ["Concrete Repair", "Painting", "Waterproofing", "Tile Replacement"], rating: 4.0, phone: "+852 2567 8901", email: "enquiry@pacificbs.hk" },
+  { id: "CTR-004", name: "Dragon City Engineering Ltd", specialties: ["Vertical Transport", "ELV", "PD System"], rating: 4.7, phone: "+852 2890 1234", email: "info@dragoncity.hk" },
+  { id: "CTR-005", name: "Green Field Environmental Ltd", specialties: ["Environmental", "Asbestos", "Water Hygiene"], rating: 4.3, phone: "+852 2456 7890", email: "service@greenfield.hk" },
+  { id: "CTR-006", name: "True Way Security Technology Ltd", specialties: ["Security", "CCTV", "PD System", "ELV"], rating: 4.1, phone: "+852 2678 9012", email: "sales@trueway.hk" },
+];
+
+export const CONTRACTS = [
+  {
+    id: "CTR-2026-001",
+    name: "PLK Multi-Site HVAC Maintenance Contract",
+    status: "Active",
+    contractorId: "CTR-001",
+    workOrders: ["WO-2026-0891", "WO-2026-0907"],
+    facilities: ["PLK Lee Chiu Kong Memorial Centre", "PLK Tin Shui Wai Rehabilitation Centre"],
+    contractSum: 134000,
+    awardedDate: "2026-07-01",
+    plannedTenderDate: null,
+    type: "Building Services",
+  },
+  {
+    id: "CTR-2026-002",
+    name: "Fire Safety Certification Package",
+    status: "Active",
+    contractorId: "CTR-002",
+    workOrders: ["WO-2026-0892", "WO-2026-0906", "WO-2026-0880"],
+    facilities: ["PLK Shek Kip Mei Community Services Centre", "PLK Tin Shui Wai Rehabilitation Centre", "PLK Lee Chiu Kong Memorial Centre"],
+    contractSum: 54500,
+    awardedDate: "2026-06-15",
+    plannedTenderDate: null,
+    type: "Fire Safety",
+  },
+  {
+    id: "CTR-2026-003",
+    name: "Y.C. Centre Electrical Upgrade Package",
+    status: "Being Formed",
+    contractorId: null,
+    workOrders: ["WO-2026-0894", "WO-2026-0895", "WO-2026-0889"],
+    facilities: ["PLK Y.C. Cheng Centre"],
+    contractSum: 155000,
+    awardedDate: null,
+    plannedTenderDate: "2026-09-01",
+    type: "Builder's Works",
+  },
+  {
+    id: "CTR-2026-004",
+    name: "Tin Shui Wai Renovation & Maintenance",
+    status: "Being Formed",
+    contractorId: null,
+    workOrders: ["WO-2026-0893", "WO-2026-0903", "WO-2026-0905"],
+    facilities: ["PLK Tin Shui Wai Rehabilitation Centre"],
+    contractSum: 276000,
+    awardedDate: null,
+    plannedTenderDate: "2026-09-10",
+    type: "Builder's Works",
+  },
+  {
+    id: "CTR-2026-005",
+    name: "CCTV & Security Systems Upgrade",
+    status: "Active",
+    contractorId: "CTR-006",
+    workOrders: ["WO-2026-0896"],
+    facilities: ["PLK Shek Kip Mei Community Services Centre"],
+    contractSum: 89000,
+    awardedDate: "2026-07-20",
+    plannedTenderDate: null,
+    type: "ELV",
+  },
+];
+
+export function generateWOHistory(wo) {
+  const idx = WORK_ORDER_STATUSES.indexOf(wo.status);
+  if (idx === -1) return [];
+  const history = [];
+  const base = new Date(wo.created + 'T08:00:00');
+  for (let i = 0; i <= idx; i++) {
+    const d = new Date(base);
+    d.setDate(d.getDate() + i * 2);
+    d.setHours(8 + ((i * 4) % 12), (i * 17) % 60, 0, 0);
+    history.push({
+      status: WORK_ORDER_STATUSES[i],
+      date: d.toISOString().slice(0, 16).replace('T', ' '),
+      by: i === 0 ? wo.createdBy : wo.assignee,
+    });
+  }
+  return history;
+}

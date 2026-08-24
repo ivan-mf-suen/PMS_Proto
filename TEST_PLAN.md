@@ -2,7 +2,7 @@
 
 **Target app:** React 19 SPA prototype (Login, Dashboard, Properties, Work Orders, Compliance Vault, Assets, Floor Plan, Reports, Settings)
 **Stack:** React 19.2 · Vite 8.2 · @vitejs/plugin-react 6.0 · plain JS (no TS) · Context state management · inline styles · static seed data (`src/data/constants.js`) · i18n EN/ZH
-**Roles:** SSD Centre Admin, Centre OIC, Service Manager, SSD AS, SSD G&C, PWD Officer
+**Roles (8):** Super Admin, IT Admin, SSD Centre Admin, SSD OIC, SSD Service Manager, SSD AS, SSD G&C, PWD
 **Document date:** 2026-08-24 · All package versions verified against npm registry on this date.
 
 ---
@@ -156,10 +156,10 @@ export default defineConfig({
 ### 2.1 Test pyramid (adapted for a prototype)
 
 ```
-        /\   E2E (Playwright)          ~12 scenarios — one per critical journey
-       /--\  Integration               ~35 tests — page-level render+interaction w/ providers
-      /----\ Unit                      ~80 tests — contexts, permissions, transitions, helpers
-     /------\ Static                   oxlint (existing) + a11y lint pass
+        /\   E2E (Playwright)          7 smoke scenarios
+       /--\  Integration               35 tests — page-level render+interaction w/ providers
+      /----\ Unit                      29 tests — contexts, permissions, i18n, compliance logic
+     /------\ Static                   oxlint (existing)
 ```
 
 Prototype calibration: **do not chase high unit coverage of JSX**. Pages are mostly declarative renders over `constants.js`. Highest-value targets are *logic*: permissions gating, pipeline transitions, filters, counts, i18n lookups. Coverage thresholds above are deliberately modest; raise them when real state/API arrives.
@@ -169,25 +169,20 @@ Prototype calibration: **do not chase high unit coverage of JSX**. Pages are mos
 ```
 src/
   test/
-    setup.js                 # global setup (above)
-    factories.js             # makeWorkOrder({status, budget, center, ...}) overrides WORK_ORDERS seeds
+    setup.js                 # global setup (ResizeObserver mock, matchMedia, cleanup)
     renderWithProviders.jsx  # render(<AuthProvider><LanguageProvider><Page/></...>)
-    page-objects/            # shared locators: sidebar, header, woTable
   context/__tests__/
-    AuthContext.test.jsx
+    AuthContext.test.jsx     # 10 tests — role login, permissions, logout
+    ComplianceContext.test.jsx # 9 tests — CRUD, status computation, soft-delete
+  i18n/__tests__/
+    LanguageContext.test.jsx # 9 tests — t(), interpolation, fallbacks, sessionStorage
   pages/__tests__/
-    Dashboard.test.jsx
-    WorkOrders.test.jsx
-    ...
+    Dashboard.test.jsx       # 13 tests — KPIs, charts, filter bar, recent WOs
+    WorkOrders.test.jsx      # 8 tests — title, search, filters, table, pipeline
+    ComplianceVault.test.jsx # 14 tests — summary bar, coverage, categories, modals
 e2e/
-  fixtures/auth.fixture.js   # storageState-free: this app has SSO-disabled quick-login buttons
-  journeys/
-    auth.spec.js
-    oic-submit-flow.spec.js
-    manager-endorsement.spec.js
-    pwd-assessment.spec.js
-    i18n.spec.js
-    smoke-all-pages.spec.js
+  smoke.spec.js             # 7 E2E smoke tests — login, navigation, key pages
+playwright.config.js        # Chromium only, port 5173
 ```
 
 ### 2.3 Conventions
@@ -213,7 +208,7 @@ Legend: **P0** blocks UAT sign-off · **P1** important · **P2** nice-to-have
 
 | ID | Priority | Test case | Assertion highlights |
 |---|---|---|---|
-| AUTH-01 | P0 | Renders SSO portal with 6 role cards | All six `role.label` values visible; Corporate ID/password inputs disabled |
+| AUTH-01 | P0 | Renders SSO portal with 8 role cards | All eight `role.label` values visible; Corporate ID/password inputs disabled |
 | AUTH-02 | P0 | Clicking each role card calls `login(key)` | `useAuth().permissions` equals corresponding `ROLES[key]` object (name, label, flags) |
 | AUTH-03 | P0 | Unauthenticated users see only LoginScreen | `screen.queryByRole('navigation')` / sidebar absent before login |
 | AUTH-04 | P0 | After login, app shell renders | Sidebar + Header present; default tab resolves to role's landing view |
@@ -236,10 +231,10 @@ Legend: **P0** blocks UAT sign-off · **P1** important · **P2** nice-to-have
 
 | ID | Priority | Test case |
 |---|---|---|
-| DASH-01 | P0 | KPI cards show occupancy 94.2%, revenue formatted, WO open/closed 28/14, compliance 97.1% with trend indicators |
+| DASH-01 | P0 | 8 KPI cards render: Active WOs (count), Pending Approval (count), Under PWD (count), Tendering (count), In Progress (count), Completed (count), Contracts Awarded (count + HK$ total), Total Contract Sum (HK$) | Counts match filteredWOs; HK$ formatted |
 | DASH-02 | P0 | Charts render (recharts mounts under mocked ResizeObserver); month labels Jan–Aug present |
 | DASH-03 | P0 | Recent work orders list shows status pills with correct colour class per status bucket (Draft grey, Pending Approval amber, Under PWD info, Completed green) |
-| DASH-04 | P1 | Expiring-documents widget lists exactly the 2 `Expiring` compliance docs |
+| DASH-04 | P1 | Compliance Alerts card shows Overdue (Expired docs), Upcoming Inspections (next 3 months), and Equipment EOL (>8 years installed) | Counts match filteredDocs and ASSETS |
 | DASH-05 | P2 | Click-through from WO row navigates to Work Orders view |
 
 ### 3.4 PROP — Properties
@@ -255,10 +250,10 @@ Legend: **P0** blocks UAT sign-off · **P1** important · **P2** nice-to-have
 
 | ID | Priority | Test case |
 |---|---|---|
-| WO-01 | P0 | Tab bar lists every status + "All", with correct counts (`All` = 20 seeds; each tab count matches `filter(w => w.status === tab).length`) |
+| WO-01 | P0 | Multi-select "Filter by Status" timeline shows all 11 statuses with per-status count badges; short labels used ("SM Review", "G&C Review", etc.); empty selection shows all WOs (All = 20 seeds) | Count badges match filter(w => w.status === s).length |
 | WO-02 | P0 | Selecting a tab filters rows to that status only |
 | WO-03 | P0 | Row fields: ID, title, centre, priority badge, assignee, due date, budget |
-| WO-04 | P0 | **canCreateWO gating:** Create button visible for Admin/OIC only; hidden for Service Manager/AS/G&C/PWD |
+| WO-04 | P0 | **canCreateWO gating:** Create button visible for Super Admin, SSD Centre Admin, and OIC only; hidden for IT Admin, Service Manager, AS, G&C, PWD |
 | WO-05 | P0 | **centreScope filtering:** ASSIGNED_ONLY role sees only their centre's WOs even though seeds span 4 centres |
 | WO-06 | P1 | Search/filter by title or ID returns matching subset; empty-state message when no match |
 | WO-07 | P1 | Priority badges map Critical/High/Medium/Low → distinct colours |
@@ -268,20 +263,20 @@ Legend: **P0** blocks UAT sign-off · **P1** important · **P2** nice-to-have
 
 | ID | Priority | Test case |
 |---|---|---|
-| CREATE-01 | P0 | Required-field validation: submit blocked without title/category/priority/budget; error messaging shown |
-| CREATE-02 | P0 | Budget ≤ $100K routes to normal approval chain (no SSD endorsement step) |
-| CREATE-03 | P0 | Budget > $100K flags SSD endorsement requirement (matches NOTIFICATIONS rule: "budget >$100K") |
-| CREATE-04 | P0 | `pwdInvolvement: with` routes to *Under PWD Assessment* after approval; `without` bypasses |
-| CREATE-05 | P1 | New WO appears in Draft tab with auto-ID format `WO-YYYY-NNNN`, creator = logged-in role's `name` |
+| CREATE-01 | P1 | Form saves with defaults — empty title falls back to "Untitled Work Order"; no hard required-field blocking (save always succeeds) |
+| CREATE-02 | P0 | Save creates WO in "Draft" status; Submit to SM creates WO in "Pending SSD Service Manager Endorsement" status |
+| CREATE-03 | P0 | Budget field accepts numeric HK$ input; $100K threshold is informational only (no automated routing) |
+| CREATE-04 | P2 | `pwdInvolvement` field captured in WO data but does not affect routing (informational field for downstream use) |
+| CREATE-05 | P1 | New WO gets auto-ID format `WO-YYYY-NNNN` via `getNextWoId()`; creator hardcoded to "Chan Siu Ming" |
 | CREATE-06 | P1 | Back/cancel discards form without mutating list |
-| CREATE-07 | P2 | Attachment picker accepts file selection (stubbed) |
+| CREATE-07 | P2 | Attachment picker accepts file selection (stubbed); Asset picker button exists but has no onClick handler |
 
 ### 3.7 COMP — Compliance Vault
 
 | ID | Priority | Test case |
 |---|---|---|
-| COMP-01 | P0 | Summary counters: total 8 documents · N Valid (6) · Expiring Soon (2) consistent with cards and subtitle |
-| COMP-02 | P0 | Expiring docs (FS251 cert, Electrical Safety cert) get red border/badge treatment |
+| COMP-01 | P0 | Summary counters: total 58 documents · Valid (53) · Expiring (4) · Expired (1) consistent with category cards |
+| COMP-02 | P0 | Expired doc (Gas Safety Certificate) and Expiring docs get red border/badge treatment |
 | COMP-03 | P1 | Filter by type (Certificate/Insurance/Inspection/Assessment/Test Report) narrows list |
 | COMP-04 | P1 | Expiry dates sorted ascending or clearly grouped |
 | COMP-05 | P2 | Document click opens preview/detail (documented behaviour) |
@@ -303,7 +298,7 @@ Legend: **P0** blocks UAT sign-off · **P1** important · **P2** nice-to-have
 | FP-01 | P0 | 8 asset pins render at expected % coordinates inside plan container |
 | FP-02 | P0 | Pin status colours: alert (FD-02 red), maintenance (GEN-01 amber), active default |
 | FP-03 | P1 | Clicking pin shows asset detail popover with label + type |
-| FP-04 | P1 | Legend/filter by asset type toggles pin visibility |
+| FP-04 | P1 | Legend groups pins by status (Operational/Alert/Maintenance), not by asset type; legend toggle hides the legend box but pins always render |
 | FP-05 | P2 | Pins remain clickable after zoom/pan (if implemented) |
 
 ### 3.10 RPT — Reports
@@ -311,7 +306,7 @@ Legend: **P0** blocks UAT sign-off · **P1** important · **P2** nice-to-have
 | ID | Priority | Test case |
 |---|---|---|
 | RPT-01 | P0 | 6 reports render; Ready (green) vs Draft (amber) badges correct (5 Ready / 1 Draft) |
-| RPT-02 | P1 | Download/view action fires for Ready reports; Draft handling defined |
+| RPT-02 | P1 | Export button renders on every row (including Draft reports) but has no onClick handler — all stubbed |
 | RPT-03 | P2 | Report names/dates sorted newest-first |
 
 ### 3.11 SET — Settings
@@ -335,24 +330,26 @@ it('derives permissions from selected role', () => {
 });
 ```
 
-**Work order pipeline — transition matrix** (drive from `WORK_ORDER_STATUSES` × role flags):
+**Work order pipeline — transition matrix** (driven from `WORK_ORDER_STATUSES` × role flags in `WorkOrderDetail.jsx`):
 
 | # | From | Action | Actor | To |
 |---|---|---|---|---|
-| T1 | *(new)* | Create | Admin, OIC | Draft |
-| T2 | Draft | Submit for OIC review | Admin (creator) | Pending OIC Submission |
-| T3 | Pending OIC Submission | Submit/endorse | OIC (`canSubmitWO`) | Pending Manager Endorsement |
-| T4 | Pending Manager Endorsement | Endorse (≤$100K) | Service Manager | Pending Approval |
-| T5 | Pending Manager Endorsement | Endorse (>$100K) | Service Manager | Pending SSD Endorsement |
-| T6 | Pending SSD Endorsement | Endorse | SSD AS / G&C | Pending Approval |
-| T7 | Pending Approval | Approve (no PWD) | G&C | Approved |
-| T8 | Pending Approval | Route to PWD (`pwdInvolvement: with`) | G&C | Under PWD Assessment |
-| T9 | Under PWD Assessment | Complete assessment + tender pack | PWD (`canEditTaskDetails`) | Submitted to IAS for Tendering |
-| T10 | Submitted to IAS for Tendering | Award / start work | G&C / AS | In Progress |
-| T11 | In Progress | Verify & close | OIC / Service Manager | Completed |
-| T12 | Any pre-Approved stage | Reject / return | endorsing role | previous stage (confirm intended return point) |
+| T1 | *(new)* | Create (Save) | OIC, Super Admin, SSD Centre Admin | Draft |
+| T2 | *(new)* | Submit to SM | OIC, Super Admin, SSD Centre Admin | Pending SSD Service Manager Endorsement |
+| T3 | Pending SSD Service Manager Endorsement | Submit to AS | SSD Service Manager | Pending SSD AS Endorsement |
+| T4 | Pending SSD Service Manager Endorsement | Return to Draft | SSD Service Manager | Draft |
+| T5 | Pending SSD AS Endorsement | Submit to G&C | SSD AS | Pending SSD G&C Review |
+| T6 | Pending SSD AS Endorsement | Return to Draft | SSD AS | Draft |
+| T7 | Pending SSD G&C Review | Submit to OIC | SSD G&C | Pending OIC Review |
+| T8 | Pending SSD G&C Review | Return to Draft | SSD G&C | Draft |
+| T9 | Pending OIC Review | Submit to PWD | SSD OIC | Under PWD Grouping |
+| T10 | Pending OIC Review | Return to Draft | SSD OIC | Draft |
+| T11 | Under PWD Grouping | Submit to IAS | PWD | Pending PWD Proceed IAS |
+| T12 | Pending PWD Proceed IAS | Create in IAS / Manual Approval | PWD | Submitted to IAS for Tendering |
+| T13 | Approved IAS | Start Work | PWD or SSD G&C | In Progress |
+| T14 | In Progress | Mark Complete | PWD or SSD G&C | Completed |
 
-Negative tests (equally important): Admin cannot execute T3–T11; Service Manager cannot create (T1); OIC cannot approve (T7/T8); PWD cannot approve or create; transitions attempted by unauthorized role throw/no-op with visible explanation.
+Negative tests: non-assigned roles see no action buttons; only OIC can submit Draft WOs to SM (line 412-420); only PWD/G&C can start work or mark complete (lines 475-493).
 
 **ComplianceContext**: doc CRUD (when merged from `PMS_Proto`), status derivation from expiry date vs today, per-centre filtering honouring `centerScope`.
 
@@ -366,10 +363,10 @@ Each spec starts by clicking the matching quick-login card (no auth backend exis
 
 | Spec | Journey | Key assertions |
 |---|---|---|
-| `smoke-all-pages.spec.js` | Login as each of 6 roles → visit all 9 views | No console errors; each page's headline renders; role-inaccessible actions hidden |
-| `oic-submit-flow.spec.js` | OIC: Dashboard → Work Orders → Draft tab → open WO-2026-0901 → submit | Status pill changes Draft → Pending OIC Submission; toast/feedback; tab count decrements/increments |
-| `manager-endorsement.spec.js` | Service Mgr: cluster centre switch → endorse WO-2026-0891 ($45K) | Moves toward Pending Approval; >$100K item (WO-2026-0894) instead demands SSD step |
-| `pwd-assessment.spec.js` | PWD: open WO-2026-0893 → edit task details → advance | Edit affordances enabled (`canEditTaskDetails=true`); Floor Plan asset linking reachable |
+| `smoke-all-pages.spec.js` | Login as each of 8 roles → visit all 9 views | No console errors; each page's headline renders; role-inaccessible actions hidden |
+| `oic-submit-flow.spec.js` | OIC: Dashboard → Work Orders → open Draft WO → submit to SM | Status changes Draft → Pending SSD Service Manager Endorsement; toast/feedback |
+| `manager-endorsement.spec.js` | Service Mgr: endorse a WO → submit to AS | Moves from Pending SSD Service Manager Endorsement → Pending SSD AS Endorsement |
+| `pwd-assessment.spec.js` | PWD: Under PWD Grouping WO → submit to IAS | Status changes Under PWD Grouping → Pending PWD Proceed IAS → Submitted to IAS for Tendering |
 | `i18n.spec.js` | Toggle EN→ZH on Dashboard, Work Orders, Compliance Vault | Key headings switch language; no mixed-language leftovers; reload keeps ZH (sessionStorage) |
 | `centre-filter.spec.js` | Admin sees locked centre; G&C switches centre → Work Orders list content follows selection | List re-scopes per centre |
 | `a11y-critical.spec.js` | axe-core scan (`@axe-core/playwright`) on Dashboard + Work Orders | No critical violations; icon buttons have accessible names |
@@ -390,26 +387,26 @@ Format: each item marked Pass / Fail / N-A + comments; defects filed with severi
 ### 5.2 Daily fault-reporting journey (Centre Admin/OIC)
 - [ ] I can raise a work order in under 2 minutes without training
 - [ ] Field labels use our vocabulary (WO number, funding source, PWD involvement) — nothing confusing
-- [ ] After saving, I can immediately find my WO in the right status tab
-- [ ] Handoff to OIC is obvious — I know what happens next and who acts
+- [ ] After saving, I can find my WO in the correct status (Draft if saved, Pending SSD Service Manager Endorsement if submitted)
+- [ ] Handoff to SM is obvious — submit button shows "Submit to Service Manager"; I know what happens next and who acts
 - [ ] Attachments (photos of damage) are easy to add and view later
 
 ### 5.3 Approvals chain (Service Manager / AS / G&C)
 - [ ] My pending queue shows only items genuinely awaiting *me*
 - [ ] Budget figures, quotes and priorities give me enough context to endorse without opening other systems
-- [ ] The >$100K SSD escalation feels correctly wired (matches financial delegation limits)
-- [ ] I cannot accidentally perform someone else's step — forbidden actions are invisible/disabled, not just error-toast
+- [ ] Budget >$100K is captured as informational data but does not trigger automated SSD escalation — the notification mentions it but no code routes differently
+- [ ] I cannot accidentally perform someone else's step — forbidden actions have no button rendered (role-gated via conditionals)
 - [ ] Comment threads read naturally top-down with author/time; useful for audit recall
 
 ### 5.4 PWD technical workflow
 - [ ] Assessment queue separates PWD-involved jobs cleanly
-- [ ] Editing task details and linking assets from the floor plan matches how we scope renovations
+- [ ] Editing task details in WO works; "Add Asset via Floor Plan" button exists but has no onClick handler — stubbed
 - [ ] Tender handoff (IAS submission) captures everything procurement needs
 
 ### 5.5 Monitoring & compliance
 - [ ] Dashboard KPIs answer "is anything burning?" at a glance; numbers plausible vs reality
 - [ ] Expiring certificates (FS251!) surface early enough to renew — expiry lead time sensible
-- [ ] Notifications prioritise correctly (cert-expiry > stale approvals > FYI)
+- [ ] Notifications display in seed order with colour-coded type dots (Critical/Warning/Info); no auto-prioritisation
 - [ ] Asset service dates align with our PPM schedule expectations
 - [ ] Reports list contains the artefacts management actually asks for monthly
 
@@ -476,13 +473,14 @@ Format: each item marked Pass / Fail / N-A + comments; defects filed with severi
 
 ### Suggested adoption order (≈ effort estimates)
 
-| Phase | Scope | Effort |
-|---|---|---|
-| 1 | Stack install + config + setup.js; CTX + AUTH + HDR suites | 1–1.5 days |
-| 2 | Page integration suites (DASH/WO/COMP/AST/RPT/SET/FP) | 2–3 days |
-| 3 | Pipeline transition-matrix tests incl. negatives | 1 day |
-| 4 | Playwright journeys + axe scan | 2 days |
-| 5 | UAT dry-run with 2 friendly users, then formal UAT sessions | 3–5 days elapsed |
+| Phase | Scope | Effort | Status |
+|---|---|---|---|
+| 1 | Stack install + config + setup.js; CTX + AUTH + i18n suites | 1–1.5 days | ✅ Done |
+| 2 | Page integration suites (DASH/WO/COMP) | 2–3 days | ✅ Done |
+| 3 | Playwright smoke tests + vitest.config.js | 1 day | ✅ Done |
+| 4 | Pipeline transition-matrix tests incl. negatives | 1 day | Pending |
+| 5 | Remaining page suites (PROP/AST/FP/RPT/SET) | 1–2 days | Pending |
+| 6 | UAT dry-run with 2 friendly users, then formal UAT sessions | 3–5 days elapsed | Pending |
 
 ---
 

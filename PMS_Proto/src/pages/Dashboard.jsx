@@ -243,7 +243,7 @@ export default function Dashboard({ selectedCenter }) {
   return (
     <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 1500 }}>
       {/* ── FILTER BAR ──────────────────────────────── */}
-      <Card style={{ padding: '12px 16px' }}>
+      <Card style={{ padding: '12px 16px', overflow: 'visible' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <Filter size={14} color="#64748B" />
           <FilterDropdown label={t('dashboard.filter.district')} options={districts} selected={districtFilter} onSelect={setDistrictFilter} />

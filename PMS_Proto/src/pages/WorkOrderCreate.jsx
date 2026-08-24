@@ -23,6 +23,45 @@ const FUNDING_SOURCES = [
   'BUILD-MAINT-FUND',
 ];
 
+const BUILDERS_WORKS = [
+  'Concrete Repair',
+  'Waterproofing/Re-roofing Works',
+  'Painting',
+  'Tile Replacement',
+  'Vinyl Flooring Replacement',
+  'Timber Door/Cabinet Replacement',
+  'Timber Furring/Dado Replacement',
+  'Window Replacement',
+  'Replacement of False Ceiling',
+  'Replacement of Sanitary Fitments',
+];
+
+const BUILDING_SERVICES = [
+  'Air-conditioning/Ventilation System Addition/Replacement',
+  'Lighting/Electrical System Addition/Replacement',
+  'PD System Addition/Replacement',
+  'ELV System (Call Bell, PA, etc.) Addition/Replacement',
+  'Gas System Addition/Replacement',
+];
+
+const WO_TYPE_KEY_MAP = {
+  'Concrete Repair': 'wo.type.concreteRepair',
+  'Waterproofing/Re-roofing Works': 'wo.type.waterproofing',
+  'Painting': 'wo.type.painting',
+  'Tile Replacement': 'wo.type.tileReplacement',
+  'Vinyl Flooring Replacement': 'wo.type.vinylFlooring',
+  'Timber Door/Cabinet Replacement': 'wo.type.timberDoorCabinet',
+  'Timber Furring/Dado Replacement': 'wo.type.timberFurring',
+  'Window Replacement': 'wo.type.windowReplacement',
+  'Replacement of False Ceiling': 'wo.type.falseCeiling',
+  'Replacement of Sanitary Fitments': 'wo.type.sanitaryFitments',
+  'Air-conditioning/Ventilation System Addition/Replacement': 'wo.type.airconVentilation',
+  'Lighting/Electrical System Addition/Replacement': 'wo.type.lightingElectrical',
+  'PD System Addition/Replacement': 'wo.type.pdSystem',
+  'ELV System (Call Bell, PA, etc.) Addition/Replacement': 'wo.type.elvSystem',
+  'Gas System Addition/Replacement': 'wo.type.gasSystem',
+};
+
 const MOCK_ASSETS = [
   {
     id: 1,
@@ -43,6 +82,7 @@ export default function WorkOrderCreate({ onBack, onViewWO }) {
   const [form, setForm] = useState({
     title: '',
     priority: 'medium',
+    category: '',
     startDate: '',
     endDate: '',
     budget: '',
@@ -62,6 +102,7 @@ export default function WorkOrderCreate({ onBack, onViewWO }) {
   const simulateInput = () => {
     update('title', 'Urgent Air Conditioner Repair Request');
     update('priority', 'high');
+    update('category', 'Air-conditioning/Ventilation System Addition/Replacement');
     update('startDate', '2026-08-20');
     update('endDate', '2026-08-25');
     update('budget', '35000');
@@ -82,7 +123,7 @@ export default function WorkOrderCreate({ onBack, onViewWO }) {
       createdBy: 'Chan Siu Ming',
       created: now.toISOString().slice(0, 10),
       budget: parseInt(form.budget) || 0,
-      category: 'MEP',
+      category: form.category || 'Concrete Repair',
       dueDate: form.endDate || 'TBD',
       description: `Work order: ${form.title || 'Untitled'}. Priority: ${form.priority}. Budget: $${form.budget || 0}.`,
       fundingSource: FUNDING_SOURCES[form.fundingSource],
@@ -267,6 +308,35 @@ export default function WorkOrderCreate({ onBack, onViewWO }) {
                     color: form.title ? 'var(--foreground)' : '#94A3B8',
                   }}
                 />
+              </div>
+
+              {/* Work Order Type */}
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 6 }}>
+                  Work Order Type
+                </label>
+                <select
+                  value={form.category}
+                  onChange={(e) => update('category', e.target.value)}
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: 8,
+                    border: '1px solid var(--border)', fontSize: 13,
+                    outline: 'none', background: '#fff',
+                    color: form.category ? 'var(--foreground)' : '#94A3B8',
+                  }}
+                >
+                  <option value="">Select work order type...</option>
+                  <optgroup label={t('wo.group.buildersWorks')}>
+                    {BUILDERS_WORKS.map((item) => (
+                      <option key={item} value={item}>{t(WO_TYPE_KEY_MAP[item])}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label={t('wo.group.buildingServices')}>
+                    {BUILDING_SERVICES.map((item) => (
+                      <option key={item} value={item}>{t(WO_TYPE_KEY_MAP[item])}</option>
+                    ))}
+                  </optgroup>
+                </select>
               </div>
 
               {/* Priority + Dates Row */}

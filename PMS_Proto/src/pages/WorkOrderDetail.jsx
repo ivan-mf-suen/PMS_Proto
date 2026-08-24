@@ -8,6 +8,24 @@ import {
   CheckSquare, Plus, Trash2, MinusCircle,
 } from 'lucide-react';
 
+const WO_TYPE_KEY_MAP = {
+  'Concrete Repair': 'wo.type.concreteRepair',
+  'Waterproofing/Re-roofing Works': 'wo.type.waterproofing',
+  'Painting': 'wo.type.painting',
+  'Tile Replacement': 'wo.type.tileReplacement',
+  'Vinyl Flooring Replacement': 'wo.type.vinylFlooring',
+  'Timber Door/Cabinet Replacement': 'wo.type.timberDoorCabinet',
+  'Timber Furring/Dado Replacement': 'wo.type.timberFurring',
+  'Window Replacement': 'wo.type.windowReplacement',
+  'Replacement of False Ceiling': 'wo.type.falseCeiling',
+  'Replacement of Sanitary Fitments': 'wo.type.sanitaryFitments',
+  'Air-conditioning/Ventilation System Addition/Replacement': 'wo.type.airconVentilation',
+  'Lighting/Electrical System Addition/Replacement': 'wo.type.lightingElectrical',
+  'PD System Addition/Replacement': 'wo.type.pdSystem',
+  'ELV System (Call Bell, PA, etc.) Addition/Replacement': 'wo.type.elvSystem',
+  'Gas System Addition/Replacement': 'wo.type.gasSystem',
+};
+
 const STATUS_STYLES = {
   'Draft': { background: '#64748B', color: '#fff' },
   'Pending SSD Service Manager Endorsement': { background: '#D97706', color: '#fff' },
@@ -814,7 +832,7 @@ export default function WorkOrderDetail({ woId, onBack }) {
               <div><FieldLabel>Estimated Budget</FieldLabel><FieldValue highlight>${wo.budget.toLocaleString()}</FieldValue></div>
               <div><FieldLabel>Funding Source</FieldLabel><FieldValue>{wo.fundingSource}</FieldValue></div>
               <div><FieldLabel>PWD Involvement</FieldLabel><FieldValue>{wo.pwdInvolvement === 'with' ? 'With PWD' : 'Without PWD'}</FieldValue></div>
-              <div><FieldLabel>Category</FieldLabel><FieldValue>{wo.category}</FieldValue></div>
+              <div><FieldLabel>Category</FieldLabel><FieldValue>{t(WO_TYPE_KEY_MAP[wo.category] || wo.category)}</FieldValue></div>
               <div><FieldLabel>Center</FieldLabel><FieldValue>{wo.center}</FieldValue></div>
               <div><FieldLabel>Assignee</FieldLabel><FieldValue>{wo.assignee}</FieldValue></div>
               <div><FieldLabel>Created By</FieldLabel><FieldValue>{wo.createdBy}</FieldValue></div>

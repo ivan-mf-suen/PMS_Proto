@@ -5,7 +5,48 @@ import { useTranslation } from '../i18n/LanguageContext';
 import { Plus, Search, Eye, Pencil, Trash2, X, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Info, CheckCircle, Calendar, User, MapPin } from 'lucide-react';
 
 const ALL_STATUSES = ['Draft', 'Pending SSD Service Manager Endorsement', 'Pending SSD G&C Review', 'Pending SSD AS Endorsement', 'Under PWD Grouping', 'Pending OIC Review', 'Pending PWD Proceed IAS', 'Submitted to IAS for Tendering', 'Approved IAS', 'In Progress', 'Completed'];
-const ALL_CATEGORIES = ['All', 'MEP', 'Building', 'Facilities', 'Security'];
+
+const BUILDERS_WORKS = [
+  'Concrete Repair',
+  'Waterproofing/Re-roofing Works',
+  'Painting',
+  'Tile Replacement',
+  'Vinyl Flooring Replacement',
+  'Timber Door/Cabinet Replacement',
+  'Timber Furring/Dado Replacement',
+  'Window Replacement',
+  'Replacement of False Ceiling',
+  'Replacement of Sanitary Fitments',
+];
+
+const BUILDING_SERVICES = [
+  'Air-conditioning/Ventilation System Addition/Replacement',
+  'Lighting/Electrical System Addition/Replacement',
+  'PD System Addition/Replacement',
+  'ELV System (Call Bell, PA, etc.) Addition/Replacement',
+  'Gas System Addition/Replacement',
+];
+
+const ALL_CATEGORIES = ['All', ...BUILDERS_WORKS, ...BUILDING_SERVICES];
+
+const WO_TYPE_KEY_MAP = {
+  'Concrete Repair': 'wo.type.concreteRepair',
+  'Waterproofing/Re-roofing Works': 'wo.type.waterproofing',
+  'Painting': 'wo.type.painting',
+  'Tile Replacement': 'wo.type.tileReplacement',
+  'Vinyl Flooring Replacement': 'wo.type.vinylFlooring',
+  'Timber Door/Cabinet Replacement': 'wo.type.timberDoorCabinet',
+  'Timber Furring/Dado Replacement': 'wo.type.timberFurring',
+  'Window Replacement': 'wo.type.windowReplacement',
+  'Replacement of False Ceiling': 'wo.type.falseCeiling',
+  'Replacement of Sanitary Fitments': 'wo.type.sanitaryFitments',
+  'Air-conditioning/Ventilation System Addition/Replacement': 'wo.type.airconVentilation',
+  'Lighting/Electrical System Addition/Replacement': 'wo.type.lightingElectrical',
+  'PD System Addition/Replacement': 'wo.type.pdSystem',
+  'ELV System (Call Bell, PA, etc.) Addition/Replacement': 'wo.type.elvSystem',
+  'Gas System Addition/Replacement': 'wo.type.gasSystem',
+};
+
 const ALL_PRIORITIES = ['All', 'Critical', 'High', 'Medium', 'Low'];
 
 const STATUS_STYLES = {
@@ -34,9 +75,14 @@ const DROPDOWN_STYLE = {
   zIndex: 100, overflow: 'hidden', maxHeight: 260, overflowY: 'auto',
 };
 
-function FilterDropdown({ label, options, selected, onSelect, counts }) {
+function FilterDropdown({ label, options, selected, onSelect, counts, groups, t, typeKeyMap }) {
   const [open, setOpen] = useState(false);
   const isAll = selected === 'All' || selected === undefined;
+  const displayLabel = (opt) => {
+    if (opt === 'All') return 'All';
+    if (t && typeKeyMap && typeKeyMap[opt]) return t(typeKeyMap[opt]);
+    return opt;
+  };
   return (
     <div style={{ position: 'relative' }}>
       <button
@@ -49,35 +95,72 @@ function FilterDropdown({ label, options, selected, onSelect, counts }) {
           cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
         }}
       >
-        {label}: {isAll ? 'All' : selected}
+        {label}: {displayLabel(selected)}
         <ChevronDown size={12} />
       </button>
       {open && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 90 }} onClick={() => setOpen(false)} />
           <div style={DROPDOWN_STYLE}>
-            {options.map((opt) => {
-              const isActive = opt === selected || (opt === 'All' && isAll);
-              const count = counts?.[opt];
-              return (
+            {groups ? (
+              <>
                 <button
-                  key={opt}
-                  onClick={() => { onSelect(opt); setOpen(false); }}
+                  onClick={() => { onSelect('All'); setOpen(false); }}
                   style={{
                     width: '100%', textAlign: 'left', padding: '8px 12px',
-                    background: isActive ? 'var(--info-bg)' : 'transparent',
+                    background: isAll ? 'var(--info-bg)' : 'transparent',
                     border: 'none', cursor: 'pointer', fontSize: 12,
-                    color: 'var(--foreground)', fontWeight: isActive ? 600 : 400,
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    color: 'var(--foreground)', fontWeight: isAll ? 600 : 400,
                   }}
-                >
-                  <span>{opt}</span>
-                  {count !== undefined && (
-                    <span style={{ fontSize: 11, color: '#94A3B8' }}>({count})</span>
-                  )}
-                </button>
-              );
-            })}
+                >All</button>
+                {groups.map(({ label: groupLabel, items }) => (
+                  <div key={groupLabel}>
+                    <div style={{ padding: '6px 12px 2px', fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{groupLabel}</div>
+                    {items.map((opt) => {
+                      const isActive = opt === selected;
+                      const count = counts?.[opt];
+                      return (
+                        <button
+                          key={opt}
+                          onClick={() => { onSelect(opt); setOpen(false); }}
+                          style={{
+                            width: '100%', textAlign: 'left', padding: '7px 12px',
+                            background: isActive ? 'var(--info-bg)' : 'transparent',
+                            border: 'none', cursor: 'pointer', fontSize: 12,
+                            color: 'var(--foreground)', fontWeight: isActive ? 600 : 400,
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          }}
+                        >
+                          <span>{displayLabel(opt)}</span>
+                          {count !== undefined && <span style={{ fontSize: 11, color: '#94A3B8' }}>({count})</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </>
+            ) : (
+              options.map((opt) => {
+                const isActive = opt === selected || (opt === 'All' && isAll);
+                const count = counts?.[opt];
+                return (
+                  <button
+                    key={opt}
+                    onClick={() => { onSelect(opt); setOpen(false); }}
+                    style={{
+                      width: '100%', textAlign: 'left', padding: '8px 12px',
+                      background: isActive ? 'var(--info-bg)' : 'transparent',
+                      border: 'none', cursor: 'pointer', fontSize: 12,
+                      color: 'var(--foreground)', fontWeight: isActive ? 600 : 400,
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    }}
+                  >
+                    <span>{displayLabel(opt)}</span>
+                    {count !== undefined && <span style={{ fontSize: 11, color: '#94A3B8' }}>({count})</span>}
+                  </button>
+                );
+              })
+            )}
           </div>
         </>
       )}
@@ -167,7 +250,7 @@ export default function WorkOrders({ onCreateWorkOrder, onViewWO, selectedCenter
 
   const activeFilters = [];
   selectedStatuses.forEach((s) => activeFilters.push({ key: `status-${s}`, label: s, clear: () => toggleStatus(s) }));
-  if (categoryFilter !== 'All') activeFilters.push({ key: 'category', label: `Category: ${categoryFilter}`, clear: () => setCategoryFilter('All') });
+  if (categoryFilter !== 'All') activeFilters.push({ key: 'category', label: `Category: ${t(WO_TYPE_KEY_MAP[categoryFilter] || categoryFilter)}`, clear: () => setCategoryFilter('All') });
   if (priorityFilter !== 'All') activeFilters.push({ key: 'priority', label: `Priority: ${priorityFilter}`, clear: () => setPriorityFilter('All') });
   if (search) activeFilters.push({ key: 'search', label: `Search: "${search}"`, clear: () => setSearch('') });
 
@@ -300,7 +383,19 @@ export default function WorkOrders({ onCreateWorkOrder, onViewWO, selectedCenter
             style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none' }}
           />
         </div>
-        <FilterDropdown label="Category" options={ALL_CATEGORIES} selected={categoryFilter} onSelect={setCategoryFilter} counts={categoryCounts} />
+        <FilterDropdown
+          label="Category"
+          options={ALL_CATEGORIES}
+          selected={categoryFilter}
+          onSelect={setCategoryFilter}
+          counts={categoryCounts}
+          groups={[
+            { label: t('wo.group.buildersWorks'), items: BUILDERS_WORKS },
+            { label: t('wo.group.buildingServices'), items: BUILDING_SERVICES },
+          ]}
+          t={t}
+          typeKeyMap={WO_TYPE_KEY_MAP}
+        />
         <FilterDropdown label="Priority" options={ALL_PRIORITIES} selected={priorityFilter} onSelect={setPriorityFilter} counts={priorityCounts} />
       </div>
 

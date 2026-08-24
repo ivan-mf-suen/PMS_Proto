@@ -679,7 +679,7 @@ export const ASSETS = [
   { id: "AST-008", name: "LED Lighting — Corridors", type: "Electrical", location: "PLK Tin Shui Wai Rehabilitation Centre", status: "Operational", lastService: "2026-03-01", nextService: "2027-03-01", manufacturer: "Philips", model: "CoreLine Panel", installYear: 2023 },
 ];
 
-export { COMPLIANCE_CATEGORIES, COMPLIANCE_DOCS } from './complianceDocs';
+export { COMPLIANCE_CATEGORIES, COMPLIANCE_DOCS, CATEGORY_CONFIG, formatCycle } from './complianceDocs';
 
 export const REPORTS_DATA = [
   { id: 1, name: "Monthly Portfolio Summary - August 2026", date: "2026-08-15", status: "Ready" },

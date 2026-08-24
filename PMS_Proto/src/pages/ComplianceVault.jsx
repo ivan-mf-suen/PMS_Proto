@@ -1,9 +1,14 @@
 import { useState, useMemo } from 'react';
-import { COMPLIANCE_DOCS, COMPLIANCE_CATEGORIES, PROPERTIES } from '../data/constants';
+import { COMPLIANCE_CATEGORIES, PROPERTIES, CATEGORY_CONFIG, formatCycle } from '../data/constants';
+import { useCompliance } from '../context/ComplianceContext';
 import { useTranslation } from '../i18n/LanguageContext';
-import { Search, AlertTriangle, CheckCircle, Clock, Bell, X, Eye, Pencil, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Search, AlertTriangle, CheckCircle, Clock, Bell, X, Eye, Pencil, Trash2,
+  ChevronDown, ChevronUp, Flame, Zap, Droplets, ArrowUp, Building2, Shield,
+  Leaf, HardHat, TriangleAlert,
+} from 'lucide-react';
 
-const STATUS_OPTIONS = ['All', 'Valid', 'Expiring', 'Expired'];
+const STATUS_OPTIONS = ['Valid', 'Expiring', 'Expired'];
 
 const CATEGORY_KEY_MAP = {
   'Fire Safety': 'compliance.cat.FireSafety',
@@ -18,48 +23,54 @@ const CATEGORY_KEY_MAP = {
   'Asbestos': 'compliance.cat.Asbestos',
 };
 
+const CATEGORY_ICON = {
+  'Fire Safety': Flame, 'Electrical': Zap, 'Gas': Droplets, 'Water Hygiene': Droplets,
+  'Lifts': ArrowUp, 'Structural': Building2, 'Insurance': Shield,
+  'Environmental': Leaf, 'Occupational Safety': HardHat, 'Asbestos': TriangleAlert,
+};
+
+const EMPTY_FORM = { name: '', category: '', center: '', documentRef: '', issuedBy: '', inspectionDate: '', nextInspection: '', expiry: '', cycleMonths: 12, responsible: '', notes: '', status: 'Valid' };
+
 export default function ComplianceVault({ selectedCenter }) {
   const { t } = useTranslation();
+  const { docs, addDoc, updateDoc, removeDoc } = useCompliance();
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [statusFilter, setStatusFilter] = useState('All');
   const [centerFilter, setCenterFilter] = useState('All');
   const [sortCol, setSortCol] = useState('nextInspection');
   const [sortDir, setSortDir] = useState('asc');
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({ ...EMPTY_FORM });
 
   const isGlobalCentre = selectedCenter && selectedCenter !== 'All';
   const effectiveCenter = isGlobalCentre ? selectedCenter : centerFilter;
 
-  const toggleCategory = (cat) => {
-    setSelectedCategories((prev) => prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]);
-  };
+  const toggleCategory = (cat) => setSelectedCategories((prev) => prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]);
   const clearCategories = () => setSelectedCategories([]);
 
+  const activeDocs = useMemo(() => docs.filter((d) => !d.removed), [docs]);
+
   const filtered = useMemo(() => {
-    let list = COMPLIANCE_DOCS.filter((d) => {
+    let list = activeDocs.filter((d) => {
       if (selectedCategories.length > 0 && !selectedCategories.includes(d.category)) return false;
       if (statusFilter !== 'All' && d.status !== statusFilter) return false;
       if (effectiveCenter !== 'All' && d.center !== effectiveCenter) return false;
       if (search) {
         const q = search.toLowerCase();
-        return d.name.toLowerCase().includes(q) || d.center.toLowerCase().includes(q) || d.documentRef.toLowerCase().includes(q) || d.issuedBy.toLowerCase().includes(q);
+        return d.name.toLowerCase().includes(q) || d.center.toLowerCase().includes(q) || d.documentRef.toLowerCase().includes(q) || (d.responsible && d.responsible.toLowerCase().includes(q));
       }
       return true;
     });
-    list.sort((a, b) => {
-      const va = a[sortCol] ?? '';
-      const vb = b[sortCol] ?? '';
-      const cmp = typeof va === 'string' ? va.localeCompare(vb) : va - vb;
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
+    list.sort((a, b) => { const va = a[sortCol] ?? ''; const vb = b[sortCol] ?? ''; const cmp = typeof va === 'string' ? va.localeCompare(vb) : va - vb; return sortDir === 'asc' ? cmp : -cmp; });
     return list;
-  }, [search, selectedCategories, statusFilter, effectiveCenter, sortCol, sortDir]);
+  }, [activeDocs, selectedCategories, statusFilter, effectiveCenter, search, sortCol, sortDir]);
 
-  const totalDocs = filtered.length;
   const validCount = filtered.filter((d) => d.status === 'Valid').length;
   const expiringCount = filtered.filter((d) => d.status === 'Expiring').length;
   const expiredCount = filtered.filter((d) => d.status === 'Expired').length;
-  const complianceRate = totalDocs > 0 ? Math.round((validCount / totalDocs) * 100) : 0;
+  const totalFiltered = filtered.length;
+  const complianceRate = totalFiltered > 0 ? Math.round((validCount / totalFiltered) * 100) : 0;
 
   const categoryCoverage = useMemo(() => {
     return COMPLIANCE_CATEGORIES.map((cat) => {
@@ -72,124 +83,143 @@ export default function ComplianceVault({ selectedCenter }) {
 
   const centerOptions = useMemo(() => ['All', ...PROPERTIES.map((p) => p.name)], []);
 
-  const handleSort = (col) => {
-    if (sortCol === col) setSortDir((d) => d === 'asc' ? 'desc' : 'asc');
-    else { setSortCol(col); setSortDir('asc'); }
-  };
+  const handleSort = (col) => { if (sortCol === col) setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortCol(col); setSortDir('asc'); } };
 
-  const statusColors = {
-    Valid: { bg: 'var(--success-bg)', color: 'var(--success)' },
-    Expiring: { bg: '#FEF3C7', color: '#B45309' },
-    Expired: { bg: '#FEE2E2', color: '#DC2626' },
-  };
+  const openAdd = () => { setForm({ ...EMPTY_FORM, cycleMonths: 12 }); setModal('add'); };
+  const openView = (doc) => { setModal({ type: 'view', doc }); };
+  const openEdit = (doc) => { setForm({ name: doc.name, category: doc.category, center: doc.center, documentRef: doc.documentRef, issuedBy: doc.issuedBy, inspectionDate: doc.inspectionDate, nextInspection: doc.nextInspection, expiry: doc.expiry, cycleMonths: doc.cycleMonths || 12, responsible: doc.responsible || '', notes: doc.notes || '', status: doc.status }); setModal({ type: 'edit', doc }); };
+  const openDelete = (doc) => { setModal({ type: 'delete', doc }); };
 
-  const activeFilters = [];
-  selectedCategories.forEach((cat) => {
-    activeFilters.push({ key: `cat-${cat}`, label: `${t('compliance.col.category')}: ${t(CATEGORY_KEY_MAP[cat] || cat)}`, clear: () => toggleCategory(cat) });
-  });
-  if (statusFilter !== 'All') activeFilters.push({ key: 'status', label: `Status: ${statusFilter}`, clear: () => setStatusFilter('All') });
-  if (!isGlobalCentre && centerFilter !== 'All') activeFilters.push({ key: 'center', label: centerFilter, clear: () => setCenterFilter('All') });
+  const handleSave = () => {
+    if (modal.type === 'edit') {
+      updateDoc(modal.doc.id, form);
+    } else {
+      addDoc(form);
+    }
+    setModal(null);
+  };
+  const handleDelete = () => { removeDoc(modal.doc.id); setModal(null); };
+
+  const statusColors = { Valid: { bg: 'var(--success-bg)', color: 'var(--success)' }, Expiring: { bg: '#FEF3C7', color: '#B45309' }, Expired: { bg: '#FEE2E2', color: '#DC2626' } };
+
+  const activeFilterPills = [];
+  selectedCategories.forEach((cat) => activeFilterPills.push({ key: `cat-${cat}`, label: `${t('compliance.col.category')}: ${t(CATEGORY_KEY_MAP[cat] || cat)}`, clear: () => toggleCategory(cat) }));
+  if (statusFilter !== 'All') activeFilterPills.push({ key: 'status', label: `Status: ${statusFilter}`, clear: () => setStatusFilter('All') });
+  if (!isGlobalCentre && centerFilter !== 'All') activeFilterPills.push({ key: 'center', label: centerFilter, clear: () => setCenterFilter('All') });
+  const hasFilters = activeFilterPills.length > 0;
+  const clearAllFilters = () => { clearCategories(); setStatusFilter('All'); if (!isGlobalCentre) setCenterFilter('All'); setSearch(''); };
+
+  const formUpdate = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
 
   return (
     <div style={{ padding: 24, maxWidth: 1400 }}>
+      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.02em' }}>{t('compliance.title')}</h1>
           <p style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>{t('compliance.subtitle')}</p>
         </div>
-        <button style={{ padding: '10px 20px', fontSize: 13, fontWeight: 600, borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <button onClick={openAdd} style={{ padding: '10px 20px', fontSize: 13, fontWeight: 600, borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
           <Bell size={16} /> {t('compliance.addAlert')}
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
-        <SummaryCard icon={<CheckCircle size={20} color="var(--success)" />} iconBg="var(--success-bg)" value={validCount} label={t('compliance.valid')} desc={t('compliance.validDesc')} />
-        <SummaryCard icon={<AlertTriangle size={20} color="#B45309" />} iconBg="#FEF3C7" value={expiringCount} label={t('compliance.expiringSoon')} desc={t('compliance.expiringDesc')} />
-        <SummaryCard icon={<Clock size={20} color="#DC2626" />} iconBg="#FEE2E2" value={expiredCount} label={t('compliance.expired')} desc={t('compliance.expiredDesc')} />
-        <ComplianceRateCard rate={complianceRate} t={t} desc={t('compliance.complianceDesc')} />
+      {/* Top Row: Compliance Rate */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+        <div style={{ flex: 1, background: '#fff', borderRadius: 12, padding: '22px 24px', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 20 }}>
+          <ComplianceRateSVG rate={complianceRate} />
+          <div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--foreground)' }}>{complianceRate}%</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#475569', marginTop: 2 }}>{t('compliance.complianceRate')}</div>
+            <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>{totalFiltered} {t('compliance.documents')} &middot; {t('compliance.complianceDesc')}</div>
+          </div>
+        </div>
       </div>
 
+      {/* Second Row: Status Cards */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
+        <SummaryCard icon={<CheckCircle size={22} color="var(--success)" />} iconBg="var(--success-bg)" value={validCount} label={t('compliance.valid')} desc={t('compliance.validDesc')} />
+        <SummaryCard icon={<AlertTriangle size={22} color="#B45309" />} iconBg="#FEF3C7" value={expiringCount} label={t('compliance.expiringSoon')} desc={t('compliance.expiringDesc')} />
+        <SummaryCard icon={<Clock size={22} color="#DC2626" />} iconBg="#FEE2E2" value={expiredCount} label={t('compliance.expired')} desc={t('compliance.expiredDesc')} />
+      </div>
+
+      {/* Coverage by Category */}
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', padding: 20, marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>{t('compliance.coverageCategory')}</div>
-          {selectedCategories.length > 0 && (
-            <button onClick={clearCategories} style={{ fontSize: 12, fontWeight: 600, color: 'var(--primary)', background: 'var(--info-bg)', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <X size={12} /> {t('compliance.clearAll')}
-            </button>
-          )}
+          <button onClick={clearCategories} style={{ fontSize: 12, fontWeight: 600, color: selectedCategories.length > 0 ? 'var(--primary)' : '#CBD5E1', background: selectedCategories.length > 0 ? 'var(--info-bg)' : '#F1F5F9', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, transition: 'all 0.15s' }}>
+            <X size={12} /> {t('compliance.clearAll')}
+          </button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
           {categoryCoverage.map(({ cat, total, valid, pct }) => {
             const isActive = selectedCategories.includes(cat);
+            const cfg = CATEGORY_CONFIG[cat] || {};
+            const IconComp = CATEGORY_ICON[cat];
             return (
-              <div key={cat}
-                onClick={() => toggleCategory(cat)}
-                style={{
-                  padding: '14px 16px', borderRadius: 10, cursor: 'pointer',
-                  border: `1.5px solid ${isActive ? 'var(--info)' : 'var(--border)'}`,
-                  background: isActive ? 'var(--info-bg)' : '#FAFBFC',
-                  transition: 'all 0.15s',
-                }}
-                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.borderColor = 'var(--info)'; }}
+              <div key={cat} onClick={() => toggleCategory(cat)} style={{ padding: '14px 16px', borderRadius: 10, cursor: 'pointer', border: `1.5px solid ${isActive ? cfg.color || 'var(--info)' : 'var(--border)'}`, background: isActive ? (cfg.bg || 'var(--info-bg)') : '#FAFBFC', transition: 'all 0.15s' }}
+                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.borderColor = cfg.color || 'var(--info)'; }}
                 onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.borderColor = 'var(--border)'; }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: isActive ? 'var(--info)' : 'var(--foreground)' }}>{t(CATEGORY_KEY_MAP[cat] || cat)}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: pct === 100 ? 'var(--success-bg)' : pct >= 80 ? '#FEF3C7' : '#FEE2E2', color: pct === 100 ? 'var(--success)' : pct >= 80 ? '#B45309' : '#DC2626' }}>{pct}%</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {IconComp && <div style={{ width: 28, height: 28, borderRadius: 6, background: cfg.bg || '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconComp size={14} color={cfg.color || '#64748B'} /></div>}
+                    <span style={{ fontSize: 13, fontWeight: 600, color: isActive ? (cfg.color || 'var(--info)') : 'var(--foreground)' }}>{t(CATEGORY_KEY_MAP[cat] || cat)}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: pct === 100 ? 'var(--success-bg)' : pct >= 80 ? '#FEF3C7' : '#FEE2E2', color: pct === 100 ? 'var(--success)' : pct >= 80 ? '#B45309' : '#DC2626' }}>{pct}%</span>
+                    {isActive && <div style={{ width: 18, height: 18, borderRadius: 4, background: cfg.color || 'var(--info)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg></div>}
+                  </div>
                 </div>
                 <div style={{ height: 8, borderRadius: 4, background: '#E2E8F0', overflow: 'hidden', marginBottom: 8 }}>
                   <div style={{ height: '100%', width: `${pct}%`, borderRadius: 4, background: pct === 100 ? 'var(--success)' : pct >= 80 ? '#F59E0B' : '#EF4444', transition: 'width 0.3s ease' }} />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: 11, color: '#94A3B8' }}>{t('compliance.validCount', { valid, total })}</div>
-                  {isActive && <div style={{ width: 18, height: 18, borderRadius: 4, background: 'var(--info)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg></div>}
-                </div>
+                <div style={{ fontSize: 11, color: '#94A3B8' }}>{t('compliance.validCount', { valid, total })}</div>
               </div>
             );
           })}
         </div>
       </div>
 
+      {/* Filter Bar */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 240 }}>
           <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('compliance.searchPlaceholder')} style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none' }} />
         </div>
-        <FilterDropdown label="Category" options={COMPLIANCE_CATEGORIES} selected={selectedCategories} onSelect={setSelectedCategories} t={t} categoryKeyMap={CATEGORY_KEY_MAP} multi />
-        <FilterDropdown label="Status" options={STATUS_OPTIONS} selected={statusFilter} onSelect={setStatusFilter} />
-        {!isGlobalCentre && <FilterDropdown label="Property" options={centerOptions} selected={centerFilter} onSelect={setCenterFilter} />}
+        <MultiDropdown label="Status" options={STATUS_OPTIONS} selected={statusFilter} onSelect={setStatusFilter} />
+        {!isGlobalCentre && <SingleDropdown label="Property" options={centerOptions} selected={centerFilter} onSelect={setCenterFilter} />}
       </div>
 
-      {activeFilters.length > 0 && (
+      {/* Active Filter Pills */}
+      {hasFilters && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 14, alignItems: 'center', flexWrap: 'wrap' }}>
-          {activeFilters.map((f) => (
+          {activeFilterPills.map((f) => (
             <span key={f.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: 'var(--info-bg)', color: 'var(--primary)', border: '1px solid rgba(37,99,235,0.2)' }}>
               {f.label}
               <button onClick={f.clear} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: 'var(--primary)' }}><X size={12} /></button>
             </span>
           ))}
-          <button onClick={() => { clearCategories(); setStatusFilter('All'); if (!isGlobalCentre) setCenterFilter('All'); }} style={{ fontSize: 12, color: '#64748B', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>{t('compliance.clearAll')}</button>
+          <button onClick={clearAllFilters} style={{ fontSize: 12, color: '#64748B', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>{t('compliance.clearAll')}</button>
         </div>
       )}
 
+      {/* Table */}
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#F8FAFC', borderBottom: '1px solid var(--border)' }}>
                 {[
-                  { key: 'name', label: t('compliance.col.certificate'), width: undefined },
-                  { key: 'category', label: t('compliance.col.category'), width: 130 },
+                  { key: 'category', label: t('compliance.col.category'), width: 160 },
+                  { key: 'name', label: t('compliance.col.certificate') },
                   ...(!isGlobalCentre ? [{ key: 'center', label: t('compliance.col.property'), width: 200 }] : []),
-                  { key: 'documentRef', label: t('compliance.col.ref'), width: 120 },
-                  { key: 'inspectionDate', label: t('compliance.col.inspected'), width: 110 },
                   { key: 'nextInspection', label: t('compliance.col.nextDue'), width: 110 },
+                  { key: 'cycleMonths', label: t('compliance.col.cycle'), width: 80 },
+                  { key: 'responsible', label: t('compliance.col.responsible'), width: 130 },
                   { key: 'status', label: t('compliance.col.status'), width: 100 },
-                  { key: 'issuedBy', label: t('compliance.col.issuedBy'), width: 150 },
-                  { key: '_actions', label: t('compliance.col.actions'), width: 100 },
+                  { key: '_actions', label: t('compliance.col.actions'), width: 90 },
                 ].map((col) => (
-                  <th key={col.key}
-                    onClick={() => col.key !== '_actions' && handleSort(col.key)}
-                    style={{ padding: '10px 16px', fontSize: 11, fontWeight: 600, color: '#64748B', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: col.key === '_actions' ? 'default' : 'pointer', userSelect: 'none', whiteSpace: 'nowrap', width: col.width, background: sortCol === col.key ? '#F1F5F9' : undefined }}>
+                  <th key={col.key} onClick={() => col.key !== '_actions' && handleSort(col.key)} style={{ padding: '10px 14px', fontSize: 11, fontWeight: 600, color: '#64748B', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: col.key === '_actions' ? 'default' : 'pointer', userSelect: 'none', whiteSpace: 'nowrap', width: col.width, background: sortCol === col.key ? '#F1F5F9' : undefined }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                       {col.label}
                       {col.key !== '_actions' && (sortCol === col.key ? (sortDir === 'asc' ? <ChevronDown size={11} color="var(--info)" /> : <ChevronUp size={11} color="var(--info)" />) : <span style={{ fontSize: 10, color: '#CBD5E1' }}>&#8597;</span>)}
@@ -199,29 +229,37 @@ export default function ComplianceVault({ selectedCenter }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((doc) => (
-                <tr key={doc.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-                  <td style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{doc.name}</td>
-                  <td style={{ padding: '10px 16px' }}><span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: '#F1F5F9', color: '#475569' }}>{t(CATEGORY_KEY_MAP[doc.category] || doc.category)}</span></td>
-                  {!isGlobalCentre && <td style={{ padding: '10px 16px', fontSize: 12, color: '#64748B', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.center}</td>}
-                  <td style={{ padding: '10px 16px', fontSize: 12, color: '#94A3B8', fontFamily: 'monospace' }}>{doc.documentRef}</td>
-                  <td style={{ padding: '10px 16px', fontSize: 12, color: '#64748B' }}>{doc.inspectionDate}</td>
-                  <td style={{ padding: '10px 16px', fontSize: 12, color: '#64748B' }}>{doc.nextInspection}</td>
-                  <td style={{ padding: '10px 16px' }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: statusColors[doc.status]?.bg, color: statusColors[doc.status]?.color }}>{doc.status}</span>
-                  </td>
-                  <td style={{ padding: '10px 16px', fontSize: 12, color: '#64748B' }}>{doc.issuedBy}</td>
-                  <td style={{ padding: '10px 16px' }}>
-                    <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                      <ActionBtn icon={<Eye size={14} />} color="var(--info)" />
-                      <ActionBtn icon={<Pencil size={14} />} color="#64748B" />
-                      <ActionBtn icon={<Trash2 size={14} />} color="#DC2626" danger />
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {filtered.map((doc) => {
+                const cfg = CATEGORY_CONFIG[doc.category] || {};
+                const IconComp = CATEGORY_ICON[doc.category];
+                return (
+                  <tr key={doc.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                    <td style={{ padding: '10px 14px' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 8, background: cfg.bg || '#F1F5F9', fontSize: 12, fontWeight: 600, color: cfg.color || '#475569' }}>
+                        {IconComp && <IconComp size={13} color={cfg.color || '#64748B'} />}
+                        {t(CATEGORY_KEY_MAP[doc.category] || doc.category)}
+                      </span>
+                    </td>
+                    <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{doc.name}</td>
+                    {!isGlobalCentre && <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748B', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.center}</td>}
+                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748B' }}>{doc.nextInspection}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748B', fontWeight: 600 }}>{formatCycle(doc.cycleMonths || 12)}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748B' }}>{doc.responsible || '—'}</td>
+                    <td style={{ padding: '10px 14px' }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: statusColors[doc.status]?.bg, color: statusColors[doc.status]?.color }}>{doc.status}</span>
+                    </td>
+                    <td style={{ padding: '10px 14px' }}>
+                      <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                        <ActionBtn icon={<Eye size={14} />} color="var(--info)" onClick={() => openView(doc)} />
+                        <ActionBtn icon={<Pencil size={14} />} color="#64748B" onClick={() => openEdit(doc)} />
+                        <ActionBtn icon={<Trash2 size={14} />} color="#DC2626" danger onClick={() => openDelete(doc)} />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
               {filtered.length === 0 && (
-                <tr><td colSpan={isGlobalCentre ? 8 : 9} style={{ padding: 48, textAlign: 'center', color: '#94A3B8', fontSize: 14 }}>
+                <tr><td colSpan={isGlobalCentre ? 7 : 8} style={{ padding: 48, textAlign: 'center', color: '#94A3B8', fontSize: 14 }}>
                   <div style={{ fontSize: 16, marginBottom: 8, color: '#CBD5E1' }}>{t('compliance.noDocs')}</div>
                   <div>{t('compliance.tryAdjusting')}</div>
                 </td></tr>
@@ -230,6 +268,28 @@ export default function ComplianceVault({ selectedCenter }) {
           </table>
         </div>
       </div>
+
+      {/* ── MODALS ────────────────────────────────── */}
+      {modal === 'add' && <DocModal title={t('compliance.addTitle')} form={form} formUpdate={formUpdate} onSave={handleSave} onCancel={() => setModal(null)} t={t} isNew />}
+      {modal?.type === 'view' && <ViewModal doc={modal.doc} onClose={() => setModal(null)} t={t} />}
+      {modal?.type === 'edit' && <DocModal title={t('compliance.editTitle')} form={form} formUpdate={formUpdate} onSave={handleSave} onCancel={() => setModal(null)} t={t} />}
+      {modal?.type === 'delete' && <DeleteModal doc={modal.doc} onConfirm={handleDelete} onCancel={() => setModal(null)} t={t} />}
+    </div>
+  );
+}
+
+// ── SUB-COMPONENTS ──────────────────────────────────────
+
+function ComplianceRateSVG({ rate }) {
+  const size = 72, stroke = 6, radius = (size - stroke) / 2, circ = 2 * Math.PI * radius, offset = circ - (rate / 100) * circ;
+  const color = rate >= 90 ? 'var(--success)' : rate >= 70 ? '#F59E0B' : '#EF4444';
+  return (
+    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E2E8F0" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth={stroke} strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
+      </svg>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, color }}>{rate}%</div>
     </div>
   );
 }
@@ -247,92 +307,183 @@ function SummaryCard({ icon, iconBg, value, label, desc }) {
   );
 }
 
-function ComplianceRateCard({ rate, t, desc }) {
-  const size = 44;
-  const stroke = 5;
-  const radius = (size - stroke) / 2;
-  const circ = 2 * Math.PI * radius;
-  const offset = circ - (rate / 100) * circ;
-  const ringColor = rate >= 90 ? 'var(--success)' : rate >= 70 ? '#F59E0B' : '#EF4444';
-
-  return (
-    <div style={{ flex: 1, background: '#fff', borderRadius: 12, padding: '18px 20px', border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 14 }}>
-      <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
-        <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E2E8F0" strokeWidth={stroke} />
-          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={ringColor} strokeWidth={stroke} strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
-        </svg>
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: ringColor }}>{rate}%</div>
-      </div>
-      <div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', lineHeight: 1.1 }}>{rate}%</div>
-        <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginTop: 2 }}>{t('compliance.complianceRate')}</div>
-        <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{desc}</div>
-      </div>
-    </div>
-  );
-}
-
-function ActionBtn({ icon, color, danger }) {
+function ActionBtn({ icon, color, danger, onClick }) {
   const [hovered, setHovered] = useState(false);
   return (
-    <button
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{ width: 30, height: 30, borderRadius: 6, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: hovered ? (danger ? '#FEE2E2' : '#F1F5F9') : 'transparent', color: hovered ? color : '#94A3B8', transition: 'all 0.15s' }}
-    >{icon}</button>
+    <button onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={onClick}
+      style={{ width: 30, height: 30, borderRadius: 6, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: hovered ? (danger ? '#FEE2E2' : '#F1F5F9') : 'transparent', color: hovered ? color : '#94A3B8', transition: 'all 0.15s' }}>
+      {icon}
+    </button>
   );
 }
 
-function FilterDropdown({ label, options, selected, onSelect, t, categoryKeyMap, multi }) {
+function SingleDropdown({ label, options, selected, onSelect }) {
   const [open, setOpen] = useState(false);
-  const displayLabel = (opt) => {
-    if (t && categoryKeyMap && categoryKeyMap[opt]) return t(categoryKeyMap[opt]);
-    return opt;
-  };
-  const isActive = multi ? (Array.isArray(selected) && selected.length > 0) : selected !== 'All';
-  const displayText = multi
-    ? (Array.isArray(selected) && selected.length > 0 ? `${selected.length} selected` : 'All')
-    : displayLabel(selected);
-
-  const handleMultiToggle = (opt) => {
-    const current = Array.isArray(selected) ? selected : [];
-    onSelect(current.includes(opt) ? current.filter((c) => c !== opt) : [...current, opt]);
-  };
-
   return (
     <div style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(!open)} style={{ padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 8, border: `1px solid ${isActive ? 'var(--info)' : 'var(--border)'}`, background: isActive ? 'var(--info-bg)' : '#fff', color: isActive ? 'var(--info)' : '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {label}: {displayText}
+      <button onClick={() => setOpen(!open)} style={{ padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 8, border: `1px solid ${selected !== 'All' ? 'var(--info)' : 'var(--border)'}`, background: selected !== 'All' ? 'var(--info-bg)' : '#fff', color: selected !== 'All' ? 'var(--info)' : '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+        {label}: {selected === 'All' ? 'All' : selected.length > 20 ? selected.slice(0, 18) + '...' : selected} <ChevronDown size={12} />
       </button>
-      {open && (
-        <>
-          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 90 }} />
-          <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 240, maxHeight: 320, overflowY: 'auto', background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 100, padding: 4 }}>
-            {multi && (
-              <div style={{ padding: '6px 10px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>{selected.length} selected</span>
-                {selected.length > 0 && (
-                  <button onClick={(e) => { e.stopPropagation(); onSelect([]); }} style={{ fontSize: 11, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Clear</button>
-                )}
-              </div>
-            )}
-            {options.map((opt) => {
-              const checked = multi ? (Array.isArray(selected) && selected.includes(opt)) : selected === opt;
-              return (
-                <button key={opt} onClick={() => multi ? handleMultiToggle(opt) : (onSelect(opt), setOpen(false))} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', fontSize: 12, border: 'none', background: checked ? 'var(--info-bg)' : 'transparent', color: checked ? 'var(--info)' : '#475569', cursor: 'pointer', borderRadius: 4, textAlign: 'left' }}>
-                  {multi && (
-                    <span style={{ width: 16, height: 16, borderRadius: 3, border: `1.5px solid ${checked ? 'var(--info)' : '#CBD5E1'}`, background: checked ? 'var(--info)' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {checked && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
-                    </span>
-                  )}
-                  <span>{displayLabel(opt)}</span>
-                </button>
-              );
-            })}
-          </div>
-        </>
-      )}
+      {open && (<><div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 90 }} />
+        <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 220, maxHeight: 280, overflowY: 'auto', background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 100, padding: 4 }}>
+          {options.map((opt) => (<button key={opt} onClick={() => { onSelect(opt); setOpen(false); }} style={{ display: 'block', width: '100%', padding: '7px 10px', fontSize: 12, border: 'none', background: selected === opt ? 'var(--info-bg)' : 'transparent', color: selected === opt ? 'var(--info)' : '#475569', cursor: 'pointer', borderRadius: 4, textAlign: 'left' }}>{opt === 'All' ? 'All' : opt}</button>))}
+        </div></>)}
     </div>
+  );
+}
+
+function MultiDropdown({ label, options, selected, onSelect }) {
+  const [open, setOpen] = useState(false);
+  const isActive = selected !== 'All';
+  return (
+    <div style={{ position: 'relative' }}>
+      <button onClick={() => setOpen(!open)} style={{ padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 8, border: `1px solid ${isActive ? 'var(--info)' : 'var(--border)'}`, background: isActive ? 'var(--info-bg)' : '#fff', color: isActive ? 'var(--info)' : '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+        {label}: {isActive ? selected : 'All'} <ChevronDown size={12} />
+      </button>
+      {open && (<><div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 90 }} />
+        <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 160, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 100, padding: 4 }}>
+          <button onClick={() => { onSelect('All'); setOpen(false); }} style={{ display: 'block', width: '100%', padding: '7px 10px', fontSize: 12, border: 'none', background: selected === 'All' ? 'var(--info-bg)' : 'transparent', color: selected === 'All' ? 'var(--info)' : '#475569', cursor: 'pointer', borderRadius: 4, textAlign: 'left' }}>All</button>
+          {options.map((opt) => (<button key={opt} onClick={() => { onSelect(opt); setOpen(false); }} style={{ display: 'block', width: '100%', padding: '7px 10px', fontSize: 12, border: 'none', background: selected === opt ? 'var(--info-bg)' : 'transparent', color: selected === opt ? 'var(--info)' : '#475569', cursor: 'pointer', borderRadius: 4, textAlign: 'left' }}>{opt}</button>))}
+        </div></>)}
+    </div>
+  );
+}
+
+// ── MODALS ──────────────────────────────────────────────
+
+function ModalShell({ children, width }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)' }}>
+      <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', width: width || 520, maxHeight: '85vh', overflowY: 'auto' }}>{children}</div>
+    </div>
+  );
+}
+
+function ViewModal({ doc, onClose, t }) {
+  const cfg = CATEGORY_CONFIG[doc.category] || {};
+  const IconComp = CATEGORY_ICON[doc.category];
+  const fields = [
+    { label: t('compliance.detail.name'), value: doc.name },
+    { label: t('compliance.detail.category'), value: <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 8px', borderRadius: 6, background: cfg.bg, fontSize: 12, fontWeight: 600, color: cfg.color }}>{IconComp && <IconComp size={12} />}{t(CATEGORY_KEY_MAP[doc.category])}</span> },
+    { label: t('compliance.detail.property'), value: doc.center },
+    { label: t('compliance.detail.ref'), value: <span style={{ fontFamily: 'monospace' }}>{doc.documentRef}</span> },
+    { label: t('compliance.detail.issuedBy'), value: doc.issuedBy },
+    { label: t('compliance.detail.inspectionDate'), value: doc.inspectionDate },
+    { label: t('compliance.detail.nextInspection'), value: doc.nextInspection },
+    { label: t('compliance.detail.expiry'), value: doc.expiry },
+    { label: t('compliance.detail.cycle'), value: formatCycle(doc.cycleMonths || 12) },
+    { label: t('compliance.detail.responsible'), value: doc.responsible || '—' },
+    { label: t('compliance.detail.status'), value: <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: STATUS_BG[doc.status], color: STATUS_CLR[doc.status] }}>{doc.status}</span> },
+    ...(doc.notes ? [{ label: t('compliance.detail.notes'), value: doc.notes }] : []),
+  ];
+  return (
+    <ModalShell>
+      <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: 16, fontWeight: 700 }}>{t('compliance.viewTitle')}</div>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
+      </div>
+      <div style={{ padding: 24 }}>
+        {fields.map((f, i) => (
+          <div key={i} style={{ display: 'flex', padding: '8px 0', borderBottom: i < fields.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+            <div style={{ width: 140, fontSize: 12, color: '#94A3B8', fontWeight: 500, flexShrink: 0 }}>{f.label}</div>
+            <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>{f.value}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
+        <button onClick={onClose} style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.form.cancel')}</button>
+      </div>
+    </ModalShell>
+  );
+}
+
+const STATUS_BG = { Valid: 'var(--success-bg)', Expiring: '#FEF3C7', Expired: '#FEE2E2' };
+const STATUS_CLR = { Valid: 'var(--success)', Expiring: '#B45309', Expired: '#DC2626' };
+
+function DocModal({ title, form, formUpdate, onSave, onCancel, t, isNew }) {
+  const fieldStyle = { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none', boxSizing: 'border-box' };
+  const labelStyle = { display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 };
+  return (
+    <ModalShell width={560}>
+      <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: 16, fontWeight: 700 }}>{title}</div>
+        <button onClick={onCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
+      </div>
+      <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={labelStyle}>{t('compliance.form.name')} *</label>
+            <input value={form.name} onChange={(e) => formUpdate('name', e.target.value)} placeholder={t('compliance.form.namePlaceholder')} style={fieldStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>{t('compliance.form.category')} *</label>
+            <select value={form.category} onChange={(e) => formUpdate('category', e.target.value)} style={{ ...fieldStyle, appearance: 'auto' }}>
+              <option value="">{t('compliance.form.selectCategory')}</option>
+              {COMPLIANCE_CATEGORIES.map((c) => <option key={c} value={c}>{t(CATEGORY_KEY_MAP[c])}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>{t('compliance.form.property')} *</label>
+            <select value={form.center} onChange={(e) => formUpdate('center', e.target.value)} style={{ ...fieldStyle, appearance: 'auto' }}>
+              <option value="">{t('compliance.form.selectProperty')}</option>
+              {PROPERTIES.map((p) => <option key={p.name} value={p.name}>{p.name.replace('PLK ', '')}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>{t('compliance.form.ref')}</label>
+            <input value={form.documentRef} onChange={(e) => formUpdate('documentRef', e.target.value)} placeholder={t('compliance.form.refPlaceholder')} style={fieldStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>{t('compliance.form.issuedBy')}</label>
+            <input value={form.issuedBy} onChange={(e) => formUpdate('issuedBy', e.target.value)} placeholder={t('compliance.form.issuedByPlaceholder')} style={fieldStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>{t('compliance.form.inspectionDate')} *</label>
+            <input type="date" value={form.inspectionDate} onChange={(e) => formUpdate('inspectionDate', e.target.value)} style={fieldStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>{t('compliance.form.nextInspection')} *</label>
+            <input type="date" value={form.nextInspection} onChange={(e) => formUpdate('nextInspection', e.target.value)} style={fieldStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>{t('compliance.form.expiry')}</label>
+            <input type="date" value={form.expiry} onChange={(e) => formUpdate('expiry', e.target.value)} style={fieldStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>{t('compliance.form.cycle')} (months)</label>
+            <input type="number" value={form.cycleMonths} onChange={(e) => formUpdate('cycleMonths', parseInt(e.target.value) || 12)} min="1" style={fieldStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>{t('compliance.form.responsible')}</label>
+            <input value={form.responsible} onChange={(e) => formUpdate('responsible', e.target.value)} placeholder={t('compliance.form.responsiblePlaceholder')} style={fieldStyle} />
+          </div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={labelStyle}>{t('compliance.form.notes')}</label>
+            <textarea value={form.notes} onChange={(e) => formUpdate('notes', e.target.value)} placeholder={t('compliance.form.notesPlaceholder')} rows={3} style={{ ...fieldStyle, resize: 'vertical' }} />
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <button onClick={onCancel} style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.form.cancel')}</button>
+        <button onClick={onSave} disabled={!form.name || !form.category || !form.center || !form.inspectionDate || !form.nextInspection} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: (!form.name || !form.category || !form.center || !form.inspectionDate || !form.nextInspection) ? 0.5 : 1 }}>{isNew ? t('compliance.form.create') : t('compliance.form.update')}</button>
+      </div>
+    </ModalShell>
+  );
+}
+
+function DeleteModal({ doc, onConfirm, onCancel, t }) {
+  return (
+    <ModalShell width={400}>
+      <div style={{ padding: 24, textAlign: 'center' }}>
+        <div style={{ width: 48, height: 48, borderRadius: 12, background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}><Trash2 size={24} color="#DC2626" /></div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)', marginBottom: 8 }}>{t('compliance.confirmDelete')}</div>
+        <div style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}>{doc.name}</div>
+        <div style={{ fontSize: 12, color: '#94A3B8' }}>{doc.documentRef}</div>
+      </div>
+      <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'center', gap: 8 }}>
+        <button onClick={onCancel} style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.form.cancel')}</button>
+        <button onClick={onConfirm} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.remove')}</button>
+      </div>
+    </ModalShell>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { WorkOrderProvider } from './context/WorkOrderContext';
+import { ComplianceProvider } from './context/ComplianceContext';
 import { LanguageProvider } from './i18n/LanguageContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -110,7 +111,9 @@ export default function App() {
     <LanguageProvider>
       <AuthProvider>
         <WorkOrderProvider>
-          <AppLayout />
+          <ComplianceProvider>
+            <AppLayout />
+          </ComplianceProvider>
         </WorkOrderProvider>
       </AuthProvider>
     </LanguageProvider>

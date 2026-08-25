@@ -1,10 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { COMPLIANCE_CATEGORIES, PROPERTIES, CATEGORY_CONFIG, formatCycle } from '../data/constants';
 import { useCompliance } from '../context/ComplianceContext';
+import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
+import { listAttachments, uploadAttachment, getAttachmentUrl, formatFileSize, formatTimestamp } from '../services/complianceFileService';
 import {
   Search, AlertTriangle, CheckCircle, Clock, Bell, X, Eye, Pencil, Trash2,
   ChevronDown, ChevronUp, Wind, Zap, Flame, ArrowUp, Shield, FileText,
+  Upload, Download, Paperclip, FileImage,
 } from 'lucide-react';
 
 const CATEGORY_KEY_MAP = {
@@ -327,6 +330,12 @@ function ModalShell({ children, width }) {
 }
 
 function ViewModal({ doc, onClose, t }) {
+  const { permissions } = useAuth();
+  const uploaderName = permissions?.name || 'System';
+  const [attachments, setAttachments] = useState(() => listAttachments(doc.id, doc));
+  const [previewing, setPreviewing] = useState(null);
+  const fileInputRef = useRef(null);
+
   const cfg = CATEGORY_CONFIG[doc.category] || {};
   const IconComp = CATEGORY_ICON[doc.category];
   const fields = [
@@ -343,8 +352,26 @@ function ViewModal({ doc, onClose, t }) {
     { label: t('compliance.detail.status'), value: <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: STATUS_BG[doc.status], color: STATUS_CLR[doc.status] }}>{doc.status}</span> },
     ...(doc.notes ? [{ label: t('compliance.detail.notes'), value: doc.notes }] : []),
   ];
+
+  const handleFilesSelected = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    files.forEach((f) => uploadAttachment(doc.id, f, uploaderName));
+    setAttachments(listAttachments(doc.id, doc));
+    e.target.value = '';
+  };
+
+  const triggerDownload = (att) => {
+    const a = document.createElement('a');
+    a.href = getAttachmentUrl(att);
+    a.download = att.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
   return (
-    <ModalShell>
+    <ModalShell width={640}>
       <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: 16, fontWeight: 700 }}>{t('compliance.viewTitle')}</div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
@@ -356,11 +383,117 @@ function ViewModal({ doc, onClose, t }) {
             <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>{f.value}</div>
           </div>
         ))}
+
+        <AttachmentHistory
+          attachments={attachments}
+          onUploadClick={() => fileInputRef.current?.click()}
+          onPreview={setPreviewing}
+          onDownload={triggerDownload}
+          t={t}
+        />
+        <input ref={fileInputRef} type="file" multiple data-testid="attachment-input" onChange={handleFilesSelected} style={{ display: 'none' }} />
       </div>
       <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
         <button onClick={onClose} style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.form.cancel')}</button>
       </div>
+      {previewing && <PreviewOverlay attachment={previewing} onClose={() => setPreviewing(null)} onDownload={() => triggerDownload(previewing)} t={t} />}
     </ModalShell>
+  );
+}
+
+function AttachmentHistory({ attachments, onUploadClick, onPreview, onDownload, t }) {
+  const headStyle = { padding: '9px 12px', fontSize: 11, fontWeight: 600, color: '#64748B', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' };
+  const cellStyle = { padding: '9px 12px', fontSize: 12, color: '#64748B', whiteSpace: 'nowrap' };
+  return (
+    <div style={{ marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Paperclip size={15} color="var(--info)" />
+          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>{t('compliance.attach.title')}</span>
+          <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500 }}>({attachments.length})</span>
+        </div>
+        <button onClick={onUploadClick} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+          <Upload size={13} /> {t('compliance.attach.upload')}
+        </button>
+      </div>
+      <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid var(--border)' }}>
+              <th style={headStyle}>{t('compliance.attach.col.name')}</th>
+              <th style={headStyle}>{t('compliance.attach.col.uploader')}</th>
+              <th style={headStyle}>{t('compliance.attach.col.time')}</th>
+              <th style={headStyle}>{t('compliance.attach.col.size')}</th>
+              <th style={headStyle}>{t('compliance.attach.col.actions')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {attachments.map((att) => (
+              <tr key={att.id} style={{ borderBottom: '1px solid #F1F5F9' }} onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                <td style={{ ...cellStyle, maxWidth: 220 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, overflow: 'hidden' }}>
+                    <FileTypeIcon mimeType={att.mimeType} />
+                    <span title={att.name} style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.name}</span>
+                  </span>
+                </td>
+                <td style={cellStyle}>{att.uploader}</td>
+                <td style={cellStyle}>{formatTimestamp(att.uploadedAt)}</td>
+                <td style={cellStyle}>{formatFileSize(att.size)}</td>
+                <td style={cellStyle}>
+                  <div style={{ display: 'flex', gap: 2 }}>
+                    <ActionBtn icon={<Eye size={14} />} color="var(--info)" onClick={() => onPreview(att)} />
+                    <ActionBtn icon={<Download size={14} />} color="#64748B" onClick={() => onDownload(att)} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {attachments.length === 0 && (
+              <tr>
+                <td colSpan={5} style={{ padding: 28, textAlign: 'center' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#94A3B8' }}>{t('compliance.attach.empty')}</div>
+                  <div style={{ fontSize: 12, color: '#CBD5E1', marginTop: 4 }}>{t('compliance.attach.emptyHint')}</div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function FileTypeIcon({ mimeType }) {
+  if (mimeType?.startsWith('image/')) return <FileImage size={14} color="var(--info)" style={{ flexShrink: 0 }} />;
+  return <FileText size={14} color="#DC2626" style={{ flexShrink: 0 }} />;
+}
+
+function PreviewOverlay({ attachment, onClose, onDownload, t }) {
+  const url = getAttachmentUrl(attachment);
+  const isImage = attachment.mimeType?.startsWith('image/');
+  const isPdf = attachment.mimeType === 'application/pdf';
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(15,23,42,0.78)', display: 'flex', flexDirection: 'column', padding: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexShrink: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: 16 }}>{t('compliance.preview.title')} — {attachment.name}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <button onClick={onDownload} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+            <Download size={13} /> {t('compliance.download')}
+          </button>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', cursor: 'pointer', color: '#fff', width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
+        </div>
+      </div>
+      {isImage ? (
+        <img src={url} alt={attachment.name} style={{ flex: 1, minHeight: 0, maxWidth: '100%', objectFit: 'contain', borderRadius: 10 }} />
+      ) : isPdf ? (
+        <iframe src={url} title={attachment.name} style={{ flex: 1, width: '100%', border: 'none', borderRadius: 10, background: '#fff' }} />
+      ) : (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', borderRadius: 10 }}>
+          <FileText size={40} color="#CBD5E1" />
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>{t('compliance.preview.unsupported')}</div>
+          <div style={{ fontSize: 12, color: '#94A3B8' }}>{t('compliance.preview.downloadHint')}</div>
+        </div>
+      )}
+    </div>
   );
 }
 

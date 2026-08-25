@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ComplianceVault from '../../pages/ComplianceVault';
 import { ComplianceProvider } from '../../context/ComplianceContext';
@@ -124,5 +124,46 @@ describe('ComplianceVault', () => {
   it('renders the subtitle text', () => {
     renderVault();
     expect(screen.getByText(/Track and manage/)).toBeInTheDocument();
+  });
+
+  it('view modal shows document history section with expected columns', async () => {
+    const user = userEvent.setup();
+    const { container } = renderVault();
+    await user.click(container.querySelector('table tbody tr button'));
+    expect(screen.getByText('Document History')).toBeInTheDocument();
+    expect(screen.getByText('Uploaded By')).toBeInTheDocument();
+    expect(screen.getByText('Uploaded At')).toBeInTheDocument();
+    expect(screen.getByText('Size')).toBeInTheDocument();
+    expect(screen.getByText('Upload Document')).toBeInTheDocument();
+  });
+
+  it('document history lists seeded records', async () => {
+    const user = userEvent.setup();
+    const { container } = renderVault();
+    await user.click(container.querySelector('table tbody tr button'));
+    const pdfCells = screen.getAllByText(/\.pdf$/i);
+    expect(pdfCells.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('uploading a file adds a row to the history table', async () => {
+    const user = userEvent.setup();
+    const { container } = renderVault();
+    await user.click(container.querySelector('table tbody tr button'));
+    const input = container.querySelector('[data-testid="attachment-input"]');
+    const file = new File(['demo content'], 'My Uploaded Cert.pdf', { type: 'application/pdf' });
+    fireEvent.change(input, { target: { files: [file] } });
+    expect(await screen.findByText('My Uploaded Cert.pdf')).toBeInTheDocument();
+    expect(screen.getByText('System')).toBeInTheDocument();
+  });
+
+  it('preview action opens the document preview overlay', async () => {
+    const user = userEvent.setup();
+    const { container } = renderVault();
+    await user.click(container.querySelector('table tbody tr button'));
+    const seededRow = screen.getAllByText(/\.pdf$/i)[0].closest('tr');
+    const previewBtn = within(seededRow).getAllByRole('button')[0];
+    await user.click(previewBtn);
+    expect(screen.getByText(/Document Preview/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Download/ })).toBeInTheDocument();
   });
 });

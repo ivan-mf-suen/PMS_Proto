@@ -65,10 +65,23 @@ export function uploadAttachment(docId, payload, uploaderName) {
 }
 
 export function isAttachmentActive(att) {
+  if (att.active === false) return false;
   if (!att.expiryDate) return true;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return new Date(`${att.expiryDate}T23:59:59`) >= today;
+}
+
+export function deactivateAttachment(docId, attId, { by, at, remarks }) {
+  const list = store.get(docId);
+  if (!list) return null;
+  const att = list.find((a) => a.id === attId);
+  if (!att) return null;
+  att.active = false;
+  att.deactivatedAt = at;
+  att.deactivatedBy = by;
+  att.deactivationRemarks = remarks;
+  return { ...att };
 }
 
 export function getAttachmentUrl(entry) {

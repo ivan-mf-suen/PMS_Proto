@@ -3,7 +3,7 @@ import { COMPLIANCE_CATEGORIES, PROPERTIES, CATEGORY_CONFIG, formatCycle } from 
 import { useCompliance } from '../context/ComplianceContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
-import { listAttachments, uploadAttachment, getAttachmentUrl, formatFileSize, formatTimestamp, formatDateOnly, isAttachmentActive, DOC_TYPES } from '../services/complianceFileService';
+import { listAttachments, uploadAttachment, deactivateAttachment, getAttachmentUrl, formatFileSize, formatTimestamp, formatDateOnly, isAttachmentActive, DOC_TYPES } from '../services/complianceFileService';
 import {
   Search, CheckCircle, Clock, Bell, X, Eye, Pencil, Trash2,
   ChevronDown, ChevronUp, Wind, Zap, Flame, ArrowUp, Droplets, Leaf,
@@ -351,6 +351,9 @@ function ViewModal({ doc, onClose, onEdit, t }) {
   const [attachments, setAttachments] = useState(() => listAttachments(doc.id, doc));
   const [previewing, setPreviewing] = useState(null);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [inactiveTarget, setInactiveTarget] = useState(null);
+  const [inactiveRemarks, setInactiveRemarks] = useState('');
+  const [inactiveStep, setInactiveStep] = useState(0);
 
   const cfg = CATEGORY_CONFIG[doc.category] || {};
   const IconComp = CATEGORY_ICON[doc.category];
@@ -384,6 +387,14 @@ function ViewModal({ doc, onClose, onEdit, t }) {
     a.remove();
   };
 
+  const handleDeactivate = () => {
+    deactivateAttachment(doc.id, inactiveTarget.id, { by: uploaderName, at: new Date().toISOString(), remarks: inactiveRemarks.trim() });
+    setAttachments(listAttachments(doc.id, doc));
+    setInactiveTarget(null);
+    setInactiveRemarks('');
+    setInactiveStep(0);
+  };
+
   return (
     <ModalShell width={640}>
       <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -408,6 +419,7 @@ function ViewModal({ doc, onClose, onEdit, t }) {
           onUploadClick={() => setUploadOpen(true)}
           onPreview={setPreviewing}
           onDownload={triggerDownload}
+          onDeactivate={(att) => { setInactiveTarget(att); setInactiveStep(0); setInactiveRemarks(''); }}
           t={t}
         />
       </div>
@@ -416,6 +428,7 @@ function ViewModal({ doc, onClose, onEdit, t }) {
       </div>
       {uploadOpen && <UploadModal onClose={() => setUploadOpen(false)} onSubmit={handleUploadSubmitted} t={t} />}
       {previewing && <PreviewOverlay attachment={previewing} onClose={() => setPreviewing(null)} onDownload={() => triggerDownload(previewing)} t={t} />}
+      {inactiveTarget && <InactiveConfirmModal target={inactiveTarget} step={inactiveStep} setStep={setInactiveStep} remarks={inactiveRemarks} setRemarks={setInactiveRemarks} onConfirm={handleDeactivate} onClose={() => { setInactiveTarget(null); setInactiveRemarks(''); setInactiveStep(0); }} t={t} />}
     </ModalShell>
   );
 }
@@ -483,7 +496,7 @@ function UploadModal({ onClose, onSubmit, t }) {
   );
 }
 
-function AttachmentHistory({ attachments, onUploadClick, onPreview, onDownload, t }) {
+function AttachmentHistory({ attachments, onUploadClick, onPreview, onDownload, onDeactivate, t }) {
   const headStyle = { padding: '8px 10px', fontSize: 11, fontWeight: 600, color: '#64748B', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', overflow: 'hidden' };
   const cellStyle = { padding: '8px 10px', fontSize: 12, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
   return (
@@ -539,6 +552,7 @@ function AttachmentHistory({ attachments, onUploadClick, onPreview, onDownload, 
                     <div style={{ display: 'flex', gap: 4 }}>
                       <TextBtn label={t('compliance.attach.preview')} color="var(--info)" onClick={() => onPreview(att)} />
                       <TextBtn label={t('compliance.download')} color="#475569" onClick={() => onDownload(att)} />
+                      {active && onDeactivate && <TextBtn label={t('compliance.attach.setInactive')} color="#DC2626" onClick={() => onDeactivate(att)} />}
                     </div>
                   </td>
                 </tr>
@@ -601,6 +615,39 @@ function PreviewOverlay({ attachment, onClose, onDownload, t }) {
         </div>
       )}
     </div>
+  );
+}
+
+function InactiveConfirmModal({ target, step, setStep, remarks, setRemarks, onConfirm, onClose, t }) {
+  const fieldStyle = { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none', boxSizing: 'border-box' };
+  return (
+    <ModalShell width={440}>
+      <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: '#DC2626' }}>{t('compliance.inactive.title')}</div>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
+      </div>
+      <div style={{ padding: 24 }}>
+        {step === 0 ? (
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6, marginBottom: 6 }}>{t('compliance.inactive.confirmMsg')}</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', background: '#F8FAFC', padding: '8px 12px', borderRadius: 8, marginBottom: 4 }}>{target.name}</div>
+          </div>
+        ) : (
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6, marginBottom: 10 }}>{t('compliance.inactive.remarksMsg')}</div>
+            <textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} rows={3} placeholder={t('compliance.inactive.remarksPlaceholder')} style={{ ...fieldStyle, resize: 'vertical' }} />
+          </div>
+        )}
+      </div>
+      <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <button onClick={onClose} style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.form.cancel')}</button>
+        {step === 0 ? (
+          <button onClick={() => setStep(1)} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.inactive.confirm')}</button>
+        ) : (
+          <button onClick={onConfirm} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.inactive.submit')}</button>
+        )}
+      </div>
+    </ModalShell>
   );
 }
 

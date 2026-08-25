@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ROLES, CENTERS, NOTIFICATIONS } from '../data/constants';
-import { Building2, ChevronDown, Bell, X } from 'lucide-react';
+import { useTranslation } from '../i18n/LanguageContext';
+import { CENTERS, NOTIFICATIONS } from '../data/constants';
+import { Building2, ChevronDown, Bell } from 'lucide-react';
 
-export default function Header() {
+const ALL_CENTERS_OPTION = 'All';
+
+export default function Header({ selectedCenter, onCenterChange }) {
   const { permissions } = useAuth();
-  const [selectedCenter, setSelectedCenter] = useState(CENTERS[0]);
+  const { language, setLanguage, t } = useTranslation();
   const [centerDropdownOpen, setCenterDropdownOpen] = useState(false);
-  const [lang, setLang] = useState('en');
   const [notifOpen, setNotifOpen] = useState(false);
+
+  const displayLabel = selectedCenter === ALL_CENTERS_OPTION ? t('header.allCentres') : selectedCenter;
 
   return (
     <header
@@ -36,21 +40,36 @@ export default function Header() {
           }}
         >
           <Building2 size={14} color={permissions?.centerScope === 'ASSIGNED_ONLY' ? '#64748B' : 'var(--info)'} />
-          <span style={{ fontSize: 13, fontWeight: 600 }}>{selectedCenter}</span>
+          <span style={{ fontSize: 13, fontWeight: 600 }}>{displayLabel}</span>
           {permissions?.centerScope !== 'ASSIGNED_ONLY' && <ChevronDown size={13} color="#64748B" />}
           {permissions?.centerScope === 'ASSIGNED_ONLY' && (
-            <span style={{ marginLeft: 6, fontSize: 10, padding: '2px 6px', backgroundColor: '#E2E8F0', color: '#475569', borderRadius: 4, fontWeight: 700 }}>LOCKED</span>
+            <span style={{ marginLeft: 6, fontSize: 10, padding: '2px 6px', backgroundColor: '#E2E8F0', color: '#475569', borderRadius: 4, fontWeight: 700 }}>{t('header.locked')}</span>
           )}
         </button>
         {centerDropdownOpen && permissions?.centerScope !== 'ASSIGNED_ONLY' && (
           <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 16px rgba(15,23,42,0.1)', minWidth: 240, zIndex: 100, overflow: 'hidden' }}>
             <div style={{ padding: '6px 12px 4px', fontSize: 11, color: '#64748B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              {permissions?.centerScope === 'CLUSTER' ? 'Cluster Centers' : 'All Global Centers'}
+              {permissions?.centerScope === 'CLUSTER' ? t('header.clusterCentres') : t('header.allGlobalCentres')}
             </div>
+            <button
+              onClick={() => { onCenterChange(ALL_CENTERS_OPTION); setCenterDropdownOpen(false); }}
+              style={{
+                width: '100%', textAlign: 'left', padding: '8px 12px',
+                background: selectedCenter === ALL_CENTERS_OPTION ? 'var(--secondary)' : 'transparent',
+                border: 'none', cursor: 'pointer', fontSize: 13,
+                color: selectedCenter === ALL_CENTERS_OPTION ? 'var(--info)' : 'var(--foreground)',
+                fontWeight: selectedCenter === ALL_CENTERS_OPTION ? 600 : 400,
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: selectedCenter === ALL_CENTERS_OPTION ? 'var(--info)' : 'transparent', display: 'inline-block' }} />
+              {t('header.allCentres')}
+            </button>
+            <div style={{ height: 1, background: 'var(--border)', margin: '2px 12px' }} />
             {CENTERS.map((center) => (
               <button
                 key={center}
-                onClick={() => { setSelectedCenter(center); setCenterDropdownOpen(false); }}
+                onClick={() => { onCenterChange(center); setCenterDropdownOpen(false); }}
                 style={{
                   width: '100%', textAlign: 'left', padding: '8px 12px',
                   background: center === selectedCenter ? 'var(--secondary)' : 'transparent',
@@ -75,11 +94,11 @@ export default function Header() {
         {['en', 'zh'].map((l) => (
           <button
             key={l}
-            onClick={() => setLang(l)}
+            onClick={() => setLanguage(l)}
             style={{
               padding: '5px 12px', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-              background: lang === l ? 'var(--primary)' : 'transparent',
-              color: lang === l ? '#fff' : '#64748B',
+              background: language === l ? 'var(--primary)' : 'transparent',
+              color: language === l ? '#fff' : '#64748B',
               transition: 'background 0.15s',
             }}
           >
@@ -105,8 +124,8 @@ export default function Header() {
         {notifOpen && (
           <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 320, background: '#fff', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 8px 24px rgba(15,23,42,0.12)', zIndex: 100, overflow: 'hidden' }}>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>Notifications</span>
-              <span style={{ fontSize: 11, padding: '2px 7px', background: 'var(--critical-bg)', color: 'var(--critical)', borderRadius: 10, fontWeight: 600 }}>3 new</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>{t('header.notifications')}</span>
+              <span style={{ fontSize: 11, padding: '2px 7px', background: 'var(--critical-bg)', color: 'var(--critical)', borderRadius: 10, fontWeight: 600 }}>3 {t('header.new')}</span>
             </div>
             {NOTIFICATIONS.map((n) => (
               <div key={n.id} style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -121,7 +140,7 @@ export default function Header() {
               onClick={() => setNotifOpen(false)}
               style={{ width: '100%', padding: '10px', background: 'transparent', border: 'none', borderTop: '1px solid var(--border)', fontSize: 12, fontWeight: 600, color: 'var(--info)', cursor: 'pointer' }}
             >
-              View All Notifications
+              {t('header.viewAll')}
             </button>
           </div>
         )}

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { ASSETS } from '../data/constants';
-import { Plus, Search, Package, Calendar, MapPin } from 'lucide-react';
+import { useTranslation } from '../i18n/LanguageContext';
+import { Plus, Search } from 'lucide-react';
 
 export default function Assets() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   const filtered = ASSETS.filter((a) =>
@@ -21,11 +23,11 @@ export default function Assets() {
     <div style={{ padding: 24, maxWidth: 1400 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.02em' }}>Assets</h1>
-          <p style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>{ASSETS.length} assets registered</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.02em' }}>{t('assets.title')}</h1>
+          <p style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>{ASSETS.length} {t('assets.count')}</p>
         </div>
         <button style={{ padding: '10px 20px', fontSize: 13, fontWeight: 600, borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Plus size={16} /> Register Asset
+          <Plus size={16} /> {t('assets.add')}
         </button>
       </div>
 
@@ -33,7 +35,7 @@ export default function Assets() {
         <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
         <input
           value={search} onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search assets by name, type, or location..."
+          placeholder={t('assets.searchPlaceholder')}
           style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none' }}
         />
       </div>
@@ -42,7 +44,7 @@ export default function Assets() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#F8FAFC' }}>
-              {['Asset ID', 'Name', 'Type', 'Location', 'Status', 'Last Service', 'Next Service'].map((h) => (
+              {[t('assets.col.id'), t('assets.col.name'), t('assets.col.type'), t('assets.col.location'), t('assets.col.status'), t('assets.col.lastService'), t('assets.col.nextService')].map((h) => (
                 <th key={h} style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: '#64748B', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
               ))}
             </tr>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { FLOOR_PLAN_ASSETS } from '../data/constants';
+import { useTranslation } from '../i18n/LanguageContext';
 import { Plus, ZoomIn, ZoomOut, RotateCcw, Layers } from 'lucide-react';
 
 const STATUS_COLORS = {
@@ -26,6 +27,7 @@ const TYPE_ICONS = {
 
 export default function FloorPlan() {
   const { permissions } = useAuth();
+  const { t } = useTranslation();
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [showLegend, setShowLegend] = useState(true);
@@ -35,12 +37,12 @@ export default function FloorPlan() {
     <div style={{ padding: 24, maxWidth: 1400, height: 'calc(100vh - 56px)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.02em' }}>Floor Plan</h1>
-          <p style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>Interactive asset map &middot; Kowloon East District Hub</p>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.02em' }}>{t('floorPlan.title')}</h1>
+          <p style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>Interactive asset map &middot; PLK Lee Chiu Kong Memorial Centre</p>
         </div>
         {permissions?.canAddMapAssets && (
           <button style={{ padding: '10px 20px', fontSize: 13, fontWeight: 600, borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Plus size={16} /> Add Asset
+            <Plus size={16} /> {t('assets.add')}
           </button>
         )}
       </div>
@@ -106,7 +108,7 @@ export default function FloorPlan() {
           {/* Legend */}
           {showLegend && (
             <div style={{ position: 'absolute', bottom: 16, left: 16, background: '#fff', borderRadius: 8, padding: '12px 16px', border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', marginBottom: 8 }}>Asset Status</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', marginBottom: 8 }}>{t('floorPlan.legend')}</div>
               {Object.entries(STATUS_LABELS).map(([key, label]) => (
                 <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: STATUS_COLORS[key] }} />
@@ -121,7 +123,7 @@ export default function FloorPlan() {
         <div style={{ width: 320, display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Asset Details */}
           <div style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)' }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)', marginBottom: 16 }}>Asset Details</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)', marginBottom: 16 }}>{t('floorPlan.assetDetails')}</div>
             {selectedAsset ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: '#F8FAFC', borderRadius: 8 }}>
@@ -135,27 +137,27 @@ export default function FloorPlan() {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <div style={{ padding: 10, background: '#F8FAFC', borderRadius: 6 }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase' }}>Status</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase' }}>{t('floorPlan.status')}</div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: STATUS_COLORS[selectedAsset.status], marginTop: 2 }}>{STATUS_LABELS[selectedAsset.status]}</div>
                   </div>
                   <div style={{ padding: 10, background: '#F8FAFC', borderRadius: 6 }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase' }}>Type</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase' }}>{t('assets.col.type')}</div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', marginTop: 2 }}>{selectedAsset.type}</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button style={{ flex: 1, padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}>View History</button>
-                  <button style={{ flex: 1, padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}>Create WO</button>
+                  <button style={{ flex: 1, padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}>{t('floorPlan.viewHistory')}</button>
+                  <button style={{ flex: 1, padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}>{t('floorPlan.createWO')}</button>
                 </div>
               </div>
             ) : (
-              <div style={{ padding: 20, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>Click an asset on the map to view details</div>
+              <div style={{ padding: 20, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>{t('floorPlan.clickAsset')}</div>
             )}
           </div>
 
           {/* Asset List */}
           <div style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', flex: 1, overflowY: 'auto' }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)', marginBottom: 12 }}>All Assets ({FLOOR_PLAN_ASSETS.length})</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)', marginBottom: 12 }}>{t('floorPlan.allAssets')} ({FLOOR_PLAN_ASSETS.length})</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {FLOOR_PLAN_ASSETS.map((asset) => (
                 <div

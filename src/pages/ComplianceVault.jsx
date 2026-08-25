@@ -73,7 +73,7 @@ export default function ComplianceVault({ selectedCenter }) {
     return list;
   }, [summaryDocs, selectedCategories, sortCol, sortDir]);
 
-  // Summary bar counts: from filtered so they match the table when categories are selected
+  // Summary bar counts: from filtered so they match the table when categories are selected test
   const validCount = filtered.filter((d) => d.status === 'Valid').length;
   const expiringCount = filtered.filter((d) => d.status === 'Expiring').length;
   const expiredCount = filtered.filter((d) => d.status === 'Expired').length;

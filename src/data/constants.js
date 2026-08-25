@@ -666,6 +666,7 @@ export const PROPERTIES = [
   { id: 10, name: "PLK Kwok Law Kwai Chun Home for the Elderly", service: "SSD", unitCode: "SW-01", unit: "Elderly Home", lsgNlsg: "Contract Home", contact: "Chow Kit Ying", email: "kitying.chow@plk.org.hk", address: "88 Queen's Road West, Sheung Wan, Hong Kong Island", phone: "+852 2548 3456" },
   { id: 11, name: "PLK Angela Leong On Kei Kindergarten-cum-Nursery", service: "SSD", unitCode: "SSP-01", unit: "Child Care Centre", lsgNlsg: "NLSG", contact: "So Ming Yi", email: "mingyi.so@plk.org.hk", address: "156 Lai Chi Kok Road, Sham Shui Po, Kowloon", phone: "+852 2327 7890" },
   { id: 12, name: "PLK Child Development Centre (Causeway Bay)", service: "SSD", unitCode: "CB-02", unit: "Child Development Centre", lsgNlsg: "NLSG", contact: "Kwok Hiu Lam", email: "hiulam.kwok@plk.org.hk", address: "66 Leighton Road, Causeway Bay", phone: "+852 2893 4567" },
+  { id: 13, name: "保良局東涌護老院", service: "SSD", unitCode: "TC-01", unit: "Elderly Home", lsgNlsg: "Contract Home", contact: "Leung Ka Fai", email: "kahfai.leung@plk.org.hk", address: "Tung Chung, Lantau, New Territories", phone: "+852 2109 1234" },
 ];
 
 export const ASSETS = [

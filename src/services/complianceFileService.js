@@ -1,12 +1,14 @@
 const store = new Map();
 
+export const DOC_TYPES = ['Certificate', 'Inspection Report', 'Site Photo', 'Checklist', 'Other'];
+
 const SEED_UPLOADERS = ['Chan Siu Ming', 'Leung Chi Fai', 'Wong Pik Shan', 'Ip Suet Ying'];
 
 const SEED_TEMPLATES = [
-  { makeName: (doc, yr) => `${doc.name} ${yr}.pdf`, mimeType: 'application/pdf' },
-  { makeName: (doc, yr) => `${doc.name} Certificate ${yr}.pdf`, mimeType: 'application/pdf' },
-  { makeName: (doc) => `${doc.name} Site Photo.jpg`, mimeType: 'image/jpeg' },
-  { makeName: (doc, yr) => `${doc.name} Checklist ${yr}.xlsx`, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+  { makeName: (doc, yr) => `${doc.name} ${yr}.pdf`, mimeType: 'application/pdf', docType: 'Certificate', expireYears: 1 },
+  { makeName: (doc, yr) => `${doc.name} Certificate ${yr}.pdf`, mimeType: 'application/pdf', docType: 'Certificate', expireYears: null },
+  { makeName: (doc) => `${doc.name} Site Photo.jpg`, mimeType: 'image/jpeg', docType: 'Site Photo', expireYears: null },
+  { makeName: (doc, yr) => `${doc.name} Checklist ${yr}.xlsx`, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', docType: 'Checklist', expireYears: -1 },
 ];
 
 function seedAttachments(docId, doc) {
@@ -19,13 +21,18 @@ function seedAttachments(docId, doc) {
     const day = String(((docId * 7 + i * 11) % 27) + 1).padStart(2, '0');
     const hour = String(9 + ((docId + i) % 8)).padStart(2, '0');
     const minute = String((docId * 13 + i * 17) % 60).padStart(2, '0');
+    const docDate = `${baseDate.slice(0, 4)}-${baseDate.slice(5, 7)}-${day}`;
+    const expiryDate = tpl.expireYears === null ? null : `${parseInt(baseDate.slice(0, 4), 10) + tpl.expireYears}${baseDate.slice(4)}`;
     entries.push({
       id: `seed-${docId}-${i}`,
       name: tpl.makeName(doc, year),
       size: 180000 + ((docId * 977 + i * 613) % 2400000),
       mimeType: tpl.mimeType,
+      docType: tpl.docType,
+      docDate,
+      expiryDate,
       uploader: SEED_UPLOADERS[(docId + i) % SEED_UPLOADERS.length],
-      uploadedAt: `${baseDate.slice(0, 4)}-${baseDate.slice(5, 7)}-${day}T${hour}:${minute}:00`,
+      uploadedAt: `${docDate}T${hour}:${minute}:00`,
       file: null,
     });
   }
@@ -39,19 +46,29 @@ export function listAttachments(docId, docMeta) {
   return [...store.get(docId)];
 }
 
-export function uploadAttachment(docId, file, uploaderName) {
+export function uploadAttachment(docId, payload, uploaderName) {
   if (!store.has(docId)) store.set(docId, []);
   const entry = {
     id: `up-${docId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    name: file.name,
-    size: file.size,
-    mimeType: file.type || guessMimeType(file.name),
+    name: payload.name || payload.file.name,
+    size: payload.file.size,
+    mimeType: payload.file.type || guessMimeType(payload.file.name),
+    docType: payload.docType || 'Other',
+    docDate: payload.docDate || new Date().toISOString().slice(0, 10),
+    expiryDate: payload.expiryDate || null,
     uploader: uploaderName,
     uploadedAt: new Date().toISOString(),
-    file,
+    file: payload.file,
   };
   store.get(docId).unshift(entry);
   return { ...entry };
+}
+
+export function isAttachmentActive(att) {
+  if (!att.expiryDate) return true;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return new Date(`${att.expiryDate}T23:59:59`) >= today;
 }
 
 export function getAttachmentUrl(entry) {
@@ -80,6 +97,13 @@ export function formatTimestamp(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso || '—';
   return `${String(d.getDate()).padStart(2, '0')} ${MONTHS[d.getMonth()]} ${d.getFullYear()}, ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+export function formatDateOnly(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return `${String(d.getDate()).padStart(2, '0')} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

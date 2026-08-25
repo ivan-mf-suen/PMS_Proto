@@ -1,9 +1,9 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { COMPLIANCE_CATEGORIES, PROPERTIES, CATEGORY_CONFIG, formatCycle } from '../data/constants';
 import { useCompliance } from '../context/ComplianceContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
-import { listAttachments, uploadAttachment, getAttachmentUrl, formatFileSize, formatTimestamp } from '../services/complianceFileService';
+import { listAttachments, uploadAttachment, getAttachmentUrl, formatFileSize, formatTimestamp, formatDateOnly, isAttachmentActive, DOC_TYPES } from '../services/complianceFileService';
 import {
   Search, AlertTriangle, CheckCircle, Clock, Bell, X, Eye, Pencil, Trash2,
   ChevronDown, ChevronUp, Wind, Zap, Flame, ArrowUp, Shield, FileText,
@@ -248,9 +248,8 @@ export default function ComplianceVault({ selectedCenter }) {
                     </td>
                     <td style={{ padding: '10px 14px' }}>
                       <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                        <ActionBtn icon={<Eye size={14} />} color="var(--info)" onClick={() => openView(doc)} />
-                        <ActionBtn icon={<Pencil size={14} />} color="#64748B" onClick={() => openEdit(doc)} />
-                        <ActionBtn icon={<Trash2 size={14} />} color="#DC2626" danger onClick={() => openDelete(doc)} />
+                        <ActionBtn icon={<Eye size={14} />} color="var(--info)" title={t('compliance.action.viewDetails')} onClick={() => openView(doc)} />
+                        <ActionBtn icon={<Trash2 size={14} />} color="#DC2626" danger title={t('compliance.remove')} onClick={() => openDelete(doc)} />
                       </div>
                     </td>
                   </tr>
@@ -269,7 +268,7 @@ export default function ComplianceVault({ selectedCenter }) {
 
       {/* ── MODALS ────────────────────────────────── */}
       {modal === 'add' && <DocModal title={t('compliance.addTitle')} form={form} formUpdate={formUpdate} onSave={handleSave} onCancel={() => setModal(null)} t={t} isNew />}
-      {modal?.type === 'view' && <ViewModal doc={modal.doc} onClose={() => setModal(null)} t={t} />}
+      {modal?.type === 'view' && <ViewModal doc={modal.doc} onClose={() => setModal(null)} onEdit={openEdit} t={t} />}
       {modal?.type === 'edit' && <DocModal title={t('compliance.editTitle')} form={form} formUpdate={formUpdate} onSave={handleSave} onCancel={() => setModal(null)} t={t} />}
       {modal?.type === 'delete' && <DeleteModal doc={modal.doc} onConfirm={handleDelete} onCancel={() => setModal(null)} t={t} />}
     </div>
@@ -308,10 +307,10 @@ function StatusCount({ icon, value, label, bg, active, onClick }) {
   );
 }
 
-function ActionBtn({ icon, color, danger, onClick }) {
+function ActionBtn({ icon, color, danger, onClick, title }) {
   const [hovered, setHovered] = useState(false);
   return (
-    <button onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={onClick}
+    <button title={title} aria-label={title} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={onClick}
       style={{ width: 30, height: 30, borderRadius: 6, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: hovered ? (danger ? '#FEE2E2' : '#F1F5F9') : 'transparent', color: hovered ? color : '#94A3B8', transition: 'all 0.15s' }}>
       {icon}
     </button>
@@ -329,12 +328,12 @@ function ModalShell({ children, width }) {
   );
 }
 
-function ViewModal({ doc, onClose, t }) {
+function ViewModal({ doc, onClose, onEdit, t }) {
   const { permissions } = useAuth();
   const uploaderName = permissions?.name || 'System';
   const [attachments, setAttachments] = useState(() => listAttachments(doc.id, doc));
   const [previewing, setPreviewing] = useState(null);
-  const fileInputRef = useRef(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const cfg = CATEGORY_CONFIG[doc.category] || {};
   const IconComp = CATEGORY_ICON[doc.category];
@@ -342,7 +341,7 @@ function ViewModal({ doc, onClose, t }) {
     { label: t('compliance.detail.name'), value: doc.name },
     { label: t('compliance.detail.category'), value: <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 8px', borderRadius: 6, background: cfg.bg, fontSize: 12, fontWeight: 600, color: cfg.color }}>{IconComp && <IconComp size={12} />}{t(CATEGORY_KEY_MAP[doc.category])}</span> },
     { label: t('compliance.detail.property'), value: doc.center },
-    { label: t('compliance.detail.ref'), value: <span style={{ fontFamily: 'monospace' }}>{doc.documentRef}</span> },
+    { label: t('compliance.detail.ref'), value: doc.documentRef },
     { label: t('compliance.detail.issuedBy'), value: doc.issuedBy },
     { label: t('compliance.detail.inspectionDate'), value: doc.inspectionDate },
     { label: t('compliance.detail.nextInspection'), value: doc.nextInspection },
@@ -353,12 +352,10 @@ function ViewModal({ doc, onClose, t }) {
     ...(doc.notes ? [{ label: t('compliance.detail.notes'), value: doc.notes }] : []),
   ];
 
-  const handleFilesSelected = (e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-    files.forEach((f) => uploadAttachment(doc.id, f, uploaderName));
+  const handleUploadSubmitted = (payload) => {
+    uploadAttachment(doc.id, payload, uploaderName);
     setAttachments(listAttachments(doc.id, doc));
-    e.target.value = '';
+    setUploadOpen(false);
   };
 
   const triggerDownload = (att) => {
@@ -374,36 +371,104 @@ function ViewModal({ doc, onClose, t }) {
     <ModalShell width={640}>
       <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: 16, fontWeight: 700 }}>{t('compliance.viewTitle')}</div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={() => onEdit(doc)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+            <Pencil size={13} /> {t('compliance.detail.edit')}
+          </button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
+        </div>
       </div>
       <div style={{ padding: 24 }}>
         {fields.map((f, i) => (
-          <div key={i} style={{ display: 'flex', padding: '8px 0', borderBottom: i < fields.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
-            <div style={{ width: 140, fontSize: 12, color: '#94A3B8', fontWeight: 500, flexShrink: 0 }}>{f.label}</div>
-            <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>{f.value}</div>
+          <div key={i} style={{ display: 'flex', alignItems: 'baseline', padding: '8px 0', borderBottom: i < fields.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+            <div style={{ width: 140, fontSize: 12, lineHeight: '18px', color: '#94A3B8', fontWeight: 500, flexShrink: 0 }}>{f.label}</div>
+            <div style={{ flex: 1, fontSize: 13, lineHeight: '18px', color: 'var(--foreground)', fontWeight: 500 }}>{f.value}</div>
           </div>
         ))}
 
         <AttachmentHistory
           attachments={attachments}
-          onUploadClick={() => fileInputRef.current?.click()}
+          onUploadClick={() => setUploadOpen(true)}
           onPreview={setPreviewing}
           onDownload={triggerDownload}
           t={t}
         />
-        <input ref={fileInputRef} type="file" multiple data-testid="attachment-input" onChange={handleFilesSelected} style={{ display: 'none' }} />
       </div>
       <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
         <button onClick={onClose} style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.form.cancel')}</button>
       </div>
+      {uploadOpen && <UploadModal onClose={() => setUploadOpen(false)} onSubmit={handleUploadSubmitted} t={t} />}
       {previewing && <PreviewOverlay attachment={previewing} onClose={() => setPreviewing(null)} onDownload={() => triggerDownload(previewing)} t={t} />}
     </ModalShell>
   );
 }
 
+function UploadModal({ onClose, onSubmit, t }) {
+  const fieldStyle = { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none', boxSizing: 'border-box' };
+  const labelStyle = { display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 };
+  const [file, setFile] = useState(null);
+  const [name, setName] = useState('');
+  const [docType, setDocType] = useState(DOC_TYPES[0]);
+  const [docDate, setDocDate] = useState(new Date().toISOString().slice(0, 10));
+  const [expiryDate, setExpiryDate] = useState('');
+
+  const handlePick = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFile(f);
+    setName(f.name);
+  };
+
+  return (
+    <ModalShell width={480}>
+      <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: 16, fontWeight: 700 }}>{t('compliance.upload.title')}</div>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
+      </div>
+      <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div>
+          <label style={labelStyle}>{t('compliance.upload.file')} *</label>
+          <button onClick={() => document.getElementById('cv-upload-file-input')?.click()} style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px dashed #CBD5E1', background: '#F8FAFC', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 13, color: file ? 'var(--foreground)' : '#94A3B8', fontWeight: file ? 600 : 500, boxSizing: 'border-box' }}>
+            <Upload size={14} color="var(--info)" />
+            {file ? file.name : t('compliance.upload.chooseFile')}
+          </button>
+          <input id="cv-upload-file-input" data-testid="upload-file-input" type="file" onChange={handlePick} style={{ display: 'none' }} />
+        </div>
+        <div>
+          <label style={labelStyle}>{t('compliance.upload.name')} *</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} disabled={!file} placeholder={t('compliance.upload.noFile')} style={{ ...fieldStyle, opacity: file ? 1 : 0.6 }} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <label style={labelStyle}>{t('compliance.upload.type')}</label>
+            <select value={docType} onChange={(e) => setDocType(e.target.value)} style={{ ...fieldStyle, appearance: 'auto' }}>
+              {DOC_TYPES.map((dt) => <option key={dt} value={dt}>{t(`compliance.doctype.${dt}`)}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>{t('compliance.upload.docDate')}</label>
+            <input type="date" value={docDate} onChange={(e) => setDocDate(e.target.value)} style={fieldStyle} />
+          </div>
+        </div>
+        <div>
+          <label style={labelStyle}>{t('compliance.upload.expiry')}</label>
+          <input type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} style={fieldStyle} />
+          <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>{t('compliance.upload.expiryOptional')}</div>
+        </div>
+      </div>
+      <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <button onClick={onClose} style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.form.cancel')}</button>
+        <button onClick={() => onSubmit({ file, name: name.trim() || file.name, docType, docDate, expiryDate: expiryDate || null })} disabled={!file} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: file ? 1 : 0.5 }}>
+          {t('compliance.upload.submit')}
+        </button>
+      </div>
+    </ModalShell>
+  );
+}
+
 function AttachmentHistory({ attachments, onUploadClick, onPreview, onDownload, t }) {
-  const headStyle = { padding: '9px 12px', fontSize: 11, fontWeight: 600, color: '#64748B', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' };
-  const cellStyle = { padding: '9px 12px', fontSize: 12, color: '#64748B', whiteSpace: 'nowrap' };
+  const headStyle = { padding: '8px 10px', fontSize: 11, fontWeight: 600, color: '#64748B', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', overflow: 'hidden' };
+  const cellStyle = { padding: '8px 10px', fontSize: 12, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
   return (
     <div style={{ marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -417,9 +482,18 @@ function AttachmentHistory({ attachments, onUploadClick, onPreview, onDownload, 
         </button>
       </div>
       <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: 62 }} />
+            <col />
+            <col style={{ width: 100 }} />
+            <col style={{ width: 138 }} />
+            <col style={{ width: 58 }} />
+            <col style={{ width: 148 }} />
+          </colgroup>
           <thead>
             <tr style={{ background: '#F8FAFC', borderBottom: '1px solid var(--border)' }}>
+              <th style={headStyle}>{t('compliance.attach.col.status')}</th>
               <th style={headStyle}>{t('compliance.attach.col.name')}</th>
               <th style={headStyle}>{t('compliance.attach.col.uploader')}</th>
               <th style={headStyle}>{t('compliance.attach.col.time')}</th>
@@ -428,28 +502,34 @@ function AttachmentHistory({ attachments, onUploadClick, onPreview, onDownload, 
             </tr>
           </thead>
           <tbody>
-            {attachments.map((att) => (
-              <tr key={att.id} style={{ borderBottom: '1px solid #F1F5F9' }} onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-                <td style={{ ...cellStyle, maxWidth: 220 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, overflow: 'hidden' }}>
-                    <FileTypeIcon mimeType={att.mimeType} />
-                    <span title={att.name} style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.name}</span>
-                  </span>
-                </td>
-                <td style={cellStyle}>{att.uploader}</td>
-                <td style={cellStyle}>{formatTimestamp(att.uploadedAt)}</td>
-                <td style={cellStyle}>{formatFileSize(att.size)}</td>
-                <td style={cellStyle}>
-                  <div style={{ display: 'flex', gap: 2 }}>
-                    <ActionBtn icon={<Eye size={14} />} color="var(--info)" onClick={() => onPreview(att)} />
-                    <ActionBtn icon={<Download size={14} />} color="#64748B" onClick={() => onDownload(att)} />
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {attachments.map((att) => {
+              const active = isAttachmentActive(att);
+              return (
+                <tr key={att.id} style={{ borderBottom: '1px solid #F1F5F9' }} onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                  <td style={{ ...cellStyle, textAlign: 'center' }}>
+                    <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 8, background: active ? 'var(--success-bg)' : '#F1F5F9', color: active ? 'var(--success)' : '#64748B' }}>{active ? t('compliance.attach.active') : t('compliance.attach.inactive')}</span>
+                  </td>
+                  <td style={{ ...cellStyle, fontWeight: 600, color: 'var(--foreground)' }} title={`${att.name}${att.docType ? ` · ${att.docType}` : ''}${att.expiryDate ? ` · ${t('compliance.upload.expiry')}: ${formatDateOnly(att.expiryDate)}` : ''}`}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, maxWidth: '100%' }}>
+                      <FileTypeIcon mimeType={att.mimeType} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{att.name}</span>
+                    </span>
+                  </td>
+                  <td style={cellStyle} title={att.uploader}>{att.uploader}</td>
+                  <td style={cellStyle}>{formatTimestamp(att.uploadedAt)}</td>
+                  <td style={cellStyle}>{formatFileSize(att.size)}</td>
+                  <td style={{ ...cellStyle, whiteSpace: 'nowrap', overflow: 'visible' }}>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <TextBtn label={t('compliance.attach.preview')} color="var(--info)" onClick={() => onPreview(att)} />
+                      <TextBtn label={t('compliance.download')} color="#475569" onClick={() => onDownload(att)} />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
             {attachments.length === 0 && (
               <tr>
-                <td colSpan={5} style={{ padding: 28, textAlign: 'center' }}>
+                <td colSpan={6} style={{ padding: 28, textAlign: 'center' }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#94A3B8' }}>{t('compliance.attach.empty')}</div>
                   <div style={{ fontSize: 12, color: '#CBD5E1', marginTop: 4 }}>{t('compliance.attach.emptyHint')}</div>
                 </td>
@@ -459,6 +539,16 @@ function AttachmentHistory({ attachments, onUploadClick, onPreview, onDownload, 
         </table>
       </div>
     </div>
+  );
+}
+
+function TextBtn({ label, color, onClick }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={onClick}
+      style={{ padding: '4px 10px', fontSize: 11, fontWeight: 600, borderRadius: 6, border: `1px solid ${hovered ? color : 'var(--border)'}`, background: hovered ? 'var(--info-bg)' : '#fff', color, cursor: 'pointer', transition: 'all 0.15s' }}>
+      {label}
+    </button>
   );
 }
 

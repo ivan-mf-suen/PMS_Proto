@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import ComplianceVault from '../../pages/ComplianceVault';
 import { ComplianceProvider } from '../../context/ComplianceContext';
 import { LanguageProvider } from '../../i18n/LanguageContext';
+import { isAttachmentActive } from '../../services/complianceFileService';
 
 function renderVault(selectedCenter) {
   return render(
@@ -126,44 +127,75 @@ describe('ComplianceVault', () => {
     expect(screen.getByText(/Track and manage/)).toBeInTheDocument();
   });
 
+  it('row has view details action but no separate edit action', () => {
+    renderVault();
+    const firstRow = container_firstDataRow();
+    const buttons = within(firstRow).getAllByRole('button');
+    expect(buttons.length).toBe(2);
+    expect(buttons[0]).toHaveAttribute('aria-label', 'View Details');
+    expect(within(firstRow).queryByLabelText('Edit')).not.toBeInTheDocument();
+  });
+
+  function container_firstDataRow() {
+    return document.querySelector('table tbody tr');
+  }
+
   it('view modal shows document history section with expected columns', async () => {
     const user = userEvent.setup();
-    const { container } = renderVault();
-    await user.click(container.querySelector('table tbody tr button'));
+    renderVault();
+    await user.click(container_firstDataRow().querySelector('button'));
     expect(screen.getByText('Document History')).toBeInTheDocument();
+    expect(screen.getAllByText('Status').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Uploaded By')).toBeInTheDocument();
     expect(screen.getByText('Uploaded At')).toBeInTheDocument();
-    expect(screen.getByText('Size')).toBeInTheDocument();
-    expect(screen.getByText('Upload Document')).toBeInTheDocument();
+    expect(screen.getAllByText('Active').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('button', { name: 'Upload Document' })).toBeInTheDocument();
   });
 
   it('document history lists seeded records', async () => {
     const user = userEvent.setup();
-    const { container } = renderVault();
-    await user.click(container.querySelector('table tbody tr button'));
+    renderVault();
+    await user.click(container_firstDataRow().querySelector('button'));
     const pdfCells = screen.getAllByText(/\.pdf$/i);
     expect(pdfCells.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('uploading a file adds a row to the history table', async () => {
+  it('upload modal collects metadata then adds an active row', async () => {
     const user = userEvent.setup();
-    const { container } = renderVault();
-    await user.click(container.querySelector('table tbody tr button'));
-    const input = container.querySelector('[data-testid="attachment-input"]');
+    renderVault();
+    await user.click(container_firstDataRow().querySelector('button'));
+    await user.click(screen.getByRole('button', { name: 'Upload Document' }));
     const file = new File(['demo content'], 'My Uploaded Cert.pdf', { type: 'application/pdf' });
-    fireEvent.change(input, { target: { files: [file] } });
-    expect(await screen.findByText('My Uploaded Cert.pdf')).toBeInTheDocument();
-    expect(screen.getByText('System')).toBeInTheDocument();
+    fireEvent.change(document.querySelector('[data-testid="upload-file-input"]'), { target: { files: [file] } });
+    expect(await screen.findByDisplayValue('My Uploaded Cert.pdf')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Upload', exact: true }));
+    const nameEl = await screen.findByText('My Uploaded Cert.pdf');
+    const row = nameEl.closest('tr');
+    expect(within(row).getByText('System')).toBeInTheDocument();
+    expect(within(row).getByText('Active')).toBeInTheDocument();
   });
 
   it('preview action opens the document preview overlay', async () => {
     const user = userEvent.setup();
-    const { container } = renderVault();
-    await user.click(container.querySelector('table tbody tr button'));
+    renderVault();
+    await user.click(container_firstDataRow().querySelector('button'));
     const seededRow = screen.getAllByText(/\.pdf$/i)[0].closest('tr');
-    const previewBtn = within(seededRow).getAllByRole('button')[0];
-    await user.click(previewBtn);
+    await user.click(within(seededRow).getByRole('button', { name: 'Preview' }));
     expect(screen.getByText(/Document Preview/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Download/ })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Download' }).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('edit button in view details opens the edit modal', async () => {
+    const user = userEvent.setup();
+    renderVault();
+    await user.click(container_firstDataRow().querySelector('button'));
+    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    expect(screen.getByText('Edit Compliance Document')).toBeInTheDocument();
+  });
+
+  it('isAttachmentActive derives status from expiry date', () => {
+    expect(isAttachmentActive({ expiryDate: null })).toBe(true);
+    expect(isAttachmentActive({ expiryDate: '2000-01-01' })).toBe(false);
+    expect(isAttachmentActive({ expiryDate: '2999-12-31' })).toBe(true);
   });
 });

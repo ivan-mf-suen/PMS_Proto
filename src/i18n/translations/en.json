@@ -204,6 +204,11 @@
   "properties.col.type": "Type",
   "properties.col.actions": "Actions",
   "properties.actions.deactivate": "Inactive",
+  "properties.col.service": "Service",
+  "properties.col.unitCode": "Unit Code",
+  "properties.col.unit": "Unit",
+  "properties.col.lsgNlsg": "LSG/NLSG",
+  "properties.col.contact": "Contact",
 
   "propertyDetail.back": "Back to Properties",
   "propertyDetail.information": "Property Information",
@@ -315,6 +320,10 @@
   "compliance.cat.Environmental": "Environmental",
   "compliance.cat.OccupationalSafety": "Occupational Safety",
   "compliance.cat.Asbestos": "Asbestos",
+  "compliance.cat.Ventilation": "Ventilation System",
+  "compliance.cat.ElectricalWR2": "Electrical Inspection WR2",
+  "compliance.cat.Licence": "Licence",
+  "compliance.cat.Lease": "Lease",
 
   "wo.group.buildersWorks": "Repair/Maintenance Builder's Works",
   "wo.group.buildingServices": "Building Services Works",

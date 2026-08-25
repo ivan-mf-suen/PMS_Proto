@@ -83,6 +83,7 @@ export default function WorkOrderCreate({ onBack, onViewWO }) {
     title: '',
     priority: 'medium',
     category: '',
+    department: 'SSD',
     startDate: '',
     endDate: '',
     budget: '',
@@ -112,7 +113,7 @@ export default function WorkOrderCreate({ onBack, onViewWO }) {
 
   const generateWO = (status) => {
     const now = new Date();
-    const id = getNextWoId();
+    const id = getNextWoId(form.department);
     return {
       id,
       title: form.title || 'Untitled Work Order',

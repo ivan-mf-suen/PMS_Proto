@@ -204,6 +204,11 @@
   "properties.col.type": "類型",
   "properties.col.actions": "操作",
   "properties.actions.deactivate": "停用",
+  "properties.col.service": "服務",
+  "properties.col.unitCode": "單位代號",
+  "properties.col.unit": "單位",
+  "properties.col.lsgNlsg": "LSG/NLSG",
+  "properties.col.contact": "聯絡人",
 
   "propertyDetail.back": "返回物業列表",
   "propertyDetail.information": "物業資料",
@@ -315,6 +320,10 @@
   "compliance.cat.Environmental": "環境",
   "compliance.cat.OccupationalSafety": "職業安全",
   "compliance.cat.Asbestos": "石棉",
+  "compliance.cat.Ventilation": "通風系統",
+  "compliance.cat.ElectricalWR2": "電力檢查WR2",
+  "compliance.cat.Licence": "牌照",
+  "compliance.cat.Lease": "租約",
 
   "wo.group.buildersWorks": "維修/保養建築工程",
   "wo.group.buildingServices": "建築設備工程",

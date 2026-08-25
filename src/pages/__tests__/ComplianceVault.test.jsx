@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ComplianceVault from '../../pages/ComplianceVault';
@@ -41,7 +41,7 @@ describe('ComplianceVault', () => {
     renderVault();
     const fireElements = screen.getAllByText('Fire Safety');
     expect(fireElements.length).toBeGreaterThanOrEqual(1);
-    const electricalElements = screen.getAllByText('Electrical');
+    const electricalElements = screen.getAllByText('Electrical Inspection WR2');
     expect(electricalElements.length).toBeGreaterThanOrEqual(1);
   });
 

@@ -4,27 +4,21 @@ import { useCompliance } from '../context/ComplianceContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
   Search, AlertTriangle, CheckCircle, Clock, Bell, X, Eye, Pencil, Trash2,
-  ChevronDown, ChevronUp, Flame, Zap, Droplets, ArrowUp, Building2, Shield,
-  Leaf, HardHat, TriangleAlert,
+  ChevronDown, ChevronUp, Wind, Zap, Flame, ArrowUp, Shield, FileText,
 } from 'lucide-react';
 
 const CATEGORY_KEY_MAP = {
-  'Fire Safety': 'compliance.cat.FireSafety',
-  'Electrical': 'compliance.cat.Electrical',
-  'Gas': 'compliance.cat.Gas',
-  'Water Hygiene': 'compliance.cat.WaterHygiene',
-  'Lifts': 'compliance.cat.Lifts',
-  'Structural': 'compliance.cat.Structural',
-  'Insurance': 'compliance.cat.Insurance',
-  'Environmental': 'compliance.cat.Environmental',
-  'Occupational Safety': 'compliance.cat.OccupationalSafety',
-  'Asbestos': 'compliance.cat.Asbestos',
+  '年檢項目 通風系統': 'compliance.cat.Ventilation',
+  '定期檢測項目 電力檢查WR2': 'compliance.cat.ElectricalWR2',
+  '年檢項目 消防': 'compliance.cat.FireSafety',
+  '年檢項目 升降機/餐𨋢': 'compliance.cat.Lifts',
+  '年檢項目 牌照': 'compliance.cat.Licence',
+  '年檢項目 租約': 'compliance.cat.Lease',
 };
 
 const CATEGORY_ICON = {
-  'Fire Safety': Flame, 'Electrical': Zap, 'Gas': Droplets, 'Water Hygiene': Droplets,
-  'Lifts': ArrowUp, 'Structural': Building2, 'Insurance': Shield,
-  'Environmental': Leaf, 'Occupational Safety': HardHat, 'Asbestos': TriangleAlert,
+  '年檢項目 通風系統': Wind, '定期檢測項目 電力檢查WR2': Zap, '年檢項目 消防': Flame,
+  '年檢項目 升降機/餐𨋢': ArrowUp, '年檢項目 牌照': Shield, '年檢項目 租約': FileText,
 };
 
 const EMPTY_FORM = { name: '', category: '', center: '', documentRef: '', issuedBy: '', inspectionDate: '', nextInspection: '', expiry: '', cycleMonths: 12, responsible: '', notes: '', status: 'Valid' };

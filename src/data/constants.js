@@ -147,7 +147,7 @@ export const CENTERS = [
 export const WORK_ORDERS = [
   // ── DRAFTS ──────────────────────────────────────────────
   {
-    id: "WO-2026-0901",
+    id: "S-260901",
     title: "Fire Exit Door Hinge Replacement",
     center: "PLK Shek Kip Mei Community Services Centre",
     priority: "Critical",
@@ -168,7 +168,7 @@ export const WORK_ORDERS = [
     ],
   },
   {
-    id: "WO-2026-0902",
+    id: "S-260902",
     title: "Roof Waterproofing — East Wing Leakage",
     center: "PLK Lee Chiu Kong Memorial Centre",
     priority: "Medium",
@@ -189,7 +189,7 @@ export const WORK_ORDERS = [
     ],
   },
   {
-    id: "WO-2026-0903",
+    id: "S-260903",
     title: "Playground Rubber Matting Replacement",
     center: "PLK Tin Shui Wai Rehabilitation Centre",
     priority: "Medium",
@@ -210,7 +210,7 @@ export const WORK_ORDERS = [
 
   // ── PENDING OIC SUBMISSION ──────────────────────────────
   {
-    id: "WO-2026-0898",
+    id: "S-260898",
     title: "Elevator Emergency Phone Battery Replacement",
     center: "PLK Lee Chiu Kong Memorial Centre",
     priority: "High",
@@ -231,7 +231,7 @@ export const WORK_ORDERS = [
     ],
   },
   {
-    id: "WO-2026-0899",
+    id: "S-260899",
     title: "Kitchen Exhaust Fan Motor Repair",
     center: "PLK Shek Kip Mei Community Services Centre",
     priority: "High",
@@ -254,7 +254,7 @@ export const WORK_ORDERS = [
 
   // ── PENDING MANAGER ENDORSEMENT ─────────────────────────
   {
-    id: "WO-2026-0891",
+    id: "S-260891",
     title: "HVAC Chiller Unit Repair — Block A",
     center: "PLK Lee Chiu Kong Memorial Centre",
     priority: "High",
@@ -276,7 +276,7 @@ export const WORK_ORDERS = [
     ],
   },
   {
-    id: "WO-2026-0904",
+    id: "S-260904",
     title: "Carpark Barrier Gate Replacement",
     center: "PLK Y.C. Cheng Centre",
     priority: "Medium",
@@ -297,7 +297,7 @@ export const WORK_ORDERS = [
     ],
   },
   {
-    id: "WO-2026-0905",
+    id: "S-260905",
     title: "LED Lighting Upgrade — All Corridors",
     center: "PLK Tin Shui Wai Rehabilitation Centre",
     priority: "Low",
@@ -318,7 +318,7 @@ export const WORK_ORDERS = [
 
   // ── PENDING SSD ENDORSEMENT ─────────────────────────────
   {
-    id: "WO-2026-0894",
+    id: "S-260894",
     title: "Electrical Distribution Board Upgrade",
     center: "PLK Y.C. Cheng Centre",
     priority: "High",
@@ -342,7 +342,7 @@ export const WORK_ORDERS = [
 
   // ── PENDING APPROVAL ────────────────────────────────────
   {
-    id: "WO-2026-0892",
+    id: "S-260892",
     title: "Fire Suppression System Servicing",
     center: "PLK Shek Kip Mei Community Services Centre",
     priority: "Critical",
@@ -364,7 +364,7 @@ export const WORK_ORDERS = [
     ],
   },
   {
-    id: "WO-2026-0906",
+    id: "S-260906",
     title: "Emergency Exit Signage Replacement",
     center: "PLK Tin Shui Wai Rehabilitation Centre",
     priority: "High",
@@ -387,7 +387,7 @@ export const WORK_ORDERS = [
 
   // ── UNDER PWD ASSESSMENT ────────────────────────────────
   {
-    id: "WO-2026-0893",
+    id: "S-260893",
     title: "Bathroom Renovation — Level 2",
     center: "PLK Tin Shui Wai Rehabilitation Centre",
     priority: "High",
@@ -410,7 +410,7 @@ export const WORK_ORDERS = [
     ],
   },
   {
-    id: "WO-2026-0907",
+    id: "S-260907",
     title: "Lift Motor Room Ventilation Upgrade",
     center: "PLK Lee Chiu Kong Memorial Centre",
     priority: "High",
@@ -434,7 +434,7 @@ export const WORK_ORDERS = [
 
   // ── APPROVED ────────────────────────────────────────────
   {
-    id: "WO-2026-0895",
+    id: "S-260895",
     title: "Parking Lot Line Repainting",
     center: "PLK Y.C. Cheng Centre",
     priority: "Low",
@@ -455,7 +455,7 @@ export const WORK_ORDERS = [
     ],
   },
   {
-    id: "WO-2026-0908",
+    id: "S-260908",
     title: "Water Tank Cleaning & Disinfection",
     center: "PLK Shek Kip Mei Community Services Centre",
     priority: "Medium",
@@ -476,7 +476,7 @@ export const WORK_ORDERS = [
 
   // ── SUBMITTED TO IAS ────────────────────────────────────
   {
-    id: "WO-2026-0896",
+    id: "S-260896",
     title: "CCTV System Upgrade — 64 Camera IP Migration",
     center: "PLK Shek Kip Mei Community Services Centre",
     priority: "Medium",
@@ -500,7 +500,7 @@ export const WORK_ORDERS = [
 
   // ── IN PROGRESS ─────────────────────────────────────────
   {
-    id: "WO-2026-0889",
+    id: "S-260889",
     title: "Generator Servicing & Load Bank Test",
     center: "PLK Y.C. Cheng Centre",
     priority: "High",
@@ -524,7 +524,7 @@ export const WORK_ORDERS = [
 
   // ── COMPLETED ───────────────────────────────────────────
   {
-    id: "WO-2026-0880",
+    id: "S-260880",
     title: "Annual Fire Alarm Panel Testing",
     center: "PLK Lee Chiu Kong Memorial Centre",
     priority: "Critical",
@@ -546,7 +546,7 @@ export const WORK_ORDERS = [
     ],
   },
   {
-    id: "WO-2026-0882",
+    id: "S-260882",
     title: "Carpet Cleaning — All Meeting Rooms",
     center: "PLK Tin Shui Wai Rehabilitation Centre",
     priority: "Low",
@@ -567,7 +567,7 @@ export const WORK_ORDERS = [
     ],
   },
   {
-    id: "WO-2026-0875",
+    id: "S-260875",
     title: "Window Cleaning — External (Bi-Annual)",
     center: "PLK Y.C. Cheng Centre",
     priority: "Low",
@@ -607,19 +607,19 @@ export const NOTIFICATIONS = [
   {
     id: 1,
     type: "critical",
-    text: "FS251 Fire Service Certification expires in 3 days — WO-2026-0892",
+    text: "FS251 Fire Service Certification expires in 3 days — S-260892",
     time: "2 hrs ago",
   },
   {
     id: 2,
     type: "warning",
-    text: "WO-2026-0891 awaiting Manager Endorsement for 5 days",
+    text: "S-260891 awaiting Manager Endorsement for 5 days",
     time: "5 hrs ago",
   },
   {
     id: 3,
     type: "warning",
-    text: "WO-2026-0894 requires SSD Endorsement — budget >$100K",
+    text: "S-260894 requires SSD Endorsement — budget >$100K",
     time: "1 day ago",
   },
   {
@@ -631,7 +631,7 @@ export const NOTIFICATIONS = [
   {
     id: 5,
     type: "info",
-    text: "WO-2026-0889 — Generator load bank test completed successfully",
+    text: "S-260889 — Generator load bank test completed successfully",
     time: "2 days ago",
   },
   {
@@ -654,29 +654,55 @@ export const FLOOR_PLAN_ASSETS = [
 ];
 
 export const PROPERTIES = [
-  { id: 1, name: "PLK Main Building (Causeway Bay)", type: "Headquarters", address: "66 Leighton Road, Causeway Bay", district: "Hong Kong Island", floorArea: 2800, yearBuilt: 1992, status: "Active", contact: { manager: "Chan Siu Ming", phone: "+852 2839 1234", email: "siuming.chan@plk.org.hk", role: "Centre Manager" }, attachments: [{ name: "Floor Plan - G.pdf", date: "2026-01-15", size: "2.4 MB" }, { name: "Building Inspection 2025.pdf", date: "2025-11-20", size: "5.1 MB" }] },
-  { id: 2, name: "PLK Shek Kip Mei Community Services Centre", type: "Community Centre", address: "130 La Chi Street, Sham Shui Po, Kowloon", district: "Kowloon", floorArea: 1850, yearBuilt: 2005, status: "Active", contact: { manager: "Leung Chi Fai", phone: "+852 2776 3456", email: "chifai.leung@plk.org.hk", role: "Centre Manager" }, attachments: [{ name: "Emergency Evacuation Plan.pdf", date: "2026-03-10", size: "1.8 MB" }] },
-  { id: 3, name: "PLK Making Life Beautiful Integrated Health Centre", type: "Health Centre", address: "123 Ning Yuen Street, Kowloon Bay, Kowloon", district: "Kowloon", floorArea: 2200, yearBuilt: 2010, status: "Active", contact: { manager: "Wong Pik Shan", phone: "+852 2756 7890", email: "pikshan.wong@plk.org.hk", role: "Centre Manager" }, attachments: [] },
-  { id: 4, name: "PLK Cheerful Court Integrated Health Centre", type: "Health Centre", address: "88 Yen Chow Street, Sham Shui Po, Kowloon", district: "Kowloon", floorArea: 1600, yearBuilt: 2012, status: "Active", contact: { manager: "Tang Hiu Ming", phone: "+852 2362 1234", email: "hiuming.tang@plk.org.hk", role: "Centre Manager" }, attachments: [{ name: "Floor Plan.pdf", date: "2025-09-01", size: "1.5 MB" }] },
-  { id: 5, name: "PLK Tin Shui Wai Rehabilitation Centre", type: "Rehabilitation Centre", address: "9 Tin Hei Street, Tin Shui Wai, New Territories", district: "New Territories", floorArea: 3500, yearBuilt: 1998, status: "Active", contact: { manager: "Ng Ka Wai", phone: "+852 2459 5678", email: "kawai.ng@plk.org.hk", role: "Centre Manager" }, attachments: [{ name: "Site Safety Plan.pdf", date: "2026-02-20", size: "3.2 MB" }] },
-  { id: 6, name: "PLK Lee Chiu Kong Memorial Centre", type: "Rehabilitation Centre", address: "100 Wai Yip Street, Kwun Tong, Kowloon", district: "Kowloon", floorArea: 3200, yearBuilt: 1995, status: "Active", contact: { manager: "Ip Suet Ying", phone: "+852 2389 4567", email: "suetying.ip@plk.org.hk", role: "Centre Manager" }, attachments: [{ name: "Fire Safety Plan.pdf", date: "2026-04-05", size: "2.8 MB" }, { name: "Annual Report 2025.pdf", date: "2026-01-30", size: "8.3 MB" }] },
-  { id: 7, name: "PLK Y.C. Cheng Centre", type: "Rehabilitation Centre", address: "200 Aberdeen Main Road, Aberdeen, Hong Kong Island", district: "Hong Kong Island", floorArea: 2600, yearBuilt: 2001, status: "Active", contact: { manager: "Fong Tsz Wan", phone: "+852 2552 8901", email: "tszwan.fong@plk.org.hk", role: "Centre Manager" }, attachments: [] },
-  { id: 8, name: "PLK Sai Ying Pun Home for the Elderly", type: "Elderly Home", address: "35 First Street, Sai Ying Pun, Hong Kong Island", district: "Hong Kong Island", floorArea: 2100, yearBuilt: 1988, status: "Active", contact: { manager: "Lam Wai Man", phone: "+852 2547 2345", email: "waiman.lam@plk.org.hk", role: "Centre Manager" }, attachments: [{ name: "Building Safety Report.pdf", date: "2025-12-15", size: "4.0 MB" }] },
-  { id: 9, name: "PLK Wan Chai Home for the Elderly", type: "Elderly Home", address: "120 Johnston Road, Wan Chai, Hong Kong Island", district: "Hong Kong Island", floorArea: 1900, yearBuilt: 1990, status: "Active", contact: { manager: "Yip Pui Ling", phone: "+852 2573 6789", email: "puiling.yip@plk.org.hk", role: "Centre Manager" }, attachments: [] },
-  { id: 10, name: "PLK Kwok Law Kwai Chun Home for the Elderly", type: "Elderly Home", address: "88 Queen's Road West, Sheung Wan, Hong Kong Island", district: "Hong Kong Island", floorArea: 2400, yearBuilt: 1996, status: "Active", contact: { manager: "Chow Kit Ying", phone: "+852 2548 3456", email: "kitying.chow@plk.org.hk", role: "Centre Manager" }, attachments: [{ name: "Insurance Certificate 2026.pdf", date: "2026-01-05", size: "1.2 MB" }] },
-  { id: 11, name: "PLK Angela Leong On Kei Kindergarten-cum-Nursery", type: "Child Care Centre", address: "156 Lai Chi Kok Road, Sham Shui Po, Kowloon", district: "Kowloon", floorArea: 1200, yearBuilt: 2008, status: "Active", contact: { manager: "So Ming Yi", phone: "+852 2327 7890", email: "mingyi.so@plk.org.hk", role: "Centre Manager" }, attachments: [{ name: "Child Safety Policy.pdf", date: "2026-06-01", size: "0.8 MB" }] },
-  { id: 12, name: "PLK Child Development Centre (Causeway Bay)", type: "Child Care Centre", address: "66 Leighton Road, Causeway Bay", district: "Hong Kong Island", floorArea: 1100, yearBuilt: 2014, status: "Active", contact: { manager: "Kwok Hiu Lam", phone: "+852 2893 4567", email: "hiulam.kwok@plk.org.hk", role: "Centre Manager" }, attachments: [] },
+  { id: 1, name: "PLK Main Building (Causeway Bay)", service: "SSD", unitCode: "CB-01", unit: "Headquarters", lsgNlsg: "LSG", contact: "Chan Siu Ming", email: "siuming.chan@plk.org.hk", address: "66 Leighton Road, Causeway Bay", phone: "+852 2839 1234" },
+  { id: 2, name: "PLK Shek Kip Mei Community Services Centre", service: "SSD", unitCode: "SKM-01", unit: "Service Centre", lsgNlsg: "LSG", contact: "Leung Chi Fai", email: "chifai.leung@plk.org.hk", address: "130 La Chi Street, Sham Shui Po, Kowloon", phone: "+852 2776 3456" },
+  { id: 3, name: "PLK Making Life Beautiful Integrated Health Centre", service: "SSD", unitCode: "KLB-01", unit: "Health Centre", lsgNlsg: "NLSG", contact: "Wong Pik Shan", email: "pikshan.wong@plk.org.hk", address: "123 Ning Yuen Street, Kowloon Bay, Kowloon", phone: "+852 2756 7890" },
+  { id: 4, name: "PLK Cheerful Court Integrated Health Centre", service: "SSD", unitCode: "CC-01", unit: "Health Centre", lsgNlsg: "NLSG", contact: "Tang Hiu Ming", email: "hiuming.tang@plk.org.hk", address: "88 Yen Chow Street, Sham Shui Po, Kowloon", phone: "+852 2362 1234" },
+  { id: 5, name: "PLK Tin Shui Wai Rehabilitation Centre", service: "SSD", unitCode: "TSW-01", unit: "Rehabilitation Centre", lsgNlsg: "LSG", contact: "Ng Ka Wai", email: "kawai.ng@plk.org.hk", address: "9 Tin Hei Street, Tin Shui Wai, New Territories", phone: "+852 2459 5678" },
+  { id: 6, name: "PLK Lee Chiu Kong Memorial Centre", service: "SSD", unitCode: "KT-01", unit: "Rehabilitation Centre", lsgNlsg: "LSG", contact: "Ip Suet Ying", email: "suetying.ip@plk.org.hk", address: "100 Wai Yip Street, Kwun Tong, Kowloon", phone: "+852 2389 4567" },
+  { id: 7, name: "PLK Y.C. Cheng Centre", service: "SSD", unitCode: "AB-01", unit: "Rehabilitation Centre", lsgNlsg: "NLSG", contact: "Fong Tsz Wan", email: "tszwan.fong@plk.org.hk", address: "200 Aberdeen Main Road, Aberdeen, Hong Kong Island", phone: "+852 2552 8901" },
+  { id: 8, name: "PLK Sai Ying Pun Home for the Elderly", service: "SSD", unitCode: "SYP-01", unit: "Elderly Home", lsgNlsg: "Contract Home", contact: "Lam Wai Man", email: "waiman.lam@plk.org.hk", address: "35 First Street, Sai Ying Pun, Hong Kong Island", phone: "+852 2547 2345" },
+  { id: 9, name: "PLK Wan Chai Home for the Elderly", service: "SSD", unitCode: "WC-01", unit: "Elderly Home", lsgNlsg: "Contract Home", contact: "Yip Pui Ling", email: "puiling.yip@plk.org.hk", address: "120 Johnston Road, Wan Chai, Hong Kong Island", phone: "+852 2573 6789" },
+  { id: 10, name: "PLK Kwok Law Kwai Chun Home for the Elderly", service: "SSD", unitCode: "SW-01", unit: "Elderly Home", lsgNlsg: "Contract Home", contact: "Chow Kit Ying", email: "kitying.chow@plk.org.hk", address: "88 Queen's Road West, Sheung Wan, Hong Kong Island", phone: "+852 2548 3456" },
+  { id: 11, name: "PLK Angela Leong On Kei Kindergarten-cum-Nursery", service: "SSD", unitCode: "SSP-01", unit: "Child Care Centre", lsgNlsg: "NLSG", contact: "So Ming Yi", email: "mingyi.so@plk.org.hk", address: "156 Lai Chi Kok Road, Sham Shui Po, Kowloon", phone: "+852 2327 7890" },
+  { id: 12, name: "PLK Child Development Centre (Causeway Bay)", service: "SSD", unitCode: "CB-02", unit: "Child Development Centre", lsgNlsg: "NLSG", contact: "Kwok Hiu Lam", email: "hiulam.kwok@plk.org.hk", address: "66 Leighton Road, Causeway Bay", phone: "+852 2893 4567" },
 ];
 
 export const ASSETS = [
-  { id: "AST-001", name: "Central AHU System (CH-03)", type: "HVAC", location: "PLK Lee Chiu Kong Memorial Centre", status: "Operational", lastService: "2026-07-15", nextService: "2026-10-15", manufacturer: "Carrier", model: "30XA-120", installYear: 2019 },
-  { id: "AST-002", name: "Fire Suppression System", type: "Fire Safety", location: "PLK Shek Kip Mei Community Services Centre", status: "Needs Inspection", lastService: "2026-04-01", nextService: "2026-08-20", manufacturer: "Tyco", model: "Sprinkler SYS-A", installYear: 2017 },
-  { id: "AST-003", name: "Elevator Bank A (3 units)", type: "Vertical Transport", location: "PLK Lee Chiu Kong Memorial Centre", status: "Operational", lastService: "2026-06-20", nextService: "2026-09-20", manufacturer: "Otis", model: "GEN2-1600", installYear: 2018 },
-  { id: "AST-004", name: "Backup Generator 500kVA", type: "Power", location: "PLK Y.C. Cheng Centre", status: "Under Maintenance", lastService: "2026-08-10", nextService: "2026-08-17", manufacturer: "Cummins", model: "C500D5", installYear: 2016 },
-  { id: "AST-005", name: "CCTV Network (64 cameras)", type: "Security", location: "All Sites", status: "Operational", lastService: "2026-08-01", nextService: "2026-11-01", manufacturer: "Hikvision", model: "DS-2CD series", installYear: 2020 },
-  { id: "AST-006", name: "Water Pump Station", type: "Plumbing", location: "PLK Tin Shui Wai Rehabilitation Centre", status: "Operational", lastService: "2026-07-20", nextService: "2026-10-20", manufacturer: "Grundfos", model: "CR 32-4", installYear: 2021 },
-  { id: "AST-007", name: "Kitchen Exhaust System", type: "MEP", location: "PLK Shek Kip Mei Community Services Centre", status: "Needs Inspection", lastService: "2026-05-15", nextService: "2026-08-18", manufacturer: "Halton", model: "Capture Ray V", installYear: 2019 },
-  { id: "AST-008", name: "LED Lighting — Corridors", type: "Electrical", location: "PLK Tin Shui Wai Rehabilitation Centre", status: "Operational", lastService: "2026-03-01", nextService: "2027-03-01", manufacturer: "Philips", model: "CoreLine Panel", installYear: 2023 },
+  { id: "AST-001", name: "Central AHU System (CH-03)", type: "HVAC", location: "PLK Lee Chiu Kong Memorial Centre", status: "Operational", lastService: "2026-07-15", nextService: "2026-10-15", manufacturer: "Carrier", model: "30XA-120", serialNumber: "CAR-2019-08432", installYear: 2019, warrantyExpiry: "2024-07-15", expectedLifespan: 20, condition: "Good", department: "SSD", serviceHistory: [
+    { date: "2026-07-15", type: "Preventive Maintenance", description: "Quarterly filter replacement and coil cleaning", contractor: "Best Maintenance Co." },
+    { date: "2026-04-10", type: "Preventive Maintenance", description: "Quarterly filter replacement and coil cleaning", contractor: "Best Maintenance Co." },
+    { date: "2026-01-12", type: "Corrective Maintenance", description: "Replaced faulty expansion valve", contractor: "Best Maintenance Co." },
+  ] },
+  { id: "AST-002", name: "Fire Suppression System", type: "Fire Safety", location: "PLK Shek Kip Mei Community Services Centre", status: "Needs Inspection", lastService: "2026-04-01", nextService: "2026-08-20", manufacturer: "Tyco", model: "Sprinkler SYS-A", serialNumber: "TYC-2017-11204", installYear: 2017, warrantyExpiry: "2022-04-01", expectedLifespan: 25, condition: "Fair", department: "SSD", serviceHistory: [
+    { date: "2026-04-01", type: "Annual Inspection", description: "Full sprinkler system inspection and flow test", contractor: "Sun Wah Engineering" },
+    { date: "2025-04-05", type: "Annual Inspection", description: "Full sprinkler system inspection and flow test", contractor: "Sun Wah Engineering" },
+  ] },
+  { id: "AST-003", name: "Elevator Bank A (3 units)", type: "Vertical Transport", location: "PLK Lee Chiu Kong Memorial Centre", status: "Operational", lastService: "2026-06-20", nextService: "2026-09-20", manufacturer: "Otis", model: "GEN2-1600", serialNumber: "OTS-2018-55671", installYear: 2018, warrantyExpiry: "2023-06-20", expectedLifespan: 25, condition: "Good", department: "SSD", serviceHistory: [
+    { date: "2026-06-20", type: "Preventive Maintenance", description: "Semi-annual lift inspection and lubrication", contractor: "Dragon City Engineering" },
+    { date: "2025-12-18", type: "Preventive Maintenance", description: "Semi-annual lift inspection and lubrication", contractor: "Dragon City Engineering" },
+    { date: "2025-06-15", type: "Corrective Maintenance", description: "Replaced door operator motor on Unit 2", contractor: "Dragon City Engineering" },
+  ] },
+  { id: "AST-004", name: "Backup Generator 500kVA", type: "Power", location: "PLK Y.C. Cheng Centre", status: "Under Maintenance", lastService: "2026-08-10", nextService: "2026-08-17", manufacturer: "Cummins", model: "C500D5", serialNumber: "CUM-2016-33412", installYear: 2016, warrantyExpiry: "2021-08-10", expectedLifespan: 20, condition: "Fair", department: "PWD", serviceHistory: [
+    { date: "2026-08-10", type: "Preventive Maintenance", description: "Quarterly oil change, filter replacement, load bank test", contractor: "Best Maintenance Co." },
+    { date: "2026-05-12", type: "Preventive Maintenance", description: "Quarterly servicing", contractor: "Best Maintenance Co." },
+    { date: "2026-02-08", type: "Corrective Maintenance", description: "Replaced battery set", contractor: "Best Maintenance Co." },
+  ] },
+  { id: "AST-005", name: "CCTV Network (64 cameras)", type: "Security", location: "All Sites", status: "Operational", lastService: "2026-08-01", nextService: "2026-11-01", manufacturer: "Hikvision", model: "DS-2CD series", serialNumber: "HKS-2020-88745", installYear: 2020, warrantyExpiry: "2025-08-01", expectedLifespan: 10, condition: "Good", department: "SSD", serviceHistory: [
+    { date: "2026-08-01", type: "Preventive Maintenance", description: "Quarterly firmware update and lens cleaning", contractor: "True Way Security Technology" },
+    { date: "2026-05-03", type: "Preventive Maintenance", description: "Quarterly firmware update and lens cleaning", contractor: "True Way Security Technology" },
+  ] },
+  { id: "AST-006", name: "Water Pump Station", type: "Plumbing", location: "PLK Tin Shui Wai Rehabilitation Centre", status: "Operational", lastService: "2026-07-20", nextService: "2026-10-20", manufacturer: "Grundfos", model: "CR 32-4", serialNumber: "GRF-2021-22109", installYear: 2021, warrantyExpiry: "2026-07-20", expectedLifespan: 15, condition: "Good", department: "PWD", serviceHistory: [
+    { date: "2026-07-20", type: "Preventive Maintenance", description: "Semi-annual pump inspection and pressure test", contractor: "Sun Wah Engineering" },
+    { date: "2026-01-15", type: "Preventive Maintenance", description: "Semi-annual pump inspection and pressure test", contractor: "Sun Wah Engineering" },
+  ] },
+  { id: "AST-007", name: "Kitchen Exhaust System", type: "MEP", location: "PLK Shek Kip Mei Community Services Centre", status: "Needs Inspection", lastService: "2026-05-15", nextService: "2026-08-18", manufacturer: "Halton", model: "Capture Ray V", serialNumber: "HLT-2019-44567", installYear: 2019, warrantyExpiry: "2024-05-15", expectedLifespan: 15, condition: "Fair", department: "SSD", serviceHistory: [
+    { date: "2026-05-15", type: "Annual Inspection", description: "Kitchen exhaust duct cleaning and fire damper test", contractor: "Green Field Environmental" },
+    { date: "2025-05-18", type: "Annual Inspection", description: "Kitchen exhaust duct cleaning and fire damper test", contractor: "Green Field Environmental" },
+  ] },
+  { id: "AST-008", name: "LED Lighting — Corridors", type: "Electrical", location: "PLK Tin Shui Wai Rehabilitation Centre", status: "Operational", lastService: "2026-03-01", nextService: "2027-03-01", manufacturer: "Philips", model: "CoreLine Panel", serialNumber: "PHI-2023-99812", installYear: 2023, warrantyExpiry: "2028-03-01", expectedLifespan: 15, condition: "Good", department: "SSD", serviceHistory: [
+    { date: "2026-03-01", type: "Annual Inspection", description: "Annual LED panel inspection and driver check", contractor: "Best Maintenance Co." },
+  ] },
 ];
 
 export { COMPLIANCE_CATEGORIES, COMPLIANCE_DOCS, CATEGORY_CONFIG, formatCycle } from './complianceDocs';
@@ -705,7 +731,7 @@ export const CONTRACTS = [
     name: "PLK Multi-Site HVAC Maintenance Contract",
     status: "Active",
     contractorId: "CTR-001",
-    workOrders: ["WO-2026-0891", "WO-2026-0907"],
+    workOrders: ["S-260891", "S-260907"],
     facilities: ["PLK Lee Chiu Kong Memorial Centre", "PLK Tin Shui Wai Rehabilitation Centre"],
     contractSum: 134000,
     awardedDate: "2026-07-01",
@@ -717,7 +743,7 @@ export const CONTRACTS = [
     name: "Fire Safety Certification Package",
     status: "Active",
     contractorId: "CTR-002",
-    workOrders: ["WO-2026-0892", "WO-2026-0906", "WO-2026-0880"],
+    workOrders: ["S-260892", "S-260906", "S-260880"],
     facilities: ["PLK Shek Kip Mei Community Services Centre", "PLK Tin Shui Wai Rehabilitation Centre", "PLK Lee Chiu Kong Memorial Centre"],
     contractSum: 54500,
     awardedDate: "2026-06-15",
@@ -729,7 +755,7 @@ export const CONTRACTS = [
     name: "Y.C. Centre Electrical Upgrade Package",
     status: "Being Formed",
     contractorId: null,
-    workOrders: ["WO-2026-0894", "WO-2026-0895", "WO-2026-0889"],
+    workOrders: ["S-260894", "S-260895", "S-260889"],
     facilities: ["PLK Y.C. Cheng Centre"],
     contractSum: 155000,
     awardedDate: null,
@@ -741,7 +767,7 @@ export const CONTRACTS = [
     name: "Tin Shui Wai Renovation & Maintenance",
     status: "Being Formed",
     contractorId: null,
-    workOrders: ["WO-2026-0893", "WO-2026-0903", "WO-2026-0905"],
+    workOrders: ["S-260893", "S-260903", "S-260905"],
     facilities: ["PLK Tin Shui Wai Rehabilitation Centre"],
     contractSum: 276000,
     awardedDate: null,
@@ -753,7 +779,7 @@ export const CONTRACTS = [
     name: "CCTV & Security Systems Upgrade",
     status: "Active",
     contractorId: "CTR-006",
-    workOrders: ["WO-2026-0896"],
+    workOrders: ["S-260896"],
     facilities: ["PLK Shek Kip Mei Community Services Centre"],
     contractSum: 89000,
     awardedDate: "2026-07-20",

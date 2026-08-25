@@ -1,18 +1,9 @@
 import { useState, useMemo } from 'react';
 import { PROPERTIES, COMPLIANCE_DOCS } from '../data/constants';
 import { useTranslation } from '../i18n/LanguageContext';
-import { Plus, Search, Eye, Pencil, X, ArrowUpDown, ArrowUp, ArrowDown, MapPin, Building2, Phone, Mail, User, FileText, Calendar, Ruler, HeartPulse, HandHelping, Heart, Baby, Users, Ban } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, X, ArrowUpDown, ArrowUp, ArrowDown, MapPin, Building2, Phone, Mail, User } from 'lucide-react';
 
-const ALL_TYPES = ['All', 'Headquarters', 'Community Centre', 'Health Centre', 'Rehabilitation Centre', 'Elderly Home', 'Child Care Centre'];
-
-const TYPE_CONFIG = {
-  Headquarters:        { icon: Building2,     color: '#1E40AF', bg: '#EFF6FF' },
-  'Community Centre':  { icon: Users,         color: '#0D9488', bg: '#F0FDFA' },
-  'Health Centre':     { icon: HeartPulse,    color: '#DC2626', bg: '#FEF2F2' },
-  'Rehabilitation Centre': { icon: HandHelping, color: '#7C3AED', bg: '#F5F3FF' },
-  'Elderly Home':      { icon: Heart,         color: '#EA580C', bg: '#FFF7ED' },
-  'Child Care Centre': { icon: Baby,          color: '#DB2777', bg: '#FDF2F8' },
-};
+const ALL_LSG = ['All', 'LSG', 'NLSG', 'Contract Home'];
 
 function SortIcon({ col, sortCol, sortDir }) {
   if (sortCol !== col) return <ArrowUpDown size={11} color="#CBD5E1" />;
@@ -43,13 +34,16 @@ function FilterDropdown({ label, options, selected, onSelect, counts }) {
   );
 }
 
-function TypeBadge({ type }) {
-  const cfg = TYPE_CONFIG[type] || { icon: Building2, color: '#64748B', bg: '#F1F5F9' };
-  const Icon = cfg.icon;
+function TypeBadge({ lsgNlsg }) {
+  const config = {
+    LSG: { color: '#1E40AF', bg: '#EFF6FF' },
+    NLSG: { color: '#0D9488', bg: '#F0FDFA' },
+    'Contract Home': { color: '#EA580C', bg: '#FFF7ED' },
+  };
+  const cfg = config[lsgNlsg] || { color: '#64748B', bg: '#F1F5F9' };
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 8, background: cfg.bg, color: cfg.color, whiteSpace: 'nowrap' }}>
-      <Icon size={13} strokeWidth={2.2} />
-      {type}
+      {lsgNlsg}
     </span>
   );
 }
@@ -57,8 +51,8 @@ function TypeBadge({ type }) {
 export default function Properties({ onViewProperty, selectedCenter }) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState('All');
-  const [sortCol, setSortCol] = useState('name');
+  const [lsgFilter, setLsgFilter] = useState('All');
+  const [sortCol, setSortCol] = useState('unitCode');
   const [sortDir, setSortDir] = useState('asc');
   const [previewProp, setPreviewProp] = useState(null);
 
@@ -66,18 +60,18 @@ export default function Properties({ onViewProperty, selectedCenter }) {
     ? PROPERTIES.filter((p) => p.name === selectedCenter)
     : PROPERTIES;
 
-  const typeCounts = useMemo(() => {
+  const lsgCounts = useMemo(() => {
     const c = { All: baseProperties.length };
-    baseProperties.forEach((p) => { c[p.type] = (c[p.type] || 0) + 1; });
+    baseProperties.forEach((p) => { c[p.lsgNlsg] = (c[p.lsgNlsg] || 0) + 1; });
     return c;
   }, [baseProperties]);
 
   const filtered = useMemo(() => {
     let list = baseProperties.filter((p) => {
-      if (typeFilter !== 'All' && p.type !== typeFilter) return false;
+      if (lsgFilter !== 'All' && p.lsgNlsg !== lsgFilter) return false;
       if (search) {
         const q = search.toLowerCase();
-        return p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q) || p.type.toLowerCase().includes(q);
+        return p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q) || p.unitCode.toLowerCase().includes(q) || p.contact.toLowerCase().includes(q) || p.service.toLowerCase().includes(q);
       }
       return true;
     });
@@ -88,7 +82,7 @@ export default function Properties({ onViewProperty, selectedCenter }) {
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return list;
-  }, [baseProperties, search, typeFilter, sortCol, sortDir]);
+  }, [baseProperties, search, lsgFilter, sortCol, sortDir]);
 
   const handleSort = (col) => {
     if (sortCol === col) setSortDir((d) => d === 'asc' ? 'desc' : 'asc');
@@ -96,7 +90,7 @@ export default function Properties({ onViewProperty, selectedCenter }) {
   };
 
   const activeFilters = [];
-  if (typeFilter !== 'All') activeFilters.push({ key: 'type', label: `Type: ${typeFilter}`, clear: () => setTypeFilter('All') });
+  if (lsgFilter !== 'All') activeFilters.push({ key: 'lsg', label: `LSG: ${lsgFilter}`, clear: () => setLsgFilter('All') });
 
   const getPropDocs = (propName) => COMPLIANCE_DOCS.filter((d) => d.center === propName);
 
@@ -118,7 +112,7 @@ export default function Properties({ onViewProperty, selectedCenter }) {
           <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('properties.searchPlaceholder')} style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none' }} />
         </div>
-        <FilterDropdown label="Type" options={ALL_TYPES} selected={typeFilter} onSelect={setTypeFilter} counts={typeCounts} />
+        <FilterDropdown label="LSG" options={ALL_LSG} selected={lsgFilter} onSelect={setLsgFilter} counts={lsgCounts} />
       </div>
 
       {/* Active Filter Chips */}
@@ -130,7 +124,7 @@ export default function Properties({ onViewProperty, selectedCenter }) {
               <button onClick={f.clear} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: 'var(--primary)' }}><X size={12} /></button>
             </span>
           ))}
-          <button onClick={() => setTypeFilter('All')} style={{ fontSize: 12, color: '#64748B', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>{t('compliance.clearAll')}</button>
+          <button onClick={() => setLsgFilter('All')} style={{ fontSize: 12, color: '#64748B', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>{t('compliance.clearAll')}</button>
         </div>
       )}
 
@@ -140,12 +134,18 @@ export default function Properties({ onViewProperty, selectedCenter }) {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#F8FAFC', borderBottom: '1px solid var(--border)' }}>
-                <th onClick={() => handleSort('name')} style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: '#64748B', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', background: sortCol === 'name' ? '#F1F5F9' : undefined }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{t('properties.col.name')} <SortIcon col="name" sortCol={sortCol} sortDir={sortDir} /></span>
-                </th>
-                <th onClick={() => handleSort('type')} style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: '#64748B', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', width: 220, background: sortCol === 'type' ? '#F1F5F9' : undefined }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{t('properties.col.type')} <SortIcon col="type" sortCol={sortCol} sortDir={sortDir} /></span>
-                </th>
+                {[
+                  { key: 'service', label: t('properties.col.service') || 'Service' },
+                  { key: 'unitCode', label: t('properties.col.unitCode') || 'Unit Code' },
+                  { key: 'name', label: t('properties.col.name') },
+                  { key: 'unit', label: t('properties.col.unit') || 'Unit' },
+                  { key: 'lsgNlsg', label: 'LSG/NLSG' },
+                  { key: 'contact', label: t('properties.col.contact') || 'Contact' },
+                ].map((col) => (
+                  <th key={col.key} onClick={() => handleSort(col.key)} style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: '#64748B', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', background: sortCol === col.key ? '#F1F5F9' : undefined }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{col.label} <SortIcon col={col.key} sortCol={sortCol} sortDir={sortDir} /></span>
+                  </th>
+                ))}
                 <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: '#64748B', textAlign: 'right', textTransform: 'uppercase', letterSpacing: '0.05em', width: 120 }}>{t('properties.col.actions')}</th>
               </tr>
             </thead>
@@ -153,26 +153,25 @@ export default function Properties({ onViewProperty, selectedCenter }) {
               {filtered.map((prop) => (
                 <tr key={prop.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
                   <td style={{ padding: '12px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ width: 34, height: 34, borderRadius: 8, background: (TYPE_CONFIG[prop.type] || TYPE_CONFIG.Headquarters).bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        {(() => { const Cfg = TYPE_CONFIG[prop.type] || TYPE_CONFIG.Headquarters; const Ic = Cfg.icon; return <Ic size={16} color={Cfg.color} />; })()}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{prop.name}</div>
-                        <div style={{ fontSize: 11, color: '#94A3B8', display: 'flex', alignItems: 'center', gap: 3, marginTop: 2 }}><MapPin size={10} />{prop.address}</div>
-                      </div>
+                    <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: '#F1F5F9', color: '#475569' }}>{prop.service}</span>
+                  </td>
+                  <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--info)', fontFamily: 'monospace' }}>{prop.unitCode}</td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{prop.name}</div>
+                      <div style={{ fontSize: 11, color: '#94A3B8', display: 'flex', alignItems: 'center', gap: 3, marginTop: 2 }}><MapPin size={10} />{prop.address}</div>
                     </div>
                   </td>
-                  <td style={{ padding: '12px 16px' }}><TypeBadge type={prop.type} /></td>
+                  <td style={{ padding: '12px 16px', fontSize: 13, color: '#64748B' }}>{prop.unit}</td>
+                  <td style={{ padding: '12px 16px' }}><TypeBadge lsgNlsg={prop.lsgNlsg} /></td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#334155' }}>{prop.contact}</div>
+                    <div style={{ fontSize: 11, color: '#94A3B8' }}>{prop.email}</div>
+                  </td>
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}>
                       <button onClick={() => setPreviewProp(prop)} title={t('common.view')} style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Eye size={14} color="#64748B" /></button>
                       <button onClick={() => onViewProperty(prop.id)} title={t('common.edit')} style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Pencil size={14} color="#64748B" /></button>
-                      <button onClick={() => {}} title={t('properties.actions.deactivate')} style={{ padding: '4px 10px', height: 30, borderRadius: 6, border: '1px solid #FECACA', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#991B1B', whiteSpace: 'nowrap', transition: 'all 0.15s' }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.borderColor = '#F87171'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#FECACA'; }}>
-                        <Ban size={12} /> {t('properties.actions.deactivate')}
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -192,39 +191,34 @@ export default function Properties({ onViewProperty, selectedCenter }) {
       {previewProp && (
         <div onClick={() => setPreviewProp(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 14, width: '100%', maxWidth: 560, maxHeight: '80vh', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            {/* Header */}
             <div style={{ padding: '18px 24px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                {(() => { const Cfg = TYPE_CONFIG[previewProp.type] || TYPE_CONFIG.Headquarters; const Ic = Cfg.icon; return <Ic size={18} color={Cfg.color} />; })()}
+                <Building2 size={18} color="var(--info)" />
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>{previewProp.name}</span>
               </div>
               <button onClick={() => setPreviewProp(null)} style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #E2E8F0', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={14} color="#64748B" /></button>
             </div>
-            {/* Body */}
             <div style={{ padding: '20px 24px', overflowY: 'auto' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <TypeBadge type={previewProp.type} />
-                <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 10, background: 'var(--success-bg)', color: 'var(--success)' }}>{previewProp.status}</span>
+                <TypeBadge lsgNlsg={previewProp.lsgNlsg} />
+                <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 10, background: '#F1F5F9', color: '#475569' }}>{previewProp.service}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 10, background: 'var(--info-bg)', color: 'var(--info)', fontFamily: 'monospace' }}>{previewProp.unitCode}</span>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 24px', marginBottom: 20 }}>
-                <PreviewField icon={<MapPin size={13} />} label={t('propertyDetail.address')} value={previewProp.address} />
-                <PreviewField icon={<MapPin size={13} />} label={t('propertyDetail.district')} value={previewProp.district} />
-                <PreviewField icon={<Ruler size={13} />} label={t('propertyDetail.floorArea')} value={`${previewProp.floorArea.toLocaleString()} sqm`} />
-                <PreviewField icon={<Calendar size={13} />} label={t('propertyDetail.yearBuilt')} value={previewProp.yearBuilt} />
+                <PreviewField icon={<MapPin size={13} />} label="Address" value={previewProp.address} />
+                <PreviewField icon={<Building2 size={13} />} label="Unit" value={previewProp.unit} />
               </div>
 
-              {/* Contact */}
               <div style={{ padding: 16, borderRadius: 10, border: '1px solid #E2E8F0', background: '#F8FAFC', marginBottom: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>{t('propertyDetail.contactCard')}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}><User size={13} color="#64748B" /><span style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>{previewProp.contact.manager}</span><span style={{ fontSize: 11, color: '#94A3B8' }}>{previewProp.contact.role}</span></div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Phone size={13} color="#64748B" /><a href={`tel:${previewProp.contact.phone}`} style={{ fontSize: 13, color: 'var(--info)', textDecoration: 'none' }}>{previewProp.contact.phone}</a></div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Mail size={13} color="#64748B" /><a href={`mailto:${previewProp.contact.email}`} style={{ fontSize: 13, color: 'var(--info)', textDecoration: 'none' }}>{previewProp.contact.email}</a></div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>Contact</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}><User size={13} color="#64748B" /><span style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>{previewProp.contact}</span></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Phone size={13} color="#64748B" /><a href={`tel:${previewProp.phone}`} style={{ fontSize: 13, color: 'var(--info)', textDecoration: 'none' }}>{previewProp.phone}</a></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Mail size={13} color="#64748B" /><a href={`mailto:${previewProp.email}`} style={{ fontSize: 13, color: 'var(--info)', textDecoration: 'none' }}>{previewProp.email}</a></div>
               </div>
 
-              {/* Compliance Summary */}
               <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>{t('propertyDetail.complianceDocuments')}</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Compliance</div>
                 <div style={{ display: 'flex', gap: 12 }}>
                   {(() => {
                     const docs = getPropDocs(previewProp.name);
@@ -241,22 +235,7 @@ export default function Properties({ onViewProperty, selectedCenter }) {
                   })()}
                 </div>
               </div>
-
-              {/* Attachments */}
-              {previewProp.attachments.length > 0 && (
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>{t('propertyDetail.attachments')}</div>
-                  {previewProp.attachments.map((a, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 6, background: '#F8FAFC', marginBottom: 4 }}>
-                      <FileText size={13} color="#64748B" />
-                      <span style={{ fontSize: 12, color: '#475569', flex: 1 }}>{a.name}</span>
-                      <span style={{ fontSize: 11, color: '#94A3B8' }}>{a.size}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
-            {/* Footer */}
             <div style={{ padding: '14px 24px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}>
               <button onClick={() => { setPreviewProp(null); onViewProperty(previewProp.id); }} style={{ padding: '7px 16px', borderRadius: 6, border: '1px solid #E2E8F0', background: '#fff', fontSize: 12, fontWeight: 600, color: '#334155', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Pencil size={13} /> {t('common.viewDetails')}

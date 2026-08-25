@@ -99,8 +99,8 @@ export default function Dashboard({ selectedCenter }) {
   const [dateTo, setDateTo] = useState('');
   const [contractorFilter, setContractorFilter] = useState('All');
 
-  const districts = ['All', ...new Set(PROPERTIES.map((p) => p.district))];
-  const facilityTypes = ['All', ...new Set(PROPERTIES.map((p) => p.type))];
+  const serviceTypes = ['All', ...new Set(PROPERTIES.map((p) => p.service))];
+  const lsgNlsgTypes = ['All', ...new Set(PROPERTIES.map((p) => p.lsgNlsg))];
   const workCategories = ['All', ...BUILDER_CATS, ...SERVICE_CATS];
   const contractorNames = ['All', ...contractors.map((c) => c.name)];
 
@@ -108,11 +108,11 @@ export default function Dashboard({ selectedCenter }) {
     let list = workOrders;
     if (selectedCenter && selectedCenter !== 'All') list = list.filter((w) => w.center === selectedCenter);
     if (districtFilter !== 'All') {
-      const centreNames = PROPERTIES.filter((p) => p.district === districtFilter).map((p) => p.name);
+      const centreNames = PROPERTIES.filter((p) => p.service === districtFilter).map((p) => p.name);
       list = list.filter((w) => centreNames.includes(w.center));
     }
     if (typeFilter !== 'All') {
-      const centreNames = PROPERTIES.filter((p) => p.type === typeFilter).map((p) => p.name);
+      const centreNames = PROPERTIES.filter((p) => p.lsgNlsg === typeFilter).map((p) => p.name);
       list = list.filter((w) => centreNames.includes(w.center));
     }
     if (categoryFilter !== 'All') list = list.filter((w) => w.category === categoryFilter);
@@ -132,7 +132,7 @@ export default function Dashboard({ selectedCenter }) {
     let docs = COMPLIANCE_DOCS;
     if (selectedCenter && selectedCenter !== 'All') docs = docs.filter((d) => d.center === selectedCenter);
     if (districtFilter !== 'All') {
-      const centreNames = PROPERTIES.filter((p) => p.district === districtFilter).map((p) => p.name);
+      const centreNames = PROPERTIES.filter((p) => p.service === districtFilter).map((p) => p.name);
       docs = docs.filter((d) => centreNames.includes(d.center));
     }
     return docs;
@@ -185,15 +185,15 @@ export default function Dashboard({ selectedCenter }) {
   ];
 
   const typeCounts = {};
-  PROPERTIES.forEach((p) => { typeCounts[p.type] = (typeCounts[p.type] || 0) + 1; });
+  PROPERTIES.forEach((p) => { typeCounts[p.lsgNlsg] = (typeCounts[p.lsgNlsg] || 0) + 1; });
   const facilityByTypeData = Object.entries(typeCounts).map(([name, value]) => ({ name, value }));
 
-  const districtCounts = {};
-  PROPERTIES.forEach((p) => { districtCounts[p.district] = (districtCounts[p.district] || 0) + 1; });
-  const facilityByDistrictData = Object.entries(districtCounts).map(([name, value]) => ({ name, value }));
+  const serviceCounts = {};
+  PROPERTIES.forEach((p) => { serviceCounts[p.service] = (serviceCounts[p.service] || 0) + 1; });
+  const facilityByDistrictData = Object.entries(serviceCounts).map(([name, value]) => ({ name, value }));
 
-  const agingBuildings = PROPERTIES.filter((p) => CURRENT_YEAR - p.yearBuilt >= 20).sort((a, b) => a.yearBuilt - b.yearBuilt);
-  const over30 = agingBuildings.filter((p) => CURRENT_YEAR - p.yearBuilt >= 30);
+  const agingAssets = ASSETS.filter((a) => CURRENT_YEAR - a.installYear >= 8).sort((a, b) => a.installYear - b.installYear);
+  const over30 = agingAssets.filter((a) => CURRENT_YEAR - a.installYear >= 15);
 
   // Top facilities by WO count
   const woByCenter = {};
@@ -246,8 +246,8 @@ export default function Dashboard({ selectedCenter }) {
       <Card style={{ padding: '12px 16px', overflow: 'visible' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <Filter size={14} color="#64748B" />
-          <FilterDropdown label={t('dashboard.filter.district')} options={districts} selected={districtFilter} onSelect={setDistrictFilter} />
-          <FilterDropdown label={t('dashboard.filter.facilityType')} options={facilityTypes} selected={typeFilter} onSelect={setTypeFilter} />
+          <FilterDropdown label={t('dashboard.filter.district')} options={serviceTypes} selected={districtFilter} onSelect={setDistrictFilter} />
+          <FilterDropdown label={t('dashboard.filter.facilityType')} options={lsgNlsgTypes} selected={typeFilter} onSelect={setTypeFilter} />
           <FilterDropdown label={t('dashboard.filter.workCategory')} options={workCategories} selected={categoryFilter} onSelect={setCategoryFilter} />
           <FilterDropdown label={t('dashboard.filter.contractor')} options={contractorNames} selected={contractorFilter} onSelect={setContractorFilter} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#64748B' }}>
@@ -422,16 +422,16 @@ export default function Dashboard({ selectedCenter }) {
                 </ResponsiveContainer>
               </div>
             </div>
-            {/* Aging Buildings */}
+            {/* Aging Assets */}
             <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 8 }}>{t('dashboard.facility.agingBuildings')} <span style={{ fontWeight: 400, color: '#94A3B8' }}>({agingBuildings.length} {t('dashboard.facility.over20yr')}, {over30.length} {t('dashboard.facility.over30yr')})</span></div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 8 }}>{t('dashboard.facility.agingBuildings')} <span style={{ fontWeight: 400, color: '#94A3B8' }}>({agingAssets.length} {t('dashboard.facility.over20yr')}, {over30.length} {t('dashboard.facility.over30yr')})</span></div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {agingBuildings.map((p) => {
-                  const age = CURRENT_YEAR - p.yearBuilt;
+                {agingAssets.map((a) => {
+                  const age = CURRENT_YEAR - a.installYear;
                   return (
-                    <div key={p.id} style={{ padding: '6px 10px', borderRadius: 6, background: age >= 30 ? '#FEF2F2' : '#FFFBEB', border: `1px solid ${age >= 30 ? '#FECACA' : '#FDE68A'}`, fontSize: 11 }}>
-                      <span style={{ fontWeight: 600, color: 'var(--foreground)' }}>{p.name.replace('PLK ', '')}</span>
-                      <span style={{ color: age >= 30 ? '#DC2626' : '#D97706', marginLeft: 4 }}>({age}yr)</span>
+                    <div key={a.id} style={{ padding: '6px 10px', borderRadius: 6, background: age >= 15 ? '#FEF2F2' : '#FFFBEB', border: `1px solid ${age >= 15 ? '#FECACA' : '#FDE68A'}`, fontSize: 11 }}>
+                      <span style={{ fontWeight: 600, color: 'var(--foreground)' }}>{a.name}</span>
+                      <span style={{ color: age >= 15 ? '#DC2626' : '#D97706', marginLeft: 4 }}>({age}yr)</span>
                     </div>
                   );
                 })}

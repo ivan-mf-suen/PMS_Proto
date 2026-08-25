@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { ArrowLeft, Building2, MapPin, Ruler, Calendar, User, Phone, Mail, FileText, ShieldCheck, AlertTriangle, CheckCircle, Clock, Package, ClipboardList, Upload, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Building2, MapPin, User, Phone, Mail, ShieldCheck, AlertTriangle, CheckCircle, Clock, Package, ClipboardList, ChevronDown, ChevronUp } from 'lucide-react';
 import { PROPERTIES, COMPLIANCE_DOCS, ASSETS, WORK_ORDERS } from '../data/constants';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export default function PropertyDetail({ propertyId, onBack }) {
   const { t } = useTranslation();
   const prop = PROPERTIES.find((p) => p.id === propertyId);
-  const [expandedSection, setExpandedSection] = useState({ compliance: true, attachments: true, wo: false, assets: false });
+  const [expandedSection, setExpandedSection] = useState({ compliance: true, attachments: false, wo: false, assets: false });
 
   if (!prop) {
     return (
@@ -37,7 +37,6 @@ export default function PropertyDetail({ propertyId, onBack }) {
 
   return (
     <div style={{ padding: 24, maxWidth: 1000 }}>
-      {/* Back Button */}
       <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginBottom: 20 }}>
           <ArrowLeft size={16} /> {t('propertyDetail.back')}
       </button>
@@ -52,8 +51,9 @@ export default function PropertyDetail({ propertyId, onBack }) {
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.02em' }}>{prop.name}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-              <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 10, background: '#F1F5F9', color: '#475569' }}>{prop.type}</span>
-              <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 10, background: 'var(--success-bg)', color: 'var(--success)' }}>{prop.status}</span>
+              <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 10, background: '#F1F5F9', color: '#475569' }}>{prop.service}</span>
+              <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 10, background: 'var(--info-bg)', color: 'var(--info)', fontFamily: 'monospace' }}>{prop.unitCode}</span>
+              <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 10, background: prop.lsgNlsg === 'LSG' ? '#EFF6FF' : prop.lsgNlsg === 'NLSG' ? '#F0FDFA' : '#FFF7ED', color: prop.lsgNlsg === 'LSG' ? '#1E40AF' : prop.lsgNlsg === 'NLSG' ? '#0D9488' : '#EA580C' }}>{prop.lsgNlsg}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, color: '#64748B', fontSize: 13 }}>
               <MapPin size={14} /> {prop.address}
@@ -64,41 +64,38 @@ export default function PropertyDetail({ propertyId, onBack }) {
 
       {/* Info Grid + Contact */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-        {/* Property Info */}
         <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', padding: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', marginBottom: 16 }}>Property Information</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <InfoRow icon={<MapPin size={14} />} label="District" value={prop.district} />
-            <InfoRow icon={<Ruler size={14} />} label="Floor Area" value={`${prop.floorArea.toLocaleString()} sqm`} />
-            <InfoRow icon={<Calendar size={14} />} label="Year Built" value={prop.yearBuilt} />
+            <InfoRow icon={<Building2 size={14} />} label="Service" value={prop.service} />
+            <InfoRow icon={<Building2 size={14} />} label="Unit Code" value={prop.unitCode} />
+            <InfoRow icon={<Building2 size={14} />} label="Unit" value={prop.unit} />
           </div>
         </div>
 
-        {/* Contact Info */}
         <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', padding: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', marginBottom: 16 }}>Contact Information</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <InfoRow icon={<User size={14} />} label="Manager" value={prop.contact.manager} />
-            <InfoRow icon={<User size={14} />} label="Role" value={prop.contact.role} />
+            <InfoRow icon={<User size={14} />} label="Contact Person" value={prop.contact} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Phone size={14} color="#94A3B8" />
               <div>
                 <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Phone</div>
-                <a href={`tel:${prop.contact.phone}`} style={{ fontSize: 13, color: 'var(--info)', textDecoration: 'none', fontWeight: 500 }}>{prop.contact.phone}</a>
+                <a href={`tel:${prop.phone}`} style={{ fontSize: 13, color: 'var(--info)', textDecoration: 'none', fontWeight: 500 }}>{prop.phone}</a>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Mail size={14} color="#94A3B8" />
               <div>
                 <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email</div>
-                <a href={`mailto:${prop.contact.email}`} style={{ fontSize: 13, color: 'var(--info)', textDecoration: 'none', fontWeight: 500 }}>{prop.contact.email}</a>
+                <a href={`mailto:${prop.email}`} style={{ fontSize: 13, color: 'var(--info)', textDecoration: 'none', fontWeight: 500 }}>{prop.email}</a>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Compliance Summary Cards */}
+      {/* Compliance Summary */}
       <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
         <div style={{ flex: 1, background: '#fff', borderRadius: 12, padding: 16, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--success-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CheckCircle size={20} color="var(--success)" /></div>
@@ -114,7 +111,7 @@ export default function PropertyDetail({ propertyId, onBack }) {
         </div>
       </div>
 
-      {/* Compliance Documents Section */}
+      {/* Compliance Documents */}
       <SectionHeader title="Compliance Documents" count={propDocs.length} icon={<ShieldCheck size={16} />} expanded={expandedSection.compliance} toggle={() => toggleSection('compliance')} />
       {expandedSection.compliance && (
         <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', marginBottom: 20, overflow: 'hidden' }}>
@@ -144,25 +141,6 @@ export default function PropertyDetail({ propertyId, onBack }) {
               )}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {/* Attachments Section */}
-      <SectionHeader title="Attachments" count={prop.attachments.length} icon={<FileText size={16} />} expanded={expandedSection.attachments} toggle={() => toggleSection('attachments')} action={<button style={{ padding: '4px 10px', fontSize: 11, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}><Upload size={11} /> Upload</button>} />
-      {expandedSection.attachments && (
-        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', marginBottom: 20, padding: 16 }}>
-          {prop.attachments.length > 0 ? prop.attachments.map((a, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, background: '#F8FAFC', marginBottom: 6 }}>
-              <FileText size={16} color="#64748B" />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: '#334155' }}>{a.name}</div>
-                <div style={{ fontSize: 11, color: '#94A3B8' }}>Uploaded {a.date}</div>
-              </div>
-              <span style={{ fontSize: 12, color: '#94A3B8' }}>{a.size}</span>
-            </div>
-          )) : (
-            <div style={{ padding: 24, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>No attachments yet</div>
-          )}
         </div>
       )}
 
@@ -242,7 +220,7 @@ function InfoRow({ icon, label, value }) {
   );
 }
 
-function SectionHeader({ title, count, icon, expanded, toggle, action }) {
+function SectionHeader({ title, count, icon, expanded, toggle }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, cursor: 'pointer' }} onClick={toggle}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
@@ -250,7 +228,6 @@ function SectionHeader({ title, count, icon, expanded, toggle, action }) {
         <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>{title}</span>
         <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500 }}>({count})</span>
       </div>
-      {action && <div onClick={(e) => e.stopPropagation()}>{action}</div>}
       {expanded ? <ChevronUp size={16} color="#94A3B8" /> : <ChevronDown size={16} color="#94A3B8" />}
     </div>
   );

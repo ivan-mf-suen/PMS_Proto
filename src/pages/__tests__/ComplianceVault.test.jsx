@@ -76,10 +76,10 @@ describe('ComplianceVault', () => {
   it('status card click toggles status filter', async () => {
     const user = userEvent.setup();
     renderVault();
-    const expiringText = screen.getAllByText('Expiring')[0];
-    await user.click(expiringText);
-    const clearBtn = screen.getByText('Clear all');
-    expect(clearBtn).toBeInTheDocument();
+    const expiredText = screen.getAllByText('Expired')[0];
+    await user.click(expiredText);
+    const clearBtns = screen.getAllByText('Clear all');
+    expect(clearBtns.length).toBeGreaterThanOrEqual(1);
   });
 
   it('category card click toggles category filter', async () => {

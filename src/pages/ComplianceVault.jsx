@@ -5,8 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { listAttachments, uploadAttachment, getAttachmentUrl, formatFileSize, formatTimestamp, formatDateOnly, isAttachmentActive, DOC_TYPES } from '../services/complianceFileService';
 import {
-  Search, AlertTriangle, CheckCircle, Clock, Bell, X, Eye, Pencil, Trash2,
-  ChevronDown, ChevronUp, Wind, Zap, Flame, ArrowUp, Shield, FileText,
+  Search, CheckCircle, Clock, Bell, X, Eye, Pencil, Trash2,
+  ChevronDown, ChevronUp, Wind, Zap, Flame, ArrowUp, Droplets, Leaf,
+  CircleHelp, FileText, Calendar,
   Upload, Download, Paperclip, FileImage,
 } from 'lucide-react';
 
@@ -15,13 +16,17 @@ const CATEGORY_KEY_MAP = {
   '定期檢測項目 電力檢查WR2': 'compliance.cat.ElectricalWR2',
   '年檢項目 消防': 'compliance.cat.FireSafety',
   '年檢項目 升降機/餐𨋢': 'compliance.cat.Lifts',
-  '年檢項目 牌照': 'compliance.cat.Licence',
+  '年檢項目 水務': 'compliance.cat.WaterHygiene',
+  '年檢項目 環境': 'compliance.cat.Environmental',
+  '年檢項目 煤氣': 'compliance.cat.Gas',
+  '年檢項目 其他': 'compliance.cat.Other',
   '年檢項目 租約': 'compliance.cat.Lease',
 };
 
 const CATEGORY_ICON = {
   '年檢項目 通風系統': Wind, '定期檢測項目 電力檢查WR2': Zap, '年檢項目 消防': Flame,
-  '年檢項目 升降機/餐𨋢': ArrowUp, '年檢項目 牌照': Shield, '年檢項目 租約': FileText,
+  '年檢項目 升降機/餐𨋢': ArrowUp, '年檢項目 水務': Droplets, '年檢項目 環境': Leaf,
+  '年檢項目 煤氣': Flame, '年檢項目 其他': CircleHelp, '年檢項目 租約': FileText,
 };
 
 const EMPTY_FORM = { name: '', category: '', center: '', documentRef: '', issuedBy: '', inspectionDate: '', nextInspection: '', expiry: '', cycleMonths: 12, responsible: '', notes: '', status: 'Valid' };
@@ -32,6 +37,8 @@ export default function ComplianceVault({ selectedCenter }) {
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [statusFilter, setStatusFilter] = useState('All');
+  const [expiryFrom, setExpiryFrom] = useState('');
+  const [expiryTo, setExpiryTo] = useState('');
   const [sortCol, setSortCol] = useState('nextInspection');
   const [sortDir, setSortDir] = useState('asc');
   const [modal, setModal] = useState(null);
@@ -52,13 +59,15 @@ export default function ComplianceVault({ selectedCenter }) {
     return activeDocs.filter((d) => {
       if (statusFilter !== 'All' && d.status !== statusFilter) return false;
       if (effectiveCenter !== 'All' && d.center !== effectiveCenter) return false;
+      if (expiryFrom && d.nextInspection < expiryFrom) return false;
+      if (expiryTo && d.nextInspection > expiryTo) return false;
       if (search) {
         const q = search.toLowerCase();
         return d.name.toLowerCase().includes(q) || d.center.toLowerCase().includes(q) || d.documentRef.toLowerCase().includes(q) || (d.responsible && d.responsible.toLowerCase().includes(q));
       }
       return true;
     });
-  }, [activeDocs, statusFilter, effectiveCenter, search]);
+  }, [activeDocs, statusFilter, effectiveCenter, search, expiryFrom, expiryTo]);
 
   // Table: applies ALL filters including category
   const filtered = useMemo(() => {
@@ -72,7 +81,6 @@ export default function ComplianceVault({ selectedCenter }) {
 
   // Summary bar counts: from filtered so they match the table when categories are selected test
   const validCount = filtered.filter((d) => d.status === 'Valid').length;
-  const expiringCount = filtered.filter((d) => d.status === 'Expiring').length;
   const expiredCount = filtered.filter((d) => d.status === 'Expired').length;
   const totalFiltered = filtered.length;
   const complianceRate = totalFiltered > 0 ? Math.round((validCount / totalFiltered) * 100) : 0;
@@ -109,8 +117,10 @@ export default function ComplianceVault({ selectedCenter }) {
   const activeFilterPills = [];
   selectedCategories.forEach((cat) => activeFilterPills.push({ key: `cat-${cat}`, label: `${t('compliance.col.category')}: ${t(CATEGORY_KEY_MAP[cat] || cat)}`, clear: () => toggleCategory(cat) }));
   if (statusFilter !== 'All') activeFilterPills.push({ key: 'status', label: `Status: ${statusFilter}`, clear: () => setStatusFilter('All') });
+  if (expiryFrom) activeFilterPills.push({ key: 'expiryFrom', label: `${t('compliance.filter.expiryFrom')}: ${expiryFrom}`, clear: () => setExpiryFrom('') });
+  if (expiryTo) activeFilterPills.push({ key: 'expiryTo', label: `${t('compliance.filter.expiryTo')}: ${expiryTo}`, clear: () => setExpiryTo('') });
   const hasFilters = activeFilterPills.length > 0;
-  const clearAllFilters = () => { clearCategories(); setStatusFilter('All'); setSearch(''); };
+  const clearAllFilters = () => { clearCategories(); setStatusFilter('All'); setSearch(''); setExpiryFrom(''); setExpiryTo(''); };
 
   const formUpdate = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
 
@@ -139,7 +149,6 @@ export default function ComplianceVault({ selectedCenter }) {
         </div>
         {/* Status counts — inline */}
         <StatusCount icon={<CheckCircle size={16} color="var(--success)" />} value={validCount} label={t('compliance.valid')} bg="var(--success-bg)" active={statusFilter === 'Valid'} onClick={() => toggleStatusFilter('Valid')} />
-        <StatusCount icon={<AlertTriangle size={16} color="#B45309" />} value={expiringCount} label={t('compliance.expiringSoon')} bg="#FEF3C7" active={statusFilter === 'Expiring'} onClick={() => toggleStatusFilter('Expiring')} />
         <StatusCount icon={<Clock size={16} color="#DC2626" />} value={expiredCount} label={t('compliance.expired')} bg="#FEE2E2" active={statusFilter === 'Expired'} onClick={() => toggleStatusFilter('Expired')} />
       </div>
 
@@ -185,6 +194,14 @@ export default function ComplianceVault({ selectedCenter }) {
         <div style={{ position: 'relative', flex: 1, minWidth: 240 }}>
           <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('compliance.searchPlaceholder')} style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none' }} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, padding: '0 10px' }}>
+          <Calendar size={14} color="#94A3B8" />
+          <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500, whiteSpace: 'nowrap' }}>{t('compliance.filter.expiryFrom')}</span>
+          <input type="date" value={expiryFrom} onChange={(e) => setExpiryFrom(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: 12, padding: '8px 2px', background: 'transparent', color: expiryFrom ? 'var(--foreground)' : '#94A3B8', fontFamily: 'inherit' }} />
+          <span style={{ fontSize: 11, color: '#CBD5E1' }}>—</span>
+          <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500, whiteSpace: 'nowrap' }}>{t('compliance.filter.expiryTo')}</span>
+          <input type="date" value={expiryTo} onChange={(e) => setExpiryTo(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: 12, padding: '8px 2px', background: 'transparent', color: expiryTo ? 'var(--foreground)' : '#94A3B8', fontFamily: 'inherit' }} />
         </div>
       </div>
 

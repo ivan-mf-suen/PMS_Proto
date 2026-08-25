@@ -357,8 +357,10 @@
   "compliance.cat.Asbestos": "Asbestos",
   "compliance.cat.Ventilation": "Ventilation System",
   "compliance.cat.ElectricalWR2": "Electrical Inspection WR2",
-  "compliance.cat.Licence": "Licence",
+  "compliance.cat.Other": "Other",
   "compliance.cat.Lease": "Lease",
+  "compliance.filter.expiryFrom": "Expiry from",
+  "compliance.filter.expiryTo": "Expiry to",
 
   "wo.group.buildersWorks": "Repair/Maintenance Builder's Works",
   "wo.group.buildingServices": "Building Services Works",

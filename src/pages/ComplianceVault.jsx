@@ -47,7 +47,7 @@ export default function ComplianceVault({ selectedCenter }) {
   const [cycleFilter, setCycleFilter] = useState([]);
   const [propertyFilter, setPropertyFilter] = useState([]);
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(50);
+  const [perPage, setPerPage] = useState(10);
 
   useEffect(() => {
     if (downloadMenu === null) return;

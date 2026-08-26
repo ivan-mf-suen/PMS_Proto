@@ -431,7 +431,8 @@ function StatusCount({ icon, value, label, bg, active, onClick, pct, subLabel })
       <div style={{ width: 38, height: 38, borderRadius: 10, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
       <div>
         <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', lineHeight: 1.1 }}>{pct != null ? `${pct}%` : value}</div>
-        <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{pct != null ? `${value} ${subLabel || 'documents'}` : label}</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: '#475569', marginTop: 2 }}>{label}</div>
+        {pct != null && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{value} {subLabel || 'documents'}</div>}
       </div>
     </div>
   );

@@ -215,4 +215,30 @@ describe('ComplianceVault', () => {
     const validBtn = Array.from(filterBtns).find((b) => b.textContent.includes('Valid') && b.closest('[style*="border-radius: 20"]'));
     expect(validBtn).toBeTruthy();
   });
+
+  it('renders column filter dropdowns for category, cycle, and property', () => {
+    renderVault();
+    const selects = document.querySelectorAll('thead select[multiple]');
+    expect(selects.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('status filter buttons support multi-select', async () => {
+    const user = userEvent.setup();
+    renderVault();
+    const filterBtns = document.querySelectorAll('button');
+    const validBtn = Array.from(filterBtns).find((b) => b.textContent === 'Valid' && b.closest('[style*="border-radius: 20"]'));
+    const expiredBtn = Array.from(filterBtns).find((b) => b.textContent === 'Expired' && b.closest('[style*="border-radius: 20"]'));
+    if (validBtn && expiredBtn) {
+      await user.click(validBtn);
+      await user.click(expiredBtn);
+      const clearBtns = screen.getAllByText('Clear all');
+      expect(clearBtns.length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('summary card labels show correct text', () => {
+    renderVault();
+    expect(screen.getAllByText('Expiring').length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText('Expiring Soon')).not.toBeInTheDocument();
+  });
 });

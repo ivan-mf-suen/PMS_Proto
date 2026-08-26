@@ -36,7 +36,7 @@ export default function ComplianceVault({ selectedCenter }) {
   const { docs, addDoc, updateDoc, removeDoc } = useCompliance();
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState([]);
   const [expiryFrom, setExpiryFrom] = useState('');
   const [expiryTo, setExpiryTo] = useState('');
   const [sortCol, setSortCol] = useState('nextInspection');
@@ -44,6 +44,8 @@ export default function ComplianceVault({ selectedCenter }) {
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [downloadMenu, setDownloadMenu] = useState(null);
+  const [cycleFilter, setCycleFilter] = useState([]);
+  const [propertyFilter, setPropertyFilter] = useState([]);
 
   useEffect(() => {
     if (downloadMenu === null) return;
@@ -58,7 +60,7 @@ export default function ComplianceVault({ selectedCenter }) {
 
   const toggleCategory = (cat) => setSelectedCategories((prev) => prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]);
   const clearCategories = () => setSelectedCategories([]);
-  const toggleStatusFilter = (status) => setStatusFilter((prev) => prev === status ? 'All' : status);
+  const toggleStatusFilter = (status) => setStatusFilter((prev) => prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]);
 
   const activeDocs = useMemo(() => docs.filter((d) => !d.removed), [docs]);
 
@@ -68,7 +70,7 @@ export default function ComplianceVault({ selectedCenter }) {
   // Used by categoryCoverage grid so all categories always remain visible
   const summaryDocs = useMemo(() => {
     return docsWithStatus.filter((d) => {
-      if (statusFilter !== 'All' && d.status !== statusFilter) return false;
+      if (statusFilter.length > 0 && !statusFilter.includes(d.status)) return false;
       if (effectiveCenter !== 'All' && d.center !== effectiveCenter) return false;
       if (expiryFrom && d.nextInspection < expiryFrom) return false;
       if (expiryTo && d.nextInspection > expiryTo) return false;
@@ -80,15 +82,17 @@ export default function ComplianceVault({ selectedCenter }) {
     });
   }, [docsWithStatus, statusFilter, effectiveCenter, search, expiryFrom, expiryTo]);
 
-  // Table: applies ALL filters including category
+  // Table: applies ALL filters including category, cycle, property
   const filtered = useMemo(() => {
     let list = summaryDocs.filter((d) => {
       if (selectedCategories.length > 0 && !selectedCategories.includes(d.category)) return false;
+      if (cycleFilter.length > 0 && !cycleFilter.includes(d.cycleMonths)) return false;
+      if (propertyFilter.length > 0 && !propertyFilter.includes(d.center)) return false;
       return true;
     });
     list.sort((a, b) => { const va = a[sortCol] ?? ''; const vb = b[sortCol] ?? ''; const cmp = typeof va === 'string' ? va.localeCompare(vb) : va - vb; return sortDir === 'asc' ? cmp : -cmp; });
     return list;
-  }, [summaryDocs, selectedCategories, sortCol, sortDir]);
+  }, [summaryDocs, selectedCategories, cycleFilter, propertyFilter, sortCol, sortDir]);
 
   // Summary bar counts: from filtered so they match the table when categories are selected test
   const validCount = filtered.filter((d) => d.status === 'Valid').length;
@@ -99,6 +103,9 @@ export default function ComplianceVault({ selectedCenter }) {
   const validPct = totalFiltered > 0 ? Math.round((validCount / totalFiltered) * 100) : 0;
   const expiringPct = totalFiltered > 0 ? Math.round((expiringCount / totalFiltered) * 100) : 0;
   const expiredPct = totalFiltered > 0 ? Math.round((expiredCount / totalFiltered) * 100) : 0;
+
+  const uniqueCycles = useMemo(() => [...new Set(docsWithStatus.map((d) => d.cycleMonths))].sort((a, b) => a - b), [docsWithStatus]);
+  const uniqueProperties = useMemo(() => [...new Set(docsWithStatus.map((d) => d.center))].sort(), [docsWithStatus]);
 
   // Coverage grid: from summaryDocs — only categories with docs matching the active status filter
   // Expiring docs count as valid (not yet expired)
@@ -131,18 +138,21 @@ export default function ComplianceVault({ selectedCenter }) {
   const statusColors = { Valid: { bg: 'var(--success-bg)', color: 'var(--success)' }, Expiring: { bg: '#FEF3C7', color: '#B45309' }, Expired: { bg: '#FEE2E2', color: '#DC2626' } };
 
   const activeFilterPills = [];
-  selectedCategories.forEach((cat) => activeFilterPills.push({ key: `cat-${cat}`, label: `${t('compliance.col.category')}: ${t(CATEGORY_KEY_MAP[cat] || cat)}`, clear: () => toggleCategory(cat) }));
-  if (statusFilter !== 'All') activeFilterPills.push({ key: 'status', label: `Status: ${statusFilter}`, clear: () => setStatusFilter('All') });
+  selectedCategories.forEach((cat) => activeFilterPills.push({ key: `cat-${cat}`, label: `${t('compliance.filter.category')}: ${t(CATEGORY_KEY_MAP[cat] || cat)}`, clear: () => toggleCategory(cat) }));
+  statusFilter.forEach((s) => activeFilterPills.push({ key: `status-${s}`, label: `Status: ${s}`, clear: () => toggleStatusFilter(s) }));
+  cycleFilter.forEach((c) => activeFilterPills.push({ key: `cycle-${c}`, label: `${t('compliance.filter.cycle')}: ${formatCycle(c)}`, clear: () => setCycleFilter((prev) => prev.filter((v) => v !== c)) }));
+  propertyFilter.forEach((p) => activeFilterPills.push({ key: `property-${p}`, label: `${t('compliance.filter.property')}: ${p.replace('PLK ', '')}`, clear: () => setPropertyFilter((prev) => prev.filter((v) => v !== p)) }));
   if (expiryFrom) activeFilterPills.push({ key: 'expiryFrom', label: `${t('compliance.filter.expiryFrom')}: ${expiryFrom}`, clear: () => setExpiryFrom('') });
   if (expiryTo) activeFilterPills.push({ key: 'expiryTo', label: `${t('compliance.filter.expiryTo')}: ${expiryTo}`, clear: () => setExpiryTo('') });
   const hasFilters = activeFilterPills.length > 0;
-  const clearAllFilters = () => { clearCategories(); setStatusFilter('All'); setSearch(''); setExpiryFrom(''); setExpiryTo(''); };
+  const clearAllFilters = () => { clearCategories(); setStatusFilter([]); setCycleFilter([]); setPropertyFilter([]); setSearch(''); setExpiryFrom(''); setExpiryTo(''); };
 
   const csvEscape = (v) => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s; };
+  const csvDate = (d) => d ? `"${d}"` : '';
 
   const exportCSV = () => {
-    const headers = ['ID', 'Category', 'Certificate Name', 'Property', 'Next Due', 'Cycle (months)', 'Last Inspected', 'Expiry', 'Issued By', 'Reference No.', 'Responsible', 'Status'];
-    const rows = filtered.map((d) => [d.id, d.category, d.name, d.center, d.nextInspection, d.cycleMonths || 12, d.inspectionDate, d.expiry, d.issuedBy, d.documentRef, d.responsible, d.status]);
+    const headers = ['Category', 'Certificate Name', 'Property', 'Next Due', 'Cycle (months)', 'Last Inspected', 'Expiry', 'Issued By', 'Reference No.', 'Responsible', 'Status'];
+    const rows = filtered.map((d) => [d.category, d.name, d.center, csvDate(d.nextInspection), d.cycleMonths || 12, csvDate(d.inspectionDate), csvDate(d.expiry), d.issuedBy, d.documentRef, d.responsible, d.status]);
     const csv = [headers.map(csvEscape).join(','), ...rows.map((r) => r.map(csvEscape).join(','))].join('\r\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -188,9 +198,9 @@ export default function ComplianceVault({ selectedCenter }) {
           </div>
         </div>
         {/* Status counts — display only */}
-        <StatusCount icon={<CheckCircle size={16} color="var(--success)" />} value={validCount} label={t('compliance.valid')} bg="var(--success-bg)" pct={statusFilter === 'All' ? validPct : undefined} />
-        <StatusCount icon={<AlertTriangle size={16} color="#D97706" />} value={expiringCount} label={t('compliance.expiringSoon')} bg="#FEF3C7" pct={statusFilter === 'All' ? expiringPct : undefined} tooltip={t('compliance.expiringDesc')} />
-        <StatusCount icon={<Clock size={16} color="#DC2626" />} value={expiredCount} label={t('compliance.expired')} bg="#FEE2E2" pct={statusFilter === 'All' ? expiredPct : undefined} />
+        <StatusCount icon={<CheckCircle size={16} color="var(--success)" />} value={validCount} label={t('compliance.valid')} bg="var(--success-bg)" pct={statusFilter.length === 0 ? validPct : undefined} />
+        <StatusCount icon={<AlertTriangle size={16} color="#D97706" />} value={expiringCount} label={t('compliance.expiring')} bg="#FEF3C7" pct={statusFilter.length === 0 ? expiringPct : undefined} />
+        <StatusCount icon={<Clock size={16} color="#DC2626" />} value={expiredCount} label={t('compliance.expired')} bg="#FEE2E2" pct={statusFilter.length === 0 ? expiredPct : undefined} />
       </div>
 
       {/* Coverage by Category */}
@@ -231,11 +241,23 @@ export default function ComplianceVault({ selectedCenter }) {
       </div>
 
       {/* Filter Bar */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: 240 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 180 }}>
           <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('compliance.searchPlaceholder')} style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none' }} />
         </div>
+        {[
+          { key: 'Valid', label: t('compliance.valid'), icon: <CheckCircle size={13} />, activeBg: 'var(--success)', activeColor: '#fff', inactiveBg: 'var(--success-bg)', inactiveColor: 'var(--success)' },
+          { key: 'Expiring', label: t('compliance.expiring'), icon: <AlertTriangle size={13} />, activeBg: '#F59E0B', activeColor: '#fff', inactiveBg: '#FEF3C7', inactiveColor: '#B45309' },
+          { key: 'Expired', label: t('compliance.expired'), icon: <Clock size={13} />, activeBg: '#DC2626', activeColor: '#fff', inactiveBg: '#FEE2E2', inactiveColor: '#DC2626' },
+        ].map(({ key, label, icon, activeBg, activeColor, inactiveBg, inactiveColor }) => {
+          const isActive = statusFilter.includes(key);
+          return (
+            <button key={key} onClick={() => toggleStatusFilter(key)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, border: `1.5px solid ${isActive ? activeBg : inactiveBg}`, background: isActive ? activeBg : inactiveBg, color: isActive ? activeColor : inactiveColor, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+              {icon}{label}
+            </button>
+          );
+        })}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, padding: '0 10px' }}>
           <Calendar size={14} color="#94A3B8" />
           <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500, whiteSpace: 'nowrap' }}>{t('compliance.filter.expiryFrom')}</span>
@@ -244,22 +266,6 @@ export default function ComplianceVault({ selectedCenter }) {
           <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500, whiteSpace: 'nowrap' }}>{t('compliance.filter.expiryTo')}</span>
           <input type="date" value={expiryTo} onChange={(e) => setExpiryTo(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: 12, padding: '8px 2px', background: 'transparent', color: expiryTo ? 'var(--foreground)' : '#94A3B8', fontFamily: 'inherit' }} />
         </div>
-      </div>
-
-      {/* Status Filter Buttons */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
-        {[
-          { key: 'Valid', label: t('compliance.valid'), icon: <CheckCircle size={13} />, activeBg: 'var(--success)', activeColor: '#fff', inactiveBg: 'var(--success-bg)', inactiveColor: 'var(--success)' },
-          { key: 'Expiring', label: t('compliance.expiringSoon'), icon: <AlertTriangle size={13} />, activeBg: '#F59E0B', activeColor: '#fff', inactiveBg: '#FEF3C7', inactiveColor: '#B45309' },
-          { key: 'Expired', label: t('compliance.expired'), icon: <Clock size={13} />, activeBg: '#DC2626', activeColor: '#fff', inactiveBg: '#FEE2E2', inactiveColor: '#DC2626' },
-        ].map(({ key, label, icon, activeBg, activeColor, inactiveBg, inactiveColor }) => {
-          const isActive = statusFilter === key;
-          return (
-            <button key={key} onClick={() => toggleStatusFilter(key)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, border: `1.5px solid ${isActive ? activeBg : inactiveBg}`, background: isActive ? activeBg : inactiveBg, color: isActive ? activeColor : inactiveColor, cursor: 'pointer', transition: 'all 0.15s' }}>
-              {icon}{label}
-            </button>
-          );
-        })}
       </div>
 
       {/* Active Filter Pills */}
@@ -311,6 +317,30 @@ export default function ComplianceVault({ selectedCenter }) {
                     </span>
                   </th>
                 ))}
+              </tr>
+              <tr style={{ background: '#F8FAFC', borderBottom: '1px solid var(--border)' }}>
+                <th style={{ padding: '4px 14px' }}>
+                  <select multiple value={selectedCategories} onChange={(e) => setSelectedCategories([...e.target.selectedOptions].map((o) => o.value))} style={{ width: '100%', fontSize: 11, padding: '3px 4px', border: '1px solid var(--border)', borderRadius: 4, background: '#fff', outline: 'none', minHeight: 52, cursor: 'pointer' }}>
+                    {COMPLIANCE_CATEGORIES.map((cat) => <option key={cat} value={cat}>{t(CATEGORY_KEY_MAP[cat] || cat)}</option>)}
+                  </select>
+                </th>
+                <th style={{ padding: '4px 14px' }} />
+                {!isGlobalCentre && (
+                  <th style={{ padding: '4px 14px' }}>
+                    <select multiple value={propertyFilter} onChange={(e) => setPropertyFilter([...e.target.selectedOptions].map((o) => o.value))} style={{ width: '100%', fontSize: 11, padding: '3px 4px', border: '1px solid var(--border)', borderRadius: 4, background: '#fff', outline: 'none', minHeight: 52, cursor: 'pointer' }}>
+                      {uniqueProperties.map((p) => <option key={p} value={p}>{p.replace('PLK ', '')}</option>)}
+                    </select>
+                  </th>
+                )}
+                <th style={{ padding: '4px 14px' }} />
+                <th style={{ padding: '4px 14px' }}>
+                  <select multiple value={cycleFilter.map(String)} onChange={(e) => setCycleFilter([...e.target.selectedOptions].map((o) => Number(o.value)))} style={{ width: '100%', fontSize: 11, padding: '3px 4px', border: '1px solid var(--border)', borderRadius: 4, background: '#fff', outline: 'none', minHeight: 52, cursor: 'pointer' }}>
+                    {uniqueCycles.map((c) => <option key={c} value={c}>{formatCycle(c)}</option>)}
+                  </select>
+                </th>
+                <th style={{ padding: '4px 14px' }} />
+                <th style={{ padding: '4px 14px' }} />
+                <th style={{ padding: '4px 14px' }} />
               </tr>
             </thead>
             <tbody>
@@ -399,18 +429,11 @@ function ComplianceRateBar({ rate }) {
   );
 }
 
-function StatusCount({ icon, value, label, bg, active, onClick, pct, tooltip }) {
-  const [hovered, setHovered] = useState(false);
+function StatusCount({ icon, value, label, bg, active, onClick, pct }) {
   return (
-    <div onClick={onClick} style={{ position: 'relative', flex: 1, background: active ? bg : '#fff', borderRadius: 12, border: `2px solid ${active ? 'var(--info)' : 'var(--border)'}`, boxShadow: active ? '0 0 0 3px rgba(37,99,235,0.12)' : 'var(--card-shadow)', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', transition: 'all 0.15s' }}
-      onMouseEnter={(e) => { setHovered(true); if (!active) e.currentTarget.style.borderColor = 'var(--info)'; }}
-      onMouseLeave={(e) => { setHovered(false); if (!active) e.currentTarget.style.borderColor = 'var(--border)'; }}>
-      {tooltip && hovered && !active && (
-        <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: 6, background: '#1E293B', color: '#F8FAFC', fontSize: 11, fontWeight: 500, lineHeight: 1.4, padding: '6px 10px', borderRadius: 6, whiteSpace: 'nowrap', zIndex: 100, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-          {tooltip}
-          <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', border: '5px solid transparent', borderTopColor: '#1E293B' }} />
-        </div>
-      )}
+    <div onClick={onClick} style={{ position: 'relative', flex: 1, background: active ? bg : '#fff', borderRadius: 12, border: `2px solid ${active ? 'var(--info)' : 'var(--border)'}`, boxShadow: active ? '0 0 0 3px rgba(37,99,235,0.12)' : 'var(--card-shadow)', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'default', transition: 'all 0.15s' }}
+      onMouseEnter={(e) => { if (!active) e.currentTarget.style.borderColor = 'var(--info)'; }}
+      onMouseLeave={(e) => { if (!active) e.currentTarget.style.borderColor = 'var(--border)'; }}>
       <div style={{ width: 34, height: 34, borderRadius: 8, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
       <div>
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--foreground)', lineHeight: 1.1 }}>{value}</div>

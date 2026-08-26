@@ -351,6 +351,9 @@
   "compliance.doctype.Site Photo": "Site Photo",
   "compliance.doctype.Checklist": "Checklist",
   "compliance.doctype.Other": "Other",
+  "compliance.exportCsv": "Export CSV",
+  "compliance.downloadActiveDocs": "Download Active",
+  "compliance.downloadAllDocs": "Download All",
 
   "compliance.cat.FireSafety": "Fire Safety",
   "compliance.cat.Electrical": "Electrical",

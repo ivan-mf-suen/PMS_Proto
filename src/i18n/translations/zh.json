@@ -351,6 +351,9 @@
   "compliance.doctype.Site Photo": "現場相片",
   "compliance.doctype.Checklist": "檢查清單",
   "compliance.doctype.Other": "其他",
+  "compliance.exportCsv": "匯出CSV",
+  "compliance.downloadActiveDocs": "下載有效文件",
+  "compliance.downloadAllDocs": "下載所有文件",
 
   "compliance.cat.FireSafety": "消防安全",
   "compliance.cat.Electrical": "電力",

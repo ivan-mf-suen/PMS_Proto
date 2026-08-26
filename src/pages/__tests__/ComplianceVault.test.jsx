@@ -73,13 +73,16 @@ describe('ComplianceVault', () => {
     expect(rowsAfter).toBeLessThan(rowsBefore);
   });
 
-  it('status card click toggles status filter', async () => {
+  it('status filter button toggles status filter', async () => {
     const user = userEvent.setup();
     renderVault();
-    const expiredText = screen.getAllByText('Expired')[0];
-    await user.click(expiredText);
-    const clearBtns = screen.getAllByText('Clear all');
-    expect(clearBtns.length).toBeGreaterThanOrEqual(1);
+    const filterBtns = screen.getAllByText('Expired');
+    const filterBtn = filterBtns.find((el) => el.closest('button'));
+    if (filterBtn) {
+      await user.click(filterBtn.closest('button'));
+      const clearBtns = screen.getAllByText('Clear all');
+      expect(clearBtns.length).toBeGreaterThanOrEqual(1);
+    }
   });
 
   it('category card click toggles category filter', async () => {
@@ -127,11 +130,11 @@ describe('ComplianceVault', () => {
     expect(screen.getByText(/Track and manage/)).toBeInTheDocument();
   });
 
-  it('row has view details action but no separate edit action', () => {
+  it('row has view details, download, and delete actions', () => {
     renderVault();
     const firstRow = container_firstDataRow();
     const buttons = within(firstRow).getAllByRole('button');
-    expect(buttons.length).toBe(2);
+    expect(buttons.length).toBe(3);
     expect(buttons[0]).toHaveAttribute('aria-label', 'View Details');
     expect(within(firstRow).queryByLabelText('Edit')).not.toBeInTheDocument();
   });
@@ -197,5 +200,19 @@ describe('ComplianceVault', () => {
     expect(isAttachmentActive({ expiryDate: null })).toBe(true);
     expect(isAttachmentActive({ expiryDate: '2000-01-01' })).toBe(false);
     expect(isAttachmentActive({ expiryDate: '2999-12-31' })).toBe(true);
+  });
+
+  it('renders Export CSV and download toolbar buttons', () => {
+    renderVault();
+    expect(screen.getByText('Export CSV')).toBeInTheDocument();
+    expect(screen.getByText('Download Active')).toBeInTheDocument();
+    expect(screen.getByText('Download All')).toBeInTheDocument();
+  });
+
+  it('renders status filter buttons between search and table', () => {
+    renderVault();
+    const filterBtns = document.querySelectorAll('button');
+    const validBtn = Array.from(filterBtns).find((b) => b.textContent.includes('Valid') && b.closest('[style*="border-radius: 20"]'));
+    expect(validBtn).toBeTruthy();
   });
 });

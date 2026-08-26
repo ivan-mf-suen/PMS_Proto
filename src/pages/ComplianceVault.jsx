@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { COMPLIANCE_CATEGORIES, PROPERTIES, CATEGORY_CONFIG, formatCycle, getDocStatus } from '../data/constants';
 import { useCompliance } from '../context/ComplianceContext';
 import { useAuth } from '../context/AuthContext';
@@ -43,6 +43,15 @@ export default function ComplianceVault({ selectedCenter }) {
   const [sortDir, setSortDir] = useState('asc');
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [downloadMenu, setDownloadMenu] = useState(null);
+
+  useEffect(() => {
+    if (downloadMenu === null) return;
+    const close = () => setDownloadMenu(null);
+    const handler = (e) => { if (!e.target.closest('[data-download-menu]')) close(); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [downloadMenu]);
 
   const isGlobalCentre = selectedCenter && selectedCenter !== 'All';
   const effectiveCenter = selectedCenter || 'All';
@@ -129,6 +138,30 @@ export default function ComplianceVault({ selectedCenter }) {
   const hasFilters = activeFilterPills.length > 0;
   const clearAllFilters = () => { clearCategories(); setStatusFilter('All'); setSearch(''); setExpiryFrom(''); setExpiryTo(''); };
 
+  const csvEscape = (v) => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s; };
+
+  const exportCSV = () => {
+    const headers = ['ID', 'Category', 'Certificate Name', 'Property', 'Next Due', 'Cycle (months)', 'Last Inspected', 'Expiry', 'Issued By', 'Reference No.', 'Responsible', 'Status'];
+    const rows = filtered.map((d) => [d.id, d.category, d.name, d.center, d.nextInspection, d.cycleMonths || 12, d.inspectionDate, d.expiry, d.issuedBy, d.documentRef, d.responsible, d.status]);
+    const csv = [headers.map(csvEscape).join(','), ...rows.map((r) => r.map(csvEscape).join(','))].join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'compliance_records.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const bulkDownload = (activeOnly) => {
+    const atts = filtered.flatMap((d) => listAttachments(d.id, d).filter((a) => !activeOnly || isAttachmentActive(a)));
+    atts.forEach((att, i) => { setTimeout(() => { const a = document.createElement('a'); a.href = getAttachmentUrl(att); a.download = att.name; document.body.appendChild(a); a.click(); a.remove(); }, i * 200); });
+  };
+
+  const downloadDoc = (doc, activeOnly) => {
+    const atts = listAttachments(doc.id, doc).filter((a) => !activeOnly || isAttachmentActive(a));
+    atts.forEach((att, i) => { setTimeout(() => { const a = document.createElement('a'); a.href = getAttachmentUrl(att); a.download = att.name; document.body.appendChild(a); a.click(); a.remove(); }, i * 200); });
+  };
+
   const formUpdate = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
 
   return (
@@ -154,10 +187,10 @@ export default function ComplianceVault({ selectedCenter }) {
             <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{totalFiltered} {t('compliance.documents')}</div>
           </div>
         </div>
-        {/* Status counts — inline */}
-        <StatusCount icon={<CheckCircle size={16} color="var(--success)" />} value={validCount} label={t('compliance.valid')} bg="var(--success-bg)" active={statusFilter === 'Valid'} onClick={() => toggleStatusFilter('Valid')} pct={statusFilter === 'All' ? validPct : undefined} />
-        <StatusCount icon={<AlertTriangle size={16} color="#D97706" />} value={expiringCount} label={t('compliance.expiringSoon')} bg="#FEF3C7" active={statusFilter === 'Expiring'} onClick={() => toggleStatusFilter('Expiring')} pct={statusFilter === 'All' ? expiringPct : undefined} tooltip={t('compliance.expiringDesc')} />
-        <StatusCount icon={<Clock size={16} color="#DC2626" />} value={expiredCount} label={t('compliance.expired')} bg="#FEE2E2" active={statusFilter === 'Expired'} onClick={() => toggleStatusFilter('Expired')} pct={statusFilter === 'All' ? expiredPct : undefined} />
+        {/* Status counts — display only */}
+        <StatusCount icon={<CheckCircle size={16} color="var(--success)" />} value={validCount} label={t('compliance.valid')} bg="var(--success-bg)" pct={statusFilter === 'All' ? validPct : undefined} />
+        <StatusCount icon={<AlertTriangle size={16} color="#D97706" />} value={expiringCount} label={t('compliance.expiringSoon')} bg="#FEF3C7" pct={statusFilter === 'All' ? expiringPct : undefined} tooltip={t('compliance.expiringDesc')} />
+        <StatusCount icon={<Clock size={16} color="#DC2626" />} value={expiredCount} label={t('compliance.expired')} bg="#FEE2E2" pct={statusFilter === 'All' ? expiredPct : undefined} />
       </div>
 
       {/* Coverage by Category */}
@@ -213,6 +246,22 @@ export default function ComplianceVault({ selectedCenter }) {
         </div>
       </div>
 
+      {/* Status Filter Buttons */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
+        {[
+          { key: 'Valid', label: t('compliance.valid'), icon: <CheckCircle size={13} />, activeBg: 'var(--success)', activeColor: '#fff', inactiveBg: 'var(--success-bg)', inactiveColor: 'var(--success)' },
+          { key: 'Expiring', label: t('compliance.expiringSoon'), icon: <AlertTriangle size={13} />, activeBg: '#F59E0B', activeColor: '#fff', inactiveBg: '#FEF3C7', inactiveColor: '#B45309' },
+          { key: 'Expired', label: t('compliance.expired'), icon: <Clock size={13} />, activeBg: '#DC2626', activeColor: '#fff', inactiveBg: '#FEE2E2', inactiveColor: '#DC2626' },
+        ].map(({ key, label, icon, activeBg, activeColor, inactiveBg, inactiveColor }) => {
+          const isActive = statusFilter === key;
+          return (
+            <button key={key} onClick={() => toggleStatusFilter(key)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, border: `1.5px solid ${isActive ? activeBg : inactiveBg}`, background: isActive ? activeBg : inactiveBg, color: isActive ? activeColor : inactiveColor, cursor: 'pointer', transition: 'all 0.15s' }}>
+              {icon}{label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Active Filter Pills */}
       {hasFilters && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 14, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -228,6 +277,19 @@ export default function ComplianceVault({ selectedCenter }) {
 
       {/* Table */}
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--border)', background: '#FAFBFC' }}>
+          <button onClick={exportCSV} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 12, fontWeight: 600, color: '#475569', cursor: 'pointer' }}>
+            <FileText size={13} /> {t('compliance.exportCsv')}
+          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => bulkDownload(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 12, fontWeight: 600, color: '#475569', cursor: 'pointer' }}>
+              <Download size={13} /> {t('compliance.downloadActiveDocs')}
+            </button>
+            <button onClick={() => bulkDownload(false)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 12, fontWeight: 600, color: '#475569', cursor: 'pointer' }}>
+              <Download size={13} /> {t('compliance.downloadAllDocs')}
+            </button>
+          </div>
+        </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -272,8 +334,27 @@ export default function ComplianceVault({ selectedCenter }) {
                       <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: statusColors[doc.status]?.bg, color: statusColors[doc.status]?.color }}>{doc.status}</span>
                     </td>
                     <td style={{ padding: '10px 14px' }}>
-                      <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: 2, alignItems: 'center', position: 'relative' }}>
                         <ActionBtn icon={<Eye size={14} />} color="var(--info)" title={t('compliance.action.viewDetails')} onClick={() => openView(doc)} />
+                        <div style={{ position: 'relative' }}>
+                          <ActionBtn icon={<Download size={14} />} color="#475569" title={t('compliance.download')} onClick={() => setDownloadMenu(downloadMenu === doc.id ? null : doc.id)} />
+                          {downloadMenu === doc.id && (
+                            <div data-download-menu style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 50, minWidth: 160, overflow: 'hidden' }}>
+                              <button
+                                onClick={() => { downloadDoc(doc, true); setDownloadMenu(null); }}
+                                style={{ display: 'block', width: '100%', padding: '8px 12px', fontSize: 12, fontWeight: 500, color: '#475569', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = '#F1F5F9'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
+                              >{t('compliance.downloadActiveDocs')}</button>
+                              <button
+                                onClick={() => { downloadDoc(doc, false); setDownloadMenu(null); }}
+                                style={{ display: 'block', width: '100%', padding: '8px 12px', fontSize: 12, fontWeight: 500, color: '#475569', background: 'none', border: 'none', borderTop: '1px solid #F1F5F9', cursor: 'pointer', textAlign: 'left' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = '#F1F5F9'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
+                              >{t('compliance.downloadAllDocs')}</button>
+                            </div>
+                          )}
+                        </div>
                         <ActionBtn icon={<Trash2 size={14} />} color="#DC2626" danger title={t('compliance.remove')} onClick={() => openDelete(doc)} />
                       </div>
                     </td>

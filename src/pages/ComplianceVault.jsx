@@ -1,14 +1,13 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { COMPLIANCE_CATEGORIES, PROPERTIES, CATEGORY_CONFIG, formatCycle, getDocStatus } from '../data/constants';
 import { useCompliance } from '../context/ComplianceContext';
-import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
-import { listAttachments, uploadAttachment, deactivateAttachment, getAttachmentUrl, formatFileSize, formatTimestamp, formatDateOnly, isAttachmentActive, DOC_TYPES } from '../services/complianceFileService';
+import { listAttachments, getAttachmentUrl, isAttachmentActive } from '../services/complianceFileService';
 import {
-  Search, CheckCircle, Clock, Bell, X, Eye, Pencil, Trash2,
+  Search, CheckCircle, Clock, Bell, X, Eye, Trash2,
   ChevronDown, ChevronUp, Wind, Zap, Flame, ArrowUp, Droplets, Leaf,
   CircleHelp, FileText, AlertTriangle, Filter,
-  Upload, Download, Paperclip, FileImage,
+  Download,
 } from 'lucide-react';
 
 const CATEGORY_KEY_MAP = {
@@ -31,7 +30,7 @@ const CATEGORY_ICON = {
 
 const EMPTY_FORM = { name: '', category: '', center: '', documentRef: '', issuedBy: '', inspectionDate: '', nextInspection: '', expiry: '', cycleMonths: 12, responsible: '', notes: '', status: 'Valid' };
 
-export default function ComplianceVault({ selectedCenter }) {
+export default function ComplianceVault({ selectedCenter, onViewDoc }) {
   const { t } = useTranslation();
   const { docs, addDoc, updateDoc, removeDoc } = useCompliance();
   const [search, setSearch] = useState('');
@@ -66,7 +65,7 @@ export default function ComplianceVault({ selectedCenter }) {
 
   const activeDocs = useMemo(() => docs.filter((d) => !d.removed), [docs]);
 
-  const docsWithStatus = useMemo(() => activeDocs.map((d) => ({ ...d, status: getDocStatus(d.nextInspection) })), [activeDocs]);
+  const docsWithStatus = useMemo(() => activeDocs.map((d) => ({ ...d, status: getDocStatus(d.nextInspection, d.inspectionDate, d.cycleMonths) })), [activeDocs]);
 
   // Summary docs: status/center/search only (no category filter)
   // Used by categoryCoverage grid so all categories always remain visible
@@ -127,8 +126,6 @@ export default function ComplianceVault({ selectedCenter }) {
   const handleSort = (col) => { if (sortCol === col) setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortCol(col); setSortDir('asc'); } };
 
   const openAdd = () => { setForm({ ...EMPTY_FORM, cycleMonths: 12 }); setModal('add'); };
-  const openView = (doc) => { setModal({ type: 'view', doc }); };
-  const openEdit = (doc) => { setForm({ name: doc.name, category: doc.category, center: doc.center, documentRef: doc.documentRef, issuedBy: doc.issuedBy, inspectionDate: doc.inspectionDate, nextInspection: doc.nextInspection, expiry: doc.expiry, cycleMonths: doc.cycleMonths || 12, responsible: doc.responsible || '', notes: doc.notes || '', status: doc.status }); setModal({ type: 'edit', doc }); };
   const openDelete = (doc) => { setModal({ type: 'delete', doc }); };
 
   const handleSave = () => {
@@ -156,7 +153,7 @@ export default function ComplianceVault({ selectedCenter }) {
   const csvEscape = (v) => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s; };
 
   const exportCSV = () => {
-    const headers = ['Category', 'Certificate Name', 'Property', 'Next Due', 'Cycle (months)', 'Last Inspected', 'Expiry', 'Issued By', 'Reference No.', 'Responsible', 'Status'];
+    const headers = ['Category', 'Certificate Name', 'Property', 'Next Due', 'Cycle (months)', 'Effective', 'Expiry', 'Issued By', 'Reference No.', 'Responsible', 'Status'];
     const rows = filtered.map((d) => [d.category, d.name, d.center, d.nextInspection || '', d.cycleMonths || 12, d.inspectionDate || '', d.expiry || '', d.issuedBy, d.documentRef, d.responsible, d.status]);
     const csv = [headers.map(csvEscape).join(','), ...rows.map((r) => r.map(csvEscape).join(','))].join('\r\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -367,7 +364,7 @@ export default function ComplianceVault({ selectedCenter }) {
                     </td>
                     <td style={{ padding: '10px 14px' }}>
                       <div style={{ display: 'flex', gap: 2, alignItems: 'center', position: 'relative' }}>
-                        <ActionBtn icon={<Eye size={14} />} color="var(--info)" title={t('compliance.action.viewDetails')} onClick={() => openView(doc)} />
+                        <ActionBtn icon={<Eye size={14} />} color="var(--info)" title={t('compliance.action.viewDetails')} onClick={() => onViewDoc(doc.id)} />
                         <div style={{ position: 'relative' }}>
                           <ActionBtn icon={<Download size={14} />} color="#475569" title={t('compliance.download')} onClick={() => setDownloadMenu(downloadMenu === doc.id ? null : doc.id)} />
                           {downloadMenu === doc.id && (
@@ -429,7 +426,6 @@ export default function ComplianceVault({ selectedCenter }) {
 
       {/* ── MODALS ────────────────────────────────── */}
       {modal === 'add' && <DocModal title={t('compliance.addTitle')} form={form} formUpdate={formUpdate} onSave={handleSave} onCancel={() => setModal(null)} t={t} isNew />}
-      {modal?.type === 'view' && <ViewModal doc={modal.doc} onClose={() => setModal(null)} onEdit={openEdit} t={t} />}
       {modal?.type === 'edit' && <DocModal title={t('compliance.editTitle')} form={form} formUpdate={formUpdate} onSave={handleSave} onCancel={() => setModal(null)} t={t} />}
       {modal?.type === 'delete' && <DeleteModal doc={modal.doc} onConfirm={handleDelete} onCancel={() => setModal(null)} t={t} />}
     </div>
@@ -488,315 +484,6 @@ function ModalShell({ children, width }) {
   );
 }
 
-function ViewModal({ doc, onClose, onEdit, t }) {
-  const { permissions } = useAuth();
-  const uploaderName = permissions?.name || 'System';
-  const [attachments, setAttachments] = useState(() => listAttachments(doc.id, doc));
-  const [previewing, setPreviewing] = useState(null);
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [inactiveTarget, setInactiveTarget] = useState(null);
-  const [inactiveRemarks, setInactiveRemarks] = useState('');
-  const [inactiveStep, setInactiveStep] = useState(0);
-
-  const cfg = CATEGORY_CONFIG[doc.category] || {};
-  const IconComp = CATEGORY_ICON[doc.category];
-  const fields = [
-    { label: t('compliance.detail.name'), value: doc.name },
-    { label: t('compliance.detail.category'), value: <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 8px', borderRadius: 6, background: cfg.bg, fontSize: 12, fontWeight: 600, color: cfg.color }}>{IconComp && <IconComp size={12} />}{t(CATEGORY_KEY_MAP[doc.category])}</span> },
-    { label: t('compliance.detail.property'), value: doc.center },
-    { label: t('compliance.detail.ref'), value: doc.documentRef },
-    { label: t('compliance.detail.issuedBy'), value: doc.issuedBy },
-    { label: t('compliance.detail.inspectionDate'), value: doc.inspectionDate },
-    { label: t('compliance.detail.nextInspection'), value: doc.nextInspection },
-    { label: t('compliance.detail.expiry'), value: doc.expiry },
-    { label: t('compliance.detail.cycle'), value: formatCycle(doc.cycleMonths || 12) },
-    { label: t('compliance.detail.responsible'), value: doc.responsible || '—' },
-    { label: t('compliance.detail.status'), value: <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: STATUS_BG[doc.status], color: STATUS_CLR[doc.status] }}>{doc.status}</span> },
-    ...(doc.notes ? [{ label: t('compliance.detail.notes'), value: doc.notes }] : []),
-  ];
-
-  const handleUploadSubmitted = (payload) => {
-    uploadAttachment(doc.id, payload, uploaderName);
-    setAttachments(listAttachments(doc.id, doc));
-    setUploadOpen(false);
-  };
-
-  const triggerDownload = (att) => {
-    const a = document.createElement('a');
-    a.href = getAttachmentUrl(att);
-    a.download = att.name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  };
-
-  const handleDeactivate = () => {
-    deactivateAttachment(doc.id, inactiveTarget.id, { by: uploaderName, at: new Date().toISOString(), remarks: inactiveRemarks.trim() });
-    setAttachments(listAttachments(doc.id, doc));
-    setInactiveTarget(null);
-    setInactiveRemarks('');
-    setInactiveStep(0);
-  };
-
-  return (
-    <ModalShell width={640}>
-      <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: 16, fontWeight: 700 }}>{t('compliance.viewTitle')}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={() => onEdit(doc)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-            <Pencil size={13} /> {t('compliance.detail.edit')}
-          </button>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
-        </div>
-      </div>
-      <div style={{ padding: 24 }}>
-        {fields.map((f, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'baseline', padding: '8px 0', borderBottom: i < fields.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
-            <div style={{ width: 140, fontSize: 12, lineHeight: '18px', color: '#94A3B8', fontWeight: 500, flexShrink: 0 }}>{f.label}</div>
-            <div style={{ flex: 1, fontSize: 13, lineHeight: '18px', color: 'var(--foreground)', fontWeight: 500 }}>{f.value}</div>
-          </div>
-        ))}
-
-        <AttachmentHistory
-          attachments={attachments}
-          onUploadClick={() => setUploadOpen(true)}
-          onPreview={setPreviewing}
-          onDownload={triggerDownload}
-          onDeactivate={(att) => { setInactiveTarget(att); setInactiveStep(0); setInactiveRemarks(''); }}
-          t={t}
-        />
-      </div>
-      <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
-        <button onClick={onClose} style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.form.cancel')}</button>
-      </div>
-      {uploadOpen && <UploadModal onClose={() => setUploadOpen(false)} onSubmit={handleUploadSubmitted} t={t} />}
-      {previewing && <PreviewOverlay attachment={previewing} onClose={() => setPreviewing(null)} onDownload={() => triggerDownload(previewing)} t={t} />}
-      {inactiveTarget && <InactiveConfirmModal target={inactiveTarget} step={inactiveStep} setStep={setInactiveStep} remarks={inactiveRemarks} setRemarks={setInactiveRemarks} onConfirm={handleDeactivate} onClose={() => { setInactiveTarget(null); setInactiveRemarks(''); setInactiveStep(0); }} t={t} />}
-    </ModalShell>
-  );
-}
-
-function UploadModal({ onClose, onSubmit, t }) {
-  const fieldStyle = { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none', boxSizing: 'border-box' };
-  const labelStyle = { display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 };
-  const [file, setFile] = useState(null);
-  const [name, setName] = useState('');
-  const [docType, setDocType] = useState(DOC_TYPES[0]);
-  const [docDate, setDocDate] = useState(new Date().toISOString().slice(0, 10));
-  const [expiryDate, setExpiryDate] = useState('');
-
-  const handlePick = (e) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    setFile(f);
-    setName(f.name);
-  };
-
-  return (
-    <ModalShell width={480}>
-      <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: 16, fontWeight: 700 }}>{t('compliance.upload.title')}</div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
-      </div>
-      <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div>
-          <label style={labelStyle}>{t('compliance.upload.file')} *</label>
-          <button onClick={() => document.getElementById('cv-upload-file-input')?.click()} style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px dashed #CBD5E1', background: '#F8FAFC', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 13, color: file ? 'var(--foreground)' : '#94A3B8', fontWeight: file ? 600 : 500, boxSizing: 'border-box' }}>
-            <Upload size={14} color="var(--info)" />
-            {file ? file.name : t('compliance.upload.chooseFile')}
-          </button>
-          <input id="cv-upload-file-input" data-testid="upload-file-input" type="file" onChange={handlePick} style={{ display: 'none' }} />
-        </div>
-        <div>
-          <label style={labelStyle}>{t('compliance.upload.name')} *</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} disabled={!file} placeholder={t('compliance.upload.noFile')} style={{ ...fieldStyle, opacity: file ? 1 : 0.6 }} />
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <div>
-            <label style={labelStyle}>{t('compliance.upload.type')}</label>
-            <select value={docType} onChange={(e) => setDocType(e.target.value)} style={{ ...fieldStyle, appearance: 'auto' }}>
-              {DOC_TYPES.map((dt) => <option key={dt} value={dt}>{t(`compliance.doctype.${dt}`)}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={labelStyle}>{t('compliance.upload.docDate')}</label>
-            <input type="date" value={docDate} onChange={(e) => setDocDate(e.target.value)} style={fieldStyle} />
-          </div>
-        </div>
-        <div>
-          <label style={labelStyle}>{t('compliance.upload.expiry')}</label>
-          <input type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} style={fieldStyle} />
-          <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>{t('compliance.upload.expiryOptional')}</div>
-        </div>
-      </div>
-      <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-        <button onClick={onClose} style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.form.cancel')}</button>
-        <button onClick={() => onSubmit({ file, name: name.trim() || file.name, docType, docDate, expiryDate: expiryDate || null })} disabled={!file} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: file ? 1 : 0.5 }}>
-          {t('compliance.upload.submit')}
-        </button>
-      </div>
-    </ModalShell>
-  );
-}
-
-function AttachmentHistory({ attachments, onUploadClick, onPreview, onDownload, onDeactivate, t }) {
-  const headStyle = { padding: '8px 10px', fontSize: 11, fontWeight: 600, color: '#64748B', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', overflow: 'hidden' };
-  const cellStyle = { padding: '8px 10px', fontSize: 12, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
-  return (
-    <div style={{ marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Paperclip size={15} color="var(--info)" />
-          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>{t('compliance.attach.title')}</span>
-          <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500 }}>({attachments.length})</span>
-        </div>
-        <button onClick={onUploadClick} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-          <Upload size={13} /> {t('compliance.attach.upload')}
-        </button>
-      </div>
-      <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-          <colgroup>
-            <col style={{ width: 62 }} />
-            <col />
-            <col style={{ width: 100 }} />
-            <col style={{ width: 138 }} />
-            <col style={{ width: 58 }} />
-            <col style={{ width: 148 }} />
-          </colgroup>
-          <thead>
-            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid var(--border)' }}>
-              <th style={headStyle}>{t('compliance.attach.col.status')}</th>
-              <th style={headStyle}>{t('compliance.attach.col.name')}</th>
-              <th style={headStyle}>{t('compliance.attach.col.uploader')}</th>
-              <th style={headStyle}>{t('compliance.attach.col.time')}</th>
-              <th style={headStyle}>{t('compliance.attach.col.size')}</th>
-              <th style={headStyle}>{t('compliance.attach.col.actions')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {attachments.map((att) => {
-              const active = isAttachmentActive(att);
-              return (
-                <tr key={att.id} style={{ borderBottom: '1px solid #F1F5F9' }} onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-                  <td style={{ ...cellStyle, textAlign: 'center' }}>
-                    <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 8, background: active ? 'var(--success-bg)' : '#F1F5F9', color: active ? 'var(--success)' : '#64748B' }}>{active ? t('compliance.attach.active') : t('compliance.attach.inactive')}</span>
-                  </td>
-                  <td style={{ ...cellStyle, fontWeight: 600, color: 'var(--foreground)' }} title={`${att.name}${att.docType ? ` · ${att.docType}` : ''}${att.expiryDate ? ` · ${t('compliance.upload.expiry')}: ${formatDateOnly(att.expiryDate)}` : ''}`}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, maxWidth: '100%' }}>
-                      <FileTypeIcon mimeType={att.mimeType} />
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{att.name}</span>
-                    </span>
-                  </td>
-                  <td style={cellStyle} title={att.uploader}>{att.uploader}</td>
-                  <td style={cellStyle}>{formatTimestamp(att.uploadedAt)}</td>
-                  <td style={cellStyle}>{formatFileSize(att.size)}</td>
-                  <td style={{ ...cellStyle, whiteSpace: 'nowrap', overflow: 'visible' }}>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <TextBtn label={t('compliance.attach.preview')} color="var(--info)" onClick={() => onPreview(att)} />
-                      <TextBtn label={t('compliance.download')} color="#475569" onClick={() => onDownload(att)} />
-                      {active && onDeactivate && <TextBtn label={t('compliance.attach.setInactive')} color="#DC2626" onClick={() => onDeactivate(att)} />}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-            {attachments.length === 0 && (
-              <tr>
-                <td colSpan={6} style={{ padding: 28, textAlign: 'center' }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#94A3B8' }}>{t('compliance.attach.empty')}</div>
-                  <div style={{ fontSize: 12, color: '#CBD5E1', marginTop: 4 }}>{t('compliance.attach.emptyHint')}</div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function TextBtn({ label, color, onClick }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <button onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={onClick}
-      style={{ padding: '4px 10px', fontSize: 11, fontWeight: 600, borderRadius: 6, border: `1px solid ${hovered ? color : 'var(--border)'}`, background: hovered ? 'var(--info-bg)' : '#fff', color, cursor: 'pointer', transition: 'all 0.15s' }}>
-      {label}
-    </button>
-  );
-}
-
-function FileTypeIcon({ mimeType }) {
-  if (mimeType?.startsWith('image/')) return <FileImage size={14} color="var(--info)" style={{ flexShrink: 0 }} />;
-  return <FileText size={14} color="#DC2626" style={{ flexShrink: 0 }} />;
-}
-
-function PreviewOverlay({ attachment, onClose, onDownload, t }) {
-  const url = getAttachmentUrl(attachment);
-  const isImage = attachment.mimeType?.startsWith('image/');
-  const isPdf = attachment.mimeType === 'application/pdf';
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(15,23,42,0.78)', display: 'flex', flexDirection: 'column', padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexShrink: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: 16 }}>{t('compliance.preview.title')} — {attachment.name}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <button onClick={onDownload} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-            <Download size={13} /> {t('compliance.download')}
-          </button>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', cursor: 'pointer', color: '#fff', width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
-        </div>
-      </div>
-      {isImage ? (
-        <img src={url} alt={attachment.name} style={{ flex: 1, minHeight: 0, maxWidth: '100%', objectFit: 'contain', borderRadius: 10 }} />
-      ) : isPdf ? (
-        <iframe src={url} title={attachment.name} style={{ flex: 1, width: '100%', border: 'none', borderRadius: 10, background: '#fff' }} />
-      ) : (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', borderRadius: 10 }}>
-          <FileText size={40} color="#CBD5E1" />
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>{t('compliance.preview.unsupported')}</div>
-          <div style={{ fontSize: 12, color: '#94A3B8' }}>{t('compliance.preview.downloadHint')}</div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function InactiveConfirmModal({ target, step, setStep, remarks, setRemarks, onConfirm, onClose, t }) {
-  const fieldStyle = { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none', boxSizing: 'border-box' };
-  return (
-    <ModalShell width={440}>
-      <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: 16, fontWeight: 700, color: '#DC2626' }}>{t('compliance.inactive.title')}</div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
-      </div>
-      <div style={{ padding: 24 }}>
-        {step === 0 ? (
-          <div>
-            <div style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6, marginBottom: 6 }}>{t('compliance.inactive.confirmMsg')}</div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', background: '#F8FAFC', padding: '8px 12px', borderRadius: 8, marginBottom: 4 }}>{target.name}</div>
-          </div>
-        ) : (
-          <div>
-            <div style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6, marginBottom: 10 }}>{t('compliance.inactive.remarksMsg')}</div>
-            <textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} rows={3} placeholder={t('compliance.inactive.remarksPlaceholder')} style={{ ...fieldStyle, resize: 'vertical' }} />
-          </div>
-        )}
-      </div>
-      <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-        <button onClick={onClose} style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.form.cancel')}</button>
-        {step === 0 ? (
-          <button onClick={() => setStep(1)} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.inactive.confirm')}</button>
-        ) : (
-          <button onClick={onConfirm} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.inactive.submit')}</button>
-        )}
-      </div>
-    </ModalShell>
-  );
-}
-
-const STATUS_BG = { Valid: 'var(--success-bg)', Expiring: '#FEF3C7', Expired: '#FEE2E2' };
-const STATUS_CLR = { Valid: 'var(--success)', Expiring: '#B45309', Expired: '#DC2626' };
-
 function DocModal({ title, form, formUpdate, onSave, onCancel, t, isNew }) {
   const fieldStyle = { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none', boxSizing: 'border-box' };
   const labelStyle = { display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 };
@@ -814,17 +501,15 @@ function DocModal({ title, form, formUpdate, onSave, onCancel, t, isNew }) {
           </div>
           <div>
             <label style={labelStyle}>{t('compliance.form.category')} *</label>
-            <select value={form.category} onChange={(e) => formUpdate('category', e.target.value)} style={{ ...fieldStyle, appearance: 'auto' }}>
-              <option value="">{t('compliance.form.selectCategory')}</option>
-              {COMPLIANCE_CATEGORIES.map((c) => <option key={c} value={c}>{t(CATEGORY_KEY_MAP[c])}</option>)}
-            </select>
+            <ComboBox value={form.category} onChange={(val) => formUpdate('category', val)}
+              options={COMPLIANCE_CATEGORIES.map((c) => ({ value: c, label: t(CATEGORY_KEY_MAP[c]) }))}
+              placeholder={t('compliance.form.selectCategory')} />
           </div>
           <div>
             <label style={labelStyle}>{t('compliance.form.property')} *</label>
-            <select value={form.center} onChange={(e) => formUpdate('center', e.target.value)} style={{ ...fieldStyle, appearance: 'auto' }}>
-              <option value="">{t('compliance.form.selectProperty')}</option>
-              {PROPERTIES.map((p) => <option key={p.name} value={p.name}>{p.name.replace('PLK ', '')}</option>)}
-            </select>
+            <ComboBox value={form.center} onChange={(val) => formUpdate('center', val)}
+              options={PROPERTIES.map((p) => ({ value: p.name, label: p.name.replace('PLK ', '') }))}
+              placeholder={t('compliance.form.selectProperty')} />
           </div>
           <div>
             <label style={labelStyle}>{t('compliance.form.ref')}</label>
@@ -835,20 +520,33 @@ function DocModal({ title, form, formUpdate, onSave, onCancel, t, isNew }) {
             <input value={form.issuedBy} onChange={(e) => formUpdate('issuedBy', e.target.value)} placeholder={t('compliance.form.issuedByPlaceholder')} style={fieldStyle} />
           </div>
           <div>
-            <label style={labelStyle}>{t('compliance.form.inspectionDate')} *</label>
-            <input type="date" value={form.inspectionDate} onChange={(e) => formUpdate('inspectionDate', e.target.value)} style={fieldStyle} />
-          </div>
-          <div>
-            <label style={labelStyle}>{t('compliance.form.nextInspection')} *</label>
-            <input type="date" value={form.nextInspection} onChange={(e) => formUpdate('nextInspection', e.target.value)} style={fieldStyle} />
-          </div>
-          <div>
-            <label style={labelStyle}>{t('compliance.form.expiry')}</label>
-            <input type="date" value={form.expiry} onChange={(e) => formUpdate('expiry', e.target.value)} style={fieldStyle} />
+            <label style={labelStyle}>{t('compliance.form.effectiveDate')} *</label>
+            <input type="date" value={form.inspectionDate} onChange={(e) => {
+              const val = e.target.value;
+              formUpdate('inspectionDate', val);
+              if (val && form.cycleMonths) {
+                const d = new Date(val);
+                d.setMonth(d.getMonth() + (form.cycleMonths || 12));
+                formUpdate('expiry', d.toISOString().slice(0, 10));
+              }
+            }} style={fieldStyle} />
           </div>
           <div>
             <label style={labelStyle}>{t('compliance.form.cycle')} (months)</label>
-            <input type="number" value={form.cycleMonths} onChange={(e) => formUpdate('cycleMonths', parseInt(e.target.value) || 12)} min="1" style={fieldStyle} />
+            <input type="number" value={form.cycleMonths} onChange={(e) => {
+              const months = parseInt(e.target.value) || 12;
+              formUpdate('cycleMonths', months);
+              if (form.inspectionDate && months) {
+                const d = new Date(form.inspectionDate);
+                d.setMonth(d.getMonth() + months);
+                formUpdate('expiry', d.toISOString().slice(0, 10));
+              }
+            }} min="1" style={fieldStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>{t('compliance.form.expiry')}</label>
+            <input type="date" value={form.expiry} readOnly style={{ ...fieldStyle, background: '#F8FAFC', color: '#64748B' }} />
+            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{t('compliance.autoExpiryHint') || 'Auto-calculated from Effective Date + Cycle'}</div>
           </div>
           <div>
             <label style={labelStyle}>{t('compliance.form.responsible')}</label>
@@ -862,7 +560,7 @@ function DocModal({ title, form, formUpdate, onSave, onCancel, t, isNew }) {
       </div>
       <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
         <button onClick={onCancel} style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.form.cancel')}</button>
-        <button onClick={onSave} disabled={!form.name || !form.category || !form.center || !form.inspectionDate || !form.nextInspection} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: (!form.name || !form.category || !form.center || !form.inspectionDate || !form.nextInspection) ? 0.5 : 1 }}>{isNew ? t('compliance.form.create') : t('compliance.form.update')}</button>
+        <button onClick={onSave} disabled={!form.name || !form.category || !form.center || !form.inspectionDate} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: (!form.name || !form.category || !form.center || !form.inspectionDate) ? 0.5 : 1 }}>{isNew ? t('compliance.form.create') : t('compliance.form.update')}</button>
       </div>
     </ModalShell>
   );
@@ -937,6 +635,45 @@ function MultiSelectDropdown({ options, selected, onChange, placeholder }) {
             ))}
             {filtered.length === 0 && <div style={{ padding: '8px', fontSize: 11, color: '#94A3B8', textAlign: 'center' }}>No results</div>}
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ComboBox({ value, onChange, options, placeholder }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const ref = useRef(null);
+  const filtered = options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase()));
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setIsOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [isOpen]);
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <input
+        value={isOpen ? search : value}
+        onChange={(e) => { setSearch(e.target.value); onChange(e.target.value); }}
+        onFocus={() => { setSearch(''); setIsOpen(true); }}
+        placeholder={placeholder}
+        style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none', boxSizing: 'border-box' }}
+      />
+      {isOpen && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 100, maxHeight: 200, overflowY: 'auto' }}>
+          {filtered.length === 0 && <div style={{ padding: '8px 12px', fontSize: 11, color: '#94A3B8' }}>Type custom value</div>}
+          {filtered.map((o) => (
+            <div key={o.value} onClick={() => { onChange(o.value); setSearch(''); setIsOpen(false); }}
+              style={{ padding: '6px 12px', fontSize: 12, cursor: 'pointer', color: o.value === value ? 'var(--primary)' : '#334155', fontWeight: o.value === value ? 600 : 400, background: o.value === value ? 'var(--info-bg)' : 'transparent' }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#F1F5F9'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = o.value === value ? 'var(--info-bg)' : 'transparent'; }}>
+              {o.label}
+            </div>
+          ))}
         </div>
       )}
     </div>

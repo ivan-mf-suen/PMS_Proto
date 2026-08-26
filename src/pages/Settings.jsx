@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { ROLES, PERMISSIONS } from '../data/constants';
 import { useTranslation } from '../i18n/LanguageContext';
 import { useLanguage } from '../i18n/LanguageContext';
-import { User, Shield, Bell, Globe, Save, Plus, Eye, EyeOff, Lock, ChevronDown, ChevronRight } from 'lucide-react';
+import { User, Shield, Bell, Globe, Save, Plus, Eye, EyeOff, Lock, ChevronDown, ChevronRight, Mail } from 'lucide-react';
 
 const ACCESS_LEVELS = {
   FULL: { label: 'Full Access', color: 'var(--success)', bg: 'var(--success-bg)' },
@@ -39,6 +39,7 @@ export default function Settings() {
     { id: 'profile', label: t('settings.profile'), icon: User },
     { id: 'roles', label: t('settings.roles'), icon: Shield },
     { id: 'notifications', label: t('settings.notifications'), icon: Bell },
+    { id: 'smtp', label: 'SMTP', icon: Mail },
     { id: 'localization', label: t('settings.localization'), icon: Globe },
   ];
 
@@ -86,6 +87,11 @@ export default function Settings() {
         {/* ─── NOTIFICATIONS ─── */}
         {activeSection === 'notifications' && (
           <NotificationsSection t={t} />
+        )}
+
+        {/* ─── SMTP ─── */}
+        {activeSection === 'smtp' && (
+          <SMTPSection t={t} />
         )}
 
         {/* ─── LOCALIZATION ─── */}
@@ -462,6 +468,98 @@ function NotificationsSection({ t }) {
       </div>
 
       <button style={primaryBtnStyle}><Save size={14} /> {t('settings.notif.save')}</button>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SMTP SECTION
+   ═══════════════════════════════════════════════════════════ */
+function SMTPSection({ t: _t }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [smtp, setSmtp] = useState({
+    host: '',
+    port: '587',
+    username: '',
+    password: '',
+    fromEmail: '',
+    fromName: '',
+    useTLS: true,
+  });
+  const [testStatus, setTestStatus] = useState(null);
+
+  const update = (key, val) => setSmtp((prev) => ({ ...prev, [key]: val }));
+
+  const handleTest = () => {
+    setTestStatus('sending');
+    setTimeout(() => setTestStatus('success'), 1500);
+  };
+
+  return (
+    <div>
+      <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--foreground)', marginBottom: 20 }}>SMTP Email Settings</h2>
+      <p style={{ fontSize: 13, color: '#64748B', marginBottom: 24 }}>Configure the outgoing mail server for compliance reminders and notifications.</p>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, maxWidth: 600, marginBottom: 24 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>SMTP Server *</label>
+          <input value={smtp.host} onChange={(e) => update('host', e.target.value)} placeholder="smtp.example.com" style={inputStyle} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Port *</label>
+          <input value={smtp.port} onChange={(e) => update('port', e.target.value)} placeholder="587" style={inputStyle} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Username</label>
+          <input value={smtp.username} onChange={(e) => update('username', e.target.value)} placeholder="user@example.com" style={inputStyle} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Password</label>
+          <div style={{ position: 'relative' }}>
+            <input type={showPassword ? 'text' : 'password'} value={smtp.password} onChange={(e) => update('password', e.target.value)} placeholder="Enter password" style={{ ...inputStyle, paddingRight: 38 }} />
+            <button onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}>
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>From Email *</label>
+          <input value={smtp.fromEmail} onChange={(e) => update('fromEmail', e.target.value)} placeholder="noreply@gov.hk" style={inputStyle} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>From Name</label>
+          <input value={smtp.fromName} onChange={(e) => update('fromName', e.target.value)} placeholder="PMS System" style={inputStyle} />
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+        <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Encryption</label>
+        <div style={{ display: 'flex', gap: 4, background: '#F1F5F9', borderRadius: 8, padding: 3 }}>
+          {['None', 'STARTTLS', 'SSL/TLS'].map((opt) => (
+            <button key={opt} onClick={() => update('useTLS', opt !== 'None')}
+              style={{ padding: '6px 14px', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: (opt === 'None' ? !smtp.useTLS : smtp.useTLS) ? '#fff' : 'transparent', color: (opt === 'None' ? !smtp.useTLS : smtp.useTLS) ? 'var(--foreground)' : '#64748B', boxShadow: (opt === 'None' ? !smtp.useTLS : smtp.useTLS) ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+              {opt}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', background: '#F8FAFC', borderRadius: 8, border: '1px solid var(--border)', marginBottom: 24, maxWidth: 600 }}>
+        <Mail size={18} style={{ color: 'var(--info)', flexShrink: 0 }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>Test Connection</div>
+          <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>Send a test email to verify your SMTP configuration</div>
+        </div>
+        {testStatus === 'success' && <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--success)' }}>Sent successfully</span>}
+        <button onClick={handleTest} disabled={!smtp.host || !smtp.port} style={{ ...ghostBtnStyle, fontSize: 12, padding: '6px 14px', opacity: (!smtp.host || !smtp.port) ? 0.5 : 1 }}>
+          {testStatus === 'sending' ? 'Sending...' : 'Send Test'}
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button style={primaryBtnStyle}><Save size={14} /> Save SMTP Settings</button>
+        <button style={ghostBtnStyle}>Cancel</button>
+      </div>
     </div>
   );
 }

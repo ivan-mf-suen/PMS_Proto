@@ -27,11 +27,17 @@ export function formatCycle(months) {
   return `${months} mo`;
 }
 
-export function getDocStatus(nextInspection) {
-  if (!nextInspection) return 'Valid';
+export function getDocStatus(nextInspection, effectiveDate, cycleMonths) {
+  let dueDate = nextInspection;
+  if (effectiveDate && cycleMonths) {
+    const d = new Date(effectiveDate + 'T00:00:00');
+    d.setMonth(d.getMonth() + cycleMonths);
+    dueDate = d.toISOString().slice(0, 10);
+  }
+  if (!dueDate) return 'Valid';
   const now = new Date();
   now.setHours(0, 0, 0, 0);
-  const due = new Date(nextInspection + 'T00:00:00');
+  const due = new Date(dueDate + 'T00:00:00');
   if (due < now) return 'Expired';
   const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
   return diffDays <= 30 ? 'Expiring' : 'Valid';

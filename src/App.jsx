@@ -14,6 +14,7 @@ import Properties from './pages/Properties';
 import PropertyDetail from './pages/PropertyDetail';
 import Assets from './pages/Assets';
 import ComplianceVault from './pages/ComplianceVault';
+import ComplianceDetail from './pages/ComplianceDetail';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 
@@ -34,6 +35,7 @@ function AppLayout() {
   const [subView, setSubView] = useState(null);
   const [viewWOId, setViewWOId] = useState(null);
   const [viewPropertyId, setViewPropertyId] = useState(null);
+  const [viewDocId, setViewDocId] = useState(null);
   const [selectedCenter, setSelectedCenter] = useState('All');
 
   const handleNavigate = (tab) => {
@@ -61,6 +63,11 @@ function AppLayout() {
   const handleViewProperty = (propId) => {
     setViewPropertyId(propId);
     setSubView('propertyDetail');
+  };
+
+  const handleViewDoc = (docId) => {
+    setViewDocId(docId);
+    setSubView('complianceDetail');
   };
 
   const PageComponent = PAGES[activeTab] || Dashboard;
@@ -92,11 +99,17 @@ function AppLayout() {
               propertyId={viewPropertyId}
               onBack={() => { setSubView(null); setViewPropertyId(null); }}
             />
+          ) : subView === 'complianceDetail' ? (
+            <ComplianceDetail
+              docId={viewDocId}
+              onBack={() => { setSubView(null); setViewDocId(null); }}
+            />
           ) : (
             <PageComponent
               onCreateWorkOrder={() => setSubView('workOrderCreate')}
               onViewWO={handleViewWO}
               onViewProperty={handleViewProperty}
+              onViewDoc={handleViewDoc}
               selectedCenter={selectedCenter}
             />
           )}

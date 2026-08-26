@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback } from 'react';
 import { COMPLIANCE_DOCS as INITIAL_DOCS } from '../data/constants';
+import { getDocStatus } from '../data/complianceDocs';
 
 const ComplianceContext = createContext({
   docs: [],
@@ -9,14 +10,7 @@ const ComplianceContext = createContext({
 });
 
 function computeStatus(doc) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const exp = new Date(doc.expiry);
-  const next = new Date(doc.nextInspection);
-  if (exp < today) return 'Expired';
-  const diffDays = (next - today) / (1000 * 60 * 60 * 24);
-  if (diffDays <= 30) return 'Expiring';
-  return 'Valid';
+  return getDocStatus(doc.nextInspection, doc.inspectionDate, doc.cycleMonths);
 }
 
 export function ComplianceProvider({ children }) {

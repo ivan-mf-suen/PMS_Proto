@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { COMPLIANCE_CATEGORIES, PROPERTIES, CATEGORY_CONFIG, formatCycle } from '../data/constants';
+import { COMPLIANCE_CATEGORIES, PROPERTIES, CATEGORY_CONFIG, formatCycle, getDocStatus } from '../data/constants';
 import { useCompliance } from '../context/ComplianceContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -7,7 +7,7 @@ import { listAttachments, uploadAttachment, deactivateAttachment, getAttachmentU
 import {
   Search, CheckCircle, Clock, Bell, X, Eye, Pencil, Trash2,
   ChevronDown, ChevronUp, Wind, Zap, Flame, ArrowUp, Droplets, Leaf,
-  CircleHelp, FileText, Calendar,
+  CircleHelp, FileText, Calendar, AlertTriangle,
   Upload, Download, Paperclip, FileImage,
 } from 'lucide-react';
 
@@ -53,10 +53,12 @@ export default function ComplianceVault({ selectedCenter }) {
 
   const activeDocs = useMemo(() => docs.filter((d) => !d.removed), [docs]);
 
+  const docsWithStatus = useMemo(() => activeDocs.map((d) => ({ ...d, status: getDocStatus(d.expiry) })), [activeDocs]);
+
   // Summary docs: status/center/search only (no category filter)
   // Used by categoryCoverage grid so all categories always remain visible
   const summaryDocs = useMemo(() => {
-    return activeDocs.filter((d) => {
+    return docsWithStatus.filter((d) => {
       if (statusFilter !== 'All' && d.status !== statusFilter) return false;
       if (effectiveCenter !== 'All' && d.center !== effectiveCenter) return false;
       if (expiryFrom && d.nextInspection < expiryFrom) return false;
@@ -67,7 +69,7 @@ export default function ComplianceVault({ selectedCenter }) {
       }
       return true;
     });
-  }, [activeDocs, statusFilter, effectiveCenter, search, expiryFrom, expiryTo]);
+  }, [docsWithStatus, statusFilter, effectiveCenter, search, expiryFrom, expiryTo]);
 
   // Table: applies ALL filters including category
   const filtered = useMemo(() => {
@@ -81,9 +83,11 @@ export default function ComplianceVault({ selectedCenter }) {
 
   // Summary bar counts: from filtered so they match the table when categories are selected test
   const validCount = filtered.filter((d) => d.status === 'Valid').length;
+  const expiringCount = filtered.filter((d) => d.status === 'Expiring').length;
   const expiredCount = filtered.filter((d) => d.status === 'Expired').length;
   const totalFiltered = filtered.length;
   const complianceRate = totalFiltered > 0 ? Math.round((validCount / totalFiltered) * 100) : 0;
+  const expiringPct = totalFiltered > 0 ? Math.round((expiringCount / totalFiltered) * 100) : 0;
 
   // Coverage grid: from summaryDocs (ignores category filter so all categories always show)
   const categoryCoverage = useMemo(() => {
@@ -149,6 +153,7 @@ export default function ComplianceVault({ selectedCenter }) {
         </div>
         {/* Status counts — inline */}
         <StatusCount icon={<CheckCircle size={16} color="var(--success)" />} value={validCount} label={t('compliance.valid')} bg="var(--success-bg)" active={statusFilter === 'Valid'} onClick={() => toggleStatusFilter('Valid')} />
+        <StatusCount icon={<AlertTriangle size={16} color="#D97706" />} value={expiringCount} label={t('compliance.expiringSoon')} bg="#FEF3C7" active={statusFilter === 'Expiring'} onClick={() => toggleStatusFilter('Expiring')} pct={expiringPct} />
         <StatusCount icon={<Clock size={16} color="#DC2626" />} value={expiredCount} label={t('compliance.expired')} bg="#FEE2E2" active={statusFilter === 'Expired'} onClick={() => toggleStatusFilter('Expired')} />
       </div>
 
@@ -310,7 +315,7 @@ function ComplianceRateBar({ rate }) {
   );
 }
 
-function StatusCount({ icon, value, label, bg, active, onClick }) {
+function StatusCount({ icon, value, label, bg, active, onClick, pct }) {
   return (
     <div onClick={onClick} style={{ flex: 1, background: active ? bg : '#fff', borderRadius: 12, border: `2px solid ${active ? 'var(--info)' : 'var(--border)'}`, boxShadow: active ? '0 0 0 3px rgba(37,99,235,0.12)' : 'var(--card-shadow)', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', transition: 'all 0.15s' }}
       onMouseEnter={(e) => { if (!active) e.currentTarget.style.borderColor = 'var(--info)'; }}
@@ -318,7 +323,7 @@ function StatusCount({ icon, value, label, bg, active, onClick }) {
       <div style={{ width: 34, height: 34, borderRadius: 8, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
       <div>
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--foreground)', lineHeight: 1.1 }}>{value}</div>
-        <div style={{ fontSize: 11, fontWeight: 600, color: '#475569', marginTop: 1 }}>{label}</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: '#475569', marginTop: 1 }}>{label}{pct != null && <span style={{ color: '#94A3B8', fontWeight: 500, marginLeft: 4 }}>({pct}%)</span>}</div>
       </div>
     </div>
   );

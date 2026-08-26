@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useWorkOrders } from '../context/WorkOrderContext';
-import { COMPLIANCE_DOCS, PROPERTIES, ASSETS, WORK_ORDER_STATUSES } from '../data/constants';
+import { COMPLIANCE_DOCS, PROPERTIES, ASSETS, WORK_ORDER_STATUSES, getDocStatus } from '../data/constants';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -157,7 +157,7 @@ export default function Dashboard({ selectedCenter }) {
   const committedCost = activeWOs.reduce((s, w) => s + (w.budget || 0), 0);
   const avgCost = filteredWOs.length > 0 ? Math.round(totalBudget / filteredWOs.length) : 0;
 
-  const expiredDocs = filteredDocs.filter((d) => d.status === 'Expired');
+  const expiredDocs = filteredDocs.filter((d) => getDocStatus(d.expiry) === 'Expired');
 
   // Upcoming inspections (next 3 months)
   const today = new Date(CURRENT_YEAR, 7, 24);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, Building2, MapPin, User, Phone, Mail, ShieldCheck, AlertTriangle, CheckCircle, Clock, Package, ClipboardList, ChevronDown, ChevronUp } from 'lucide-react';
-import { PROPERTIES, COMPLIANCE_DOCS, ASSETS, WORK_ORDERS } from '../data/constants';
+import { PROPERTIES, COMPLIANCE_DOCS, getDocStatus, ASSETS, WORK_ORDERS } from '../data/constants';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export default function PropertyDetail({ propertyId, onBack }) {
@@ -23,9 +23,9 @@ export default function PropertyDetail({ propertyId, onBack }) {
   const propAssets = ASSETS.filter((a) => a.location === prop.name);
   const propWOs = WORK_ORDERS.filter((w) => w.center === prop.name);
 
-  const validDocs = propDocs.filter((d) => d.status === 'Valid').length;
-  const expiringDocs = propDocs.filter((d) => d.status === 'Expiring').length;
-  const expiredDocs = propDocs.filter((d) => d.status === 'Expired').length;
+  const validDocs = propDocs.filter((d) => getDocStatus(d.expiry) === 'Valid').length;
+  const expiringDocs = propDocs.filter((d) => getDocStatus(d.expiry) === 'Expiring').length;
+  const expiredDocs = propDocs.filter((d) => getDocStatus(d.expiry) === 'Expired').length;
 
   const toggleSection = (key) => setExpandedSection((prev) => ({ ...prev, [key]: !prev[key] }));
 
@@ -132,7 +132,7 @@ export default function PropertyDetail({ propertyId, onBack }) {
                   <td style={{ padding: '10px 16px', fontSize: 12, color: '#64748B' }}>{doc.inspectionDate}</td>
                   <td style={{ padding: '10px 16px', fontSize: 12, color: '#64748B' }}>{doc.nextInspection}</td>
                   <td style={{ padding: '10px 16px' }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: statusColors[doc.status]?.bg, color: statusColors[doc.status]?.color }}>{doc.status}</span>
+                    {(() => { const s = getDocStatus(doc.expiry); return <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: statusColors[s]?.bg, color: statusColors[s]?.color }}>{s}</span>; })()}
                   </td>
                 </tr>
               ))}

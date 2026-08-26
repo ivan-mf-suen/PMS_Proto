@@ -330,9 +330,9 @@ export default function ComplianceVault({ selectedCenter }) {
                   { key: 'category', label: t('compliance.col.category'), width: 160 },
                   { key: 'name', label: t('compliance.col.certificate') },
                   ...(!isGlobalCentre ? [{ key: 'center', label: t('compliance.col.property'), width: 200 }] : []),
-                  { key: 'nextInspection', label: t('compliance.col.nextDue'), width: 110 },
-                  { key: 'cycleMonths', label: t('compliance.col.cycle'), width: 80 },
                   { key: 'inspectionDate', label: t('compliance.col.lastInspect'), width: 110 },
+                  { key: 'cycleMonths', label: t('compliance.col.cycle'), width: 80 },
+                  { key: 'nextInspection', label: t('compliance.col.nextDue'), width: 110 },
                   { key: 'status', label: t('compliance.col.status'), width: 100 },
                   { key: '_actions', label: t('compliance.col.actions'), width: 90 },
                 ].map((col) => (
@@ -359,9 +359,9 @@ export default function ComplianceVault({ selectedCenter }) {
                     </td>
                     <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{doc.name}</td>
                     {!isGlobalCentre && <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748B', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.center}</td>}
-                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748B' }}>{doc.nextInspection}</td>
-                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748B', fontWeight: 600 }}>{formatCycle(doc.cycleMonths || 12)}</td>
                     <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748B' }}>{doc.inspectionDate}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748B', fontWeight: 600 }}>{formatCycle(doc.cycleMonths || 12)}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748B' }}>{doc.nextInspection}</td>
                     <td style={{ padding: '10px 14px' }}>
                       <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: statusColors[doc.status]?.bg, color: statusColors[doc.status]?.color }}>{doc.status}</span>
                     </td>

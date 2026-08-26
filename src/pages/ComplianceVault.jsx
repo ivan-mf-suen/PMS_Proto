@@ -7,7 +7,7 @@ import { listAttachments, uploadAttachment, deactivateAttachment, getAttachmentU
 import {
   Search, CheckCircle, Clock, Bell, X, Eye, Pencil, Trash2,
   ChevronDown, ChevronUp, Wind, Zap, Flame, ArrowUp, Droplets, Leaf,
-  CircleHelp, FileText, Calendar, AlertTriangle,
+  CircleHelp, FileText, AlertTriangle, Filter,
   Upload, Download, Paperclip, FileImage,
 } from 'lucide-react';
 
@@ -246,51 +246,52 @@ export default function ComplianceVault({ selectedCenter }) {
       </div>
 
       {/* Filter Bar */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-        <MultiSelectDropdown
-          options={COMPLIANCE_CATEGORIES.map((cat) => ({ value: cat, label: t(CATEGORY_KEY_MAP[cat] || cat) }))}
-          selected={selectedCategories}
-          onChange={setSelectedCategories}
-          placeholder={t('compliance.filter.category')}
-        />
-        <div style={{ position: 'relative', flex: 1, minWidth: 180 }}>
-          <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
-          <input value={search} onChange={(e) => { setPage(1); setSearch(e.target.value); }} placeholder={t('compliance.searchPlaceholder')} style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none' }} />
-        </div>
-        {!isGlobalCentre && (
+      <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', overflow: 'visible', padding: '12px 16px', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <Filter size={14} color="#64748B" />
           <MultiSelectDropdown
-            options={uniqueProperties.map((p) => ({ value: p, label: p.replace('PLK ', '') }))}
-            selected={propertyFilter}
-            onChange={(v) => { setPage(1); setPropertyFilter(v); }}
-            placeholder={t('compliance.filter.property')}
+            options={COMPLIANCE_CATEGORIES.map((cat) => ({ value: cat, label: t(CATEGORY_KEY_MAP[cat] || cat) }))}
+            selected={selectedCategories}
+            onChange={setSelectedCategories}
+            placeholder={t('compliance.filter.category')}
           />
-        )}
-        <MultiSelectDropdown
-          options={uniqueCycles.map((c) => ({ value: c, label: formatCycle(c) }))}
-          selected={cycleFilter}
-          onChange={(v) => { setPage(1); setCycleFilter(v); }}
-          placeholder={t('compliance.filter.cycle')}
-        />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, padding: '0 10px' }}>
-          <Calendar size={14} color="#94A3B8" />
-          <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500, whiteSpace: 'nowrap' }}>{t('compliance.filter.expiryFrom')}</span>
-          <input type="date" value={expiryFrom} onChange={(e) => { setPage(1); setExpiryFrom(e.target.value); }} style={{ border: 'none', outline: 'none', fontSize: 12, padding: '8px 2px', background: 'transparent', color: expiryFrom ? 'var(--foreground)' : '#94A3B8', fontFamily: 'inherit' }} />
-          <span style={{ fontSize: 11, color: '#CBD5E1' }}>—</span>
-          <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500, whiteSpace: 'nowrap' }}>{t('compliance.filter.expiryTo')}</span>
-          <input type="date" value={expiryTo} onChange={(e) => { setPage(1); setExpiryTo(e.target.value); }} style={{ border: 'none', outline: 'none', fontSize: 12, padding: '8px 2px', background: 'transparent', color: expiryTo ? 'var(--foreground)' : '#94A3B8', fontFamily: 'inherit' }} />
+          <div style={{ position: 'relative', flex: 1, minWidth: 180 }}>
+            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+            <input value={search} onChange={(e) => { setPage(1); setSearch(e.target.value); }} placeholder={t('compliance.searchPlaceholder')} style={{ width: '100%', padding: '8px 12px 8px 36px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12, background: '#fff', outline: 'none' }} />
+          </div>
+          {!isGlobalCentre && (
+            <MultiSelectDropdown
+              options={uniqueProperties.map((p) => ({ value: p, label: p.replace('PLK ', '') }))}
+              selected={propertyFilter}
+              onChange={(v) => { setPage(1); setPropertyFilter(v); }}
+              placeholder={t('compliance.filter.property')}
+            />
+          )}
+          <MultiSelectDropdown
+            options={uniqueCycles.map((c) => ({ value: c, label: formatCycle(c) }))}
+            selected={cycleFilter}
+            onChange={(v) => { setPage(1); setCycleFilter(v); }}
+            placeholder={t('compliance.filter.cycle')}
+          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#64748B' }}>
+            <span>{t('compliance.filter.expiryFrom')}</span>
+            <input type="date" value={expiryFrom} onChange={(e) => { setPage(1); setExpiryFrom(e.target.value); }} style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12 }} />
+            <span>{t('compliance.filter.expiryTo')}</span>
+            <input type="date" value={expiryTo} onChange={(e) => { setPage(1); setExpiryTo(e.target.value); }} style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12 }} />
+          </div>
+          {[
+            { key: 'Valid', label: t('compliance.valid'), icon: <CheckCircle size={13} />, activeBg: 'var(--success)', activeColor: '#fff', _inactiveBg: 'var(--success-bg)', _inactiveColor: 'var(--success)' },
+            { key: 'Expiring', label: t('compliance.expiring'), icon: <AlertTriangle size={13} />, activeBg: '#F59E0B', activeColor: '#fff', _inactiveBg: '#FEF3C7', _inactiveColor: '#B45309' },
+            { key: 'Expired', label: t('compliance.expired'), icon: <Clock size={13} />, activeBg: '#DC2626', activeColor: '#fff', _inactiveBg: '#FEE2E2', _inactiveColor: '#DC2626' },
+          ].map(({ key, label, icon, activeBg, activeColor }) => {
+            const isActive = statusFilter.includes(key);
+            return (
+              <button key={key} onClick={() => toggleStatusFilter(key)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600, border: `1px solid ${isActive ? activeBg : 'var(--border)'}`, background: isActive ? activeBg : '#fff', color: isActive ? activeColor : '#64748B', cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                {icon}{label}
+              </button>
+            );
+          })}
         </div>
-        {[
-          { key: 'Valid', label: t('compliance.valid'), icon: <CheckCircle size={13} />, activeBg: 'var(--success)', activeColor: '#fff', inactiveBg: 'var(--success-bg)', inactiveColor: 'var(--success)' },
-          { key: 'Expiring', label: t('compliance.expiring'), icon: <AlertTriangle size={13} />, activeBg: '#F59E0B', activeColor: '#fff', inactiveBg: '#FEF3C7', inactiveColor: '#B45309' },
-          { key: 'Expired', label: t('compliance.expired'), icon: <Clock size={13} />, activeBg: '#DC2626', activeColor: '#fff', inactiveBg: '#FEE2E2', inactiveColor: '#DC2626' },
-        ].map(({ key, label, icon, activeBg, activeColor, inactiveBg, inactiveColor }) => {
-          const isActive = statusFilter.includes(key);
-          return (
-            <button key={key} onClick={() => toggleStatusFilter(key)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, border: `1.5px solid ${isActive ? activeBg : inactiveBg}`, background: isActive ? activeBg : inactiveBg, color: isActive ? activeColor : inactiveColor, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
-              {icon}{label}
-            </button>
-          );
-        })}
       </div>
 
       {/* Active Filter Pills */}
@@ -912,11 +913,11 @@ function MultiSelectDropdown({ options, selected, onChange, placeholder }) {
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <button onClick={() => setIsOpen(!isOpen)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 12, fontWeight: 500, color: selected.length > 0 ? 'var(--foreground)' : '#94A3B8', cursor: 'pointer', minHeight: 32, maxWidth: 200, overflow: 'hidden', textAlign: 'left' }}>
+      <button onClick={() => setIsOpen(!isOpen)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 12, fontWeight: 600, color: selected.length > 0 ? 'var(--foreground)' : '#64748B', cursor: 'pointer', minHeight: 32, maxWidth: 200, overflow: 'hidden', textAlign: 'left' }}>
         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {selected.length === 0 ? (placeholder || 'All') : `${selected.length} selected`}
         </span>
-        <ChevronDown size={12} color="#94A3B8" />
+        <ChevronDown size={12} />
       </button>
       {selected.length > 0 && (
         <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginTop: 4, maxWidth: 200 }}>

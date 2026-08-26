@@ -212,7 +212,7 @@ describe('ComplianceVault', () => {
   it('renders status filter buttons between search and table', () => {
     renderVault();
     const filterBtns = document.querySelectorAll('button');
-    const validBtn = Array.from(filterBtns).find((b) => b.textContent.includes('Valid') && b.closest('[style*="border-radius: 20"]'));
+    const validBtn = Array.from(filterBtns).find((b) => b.textContent.includes('Valid') && b.closest('[style*="border-radius: 6"]'));
     expect(validBtn).toBeTruthy();
   });
 

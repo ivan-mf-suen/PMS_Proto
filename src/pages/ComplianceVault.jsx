@@ -154,11 +154,10 @@ export default function ComplianceVault({ selectedCenter }) {
   const clearAllFilters = () => { clearCategories(); setStatusFilter([]); setCycleFilter([]); setPropertyFilter([]); setSearch(''); setExpiryFrom(''); setExpiryTo(''); setPage(1); };
 
   const csvEscape = (v) => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s; };
-  const csvDate = (d) => d ? `"${d}"` : '';
 
   const exportCSV = () => {
     const headers = ['Category', 'Certificate Name', 'Property', 'Next Due', 'Cycle (months)', 'Last Inspected', 'Expiry', 'Issued By', 'Reference No.', 'Responsible', 'Status'];
-    const rows = filtered.map((d) => [d.category, d.name, d.center, csvDate(d.nextInspection), d.cycleMonths || 12, csvDate(d.inspectionDate), csvDate(d.expiry), d.issuedBy, d.documentRef, d.responsible, d.status]);
+    const rows = filtered.map((d) => [d.category, d.name, d.center, d.nextInspection || '', d.cycleMonths || 12, d.inspectionDate || '', d.expiry || '', d.issuedBy, d.documentRef, d.responsible, d.status]);
     const csv = [headers.map(csvEscape).join(','), ...rows.map((r) => r.map(csvEscape).join(','))].join('\r\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

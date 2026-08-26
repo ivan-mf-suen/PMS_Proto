@@ -358,6 +358,11 @@
   "compliance.filter.category": "分類",
   "compliance.filter.cycle": "週期",
   "compliance.filter.property": "物業",
+  "compliance.perPage": "每頁顯示",
+  "compliance.showing": "顯示第 {from} 至 {to} 項，共 {total} 項",
+  "compliance.prev": "上一頁",
+  "compliance.next": "下一頁",
+  "compliance.ofPages": "共 {total} 頁",
 
   "compliance.cat.FireSafety": "消防安全",
   "compliance.cat.Electrical": "電力",

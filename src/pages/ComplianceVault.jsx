@@ -46,6 +46,8 @@ export default function ComplianceVault({ selectedCenter }) {
   const [downloadMenu, setDownloadMenu] = useState(null);
   const [cycleFilter, setCycleFilter] = useState([]);
   const [propertyFilter, setPropertyFilter] = useState([]);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
 
   useEffect(() => {
     if (downloadMenu === null) return;
@@ -58,9 +60,9 @@ export default function ComplianceVault({ selectedCenter }) {
   const isGlobalCentre = selectedCenter && selectedCenter !== 'All';
   const effectiveCenter = selectedCenter || 'All';
 
-  const toggleCategory = (cat) => setSelectedCategories((prev) => prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]);
-  const clearCategories = () => setSelectedCategories([]);
-  const toggleStatusFilter = (status) => setStatusFilter((prev) => prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]);
+  const toggleCategory = (cat) => { setPage(1); setSelectedCategories((prev) => prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]); };
+  const clearCategories = () => { setPage(1); setSelectedCategories([]); };
+  const toggleStatusFilter = (status) => { setPage(1); setStatusFilter((prev) => prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]); };
 
   const activeDocs = useMemo(() => docs.filter((d) => !d.removed), [docs]);
 
@@ -93,6 +95,10 @@ export default function ComplianceVault({ selectedCenter }) {
     list.sort((a, b) => { const va = a[sortCol] ?? ''; const vb = b[sortCol] ?? ''; const cmp = typeof va === 'string' ? va.localeCompare(vb) : va - vb; return sortDir === 'asc' ? cmp : -cmp; });
     return list;
   }, [summaryDocs, selectedCategories, cycleFilter, propertyFilter, sortCol, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const safePage = Math.min(page, totalPages);
+  const pagedDocs = filtered.slice((safePage - 1) * perPage, safePage * perPage);
 
   // Summary bar counts: from filtered so they match the table when categories are selected test
   const validCount = filtered.filter((d) => d.status === 'Valid').length;
@@ -145,7 +151,7 @@ export default function ComplianceVault({ selectedCenter }) {
   if (expiryFrom) activeFilterPills.push({ key: 'expiryFrom', label: `${t('compliance.filter.expiryFrom')}: ${expiryFrom}`, clear: () => setExpiryFrom('') });
   if (expiryTo) activeFilterPills.push({ key: 'expiryTo', label: `${t('compliance.filter.expiryTo')}: ${expiryTo}`, clear: () => setExpiryTo('') });
   const hasFilters = activeFilterPills.length > 0;
-  const clearAllFilters = () => { clearCategories(); setStatusFilter([]); setCycleFilter([]); setPropertyFilter([]); setSearch(''); setExpiryFrom(''); setExpiryTo(''); };
+  const clearAllFilters = () => { clearCategories(); setStatusFilter([]); setCycleFilter([]); setPropertyFilter([]); setSearch(''); setExpiryFrom(''); setExpiryTo(''); setPage(1); };
 
   const csvEscape = (v) => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s; };
   const csvDate = (d) => d ? `"${d}"` : '';
@@ -242,9 +248,37 @@ export default function ComplianceVault({ selectedCenter }) {
 
       {/* Filter Bar */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <MultiSelectDropdown
+          options={COMPLIANCE_CATEGORIES.map((cat) => ({ value: cat, label: t(CATEGORY_KEY_MAP[cat] || cat) }))}
+          selected={selectedCategories}
+          onChange={setSelectedCategories}
+          placeholder={t('compliance.filter.category')}
+        />
         <div style={{ position: 'relative', flex: 1, minWidth: 180 }}>
           <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('compliance.searchPlaceholder')} style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none' }} />
+          <input value={search} onChange={(e) => { setPage(1); setSearch(e.target.value); }} placeholder={t('compliance.searchPlaceholder')} style={{ width: '100%', padding: '9px 12px 9px 36px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none' }} />
+        </div>
+        {!isGlobalCentre && (
+          <MultiSelectDropdown
+            options={uniqueProperties.map((p) => ({ value: p, label: p.replace('PLK ', '') }))}
+            selected={propertyFilter}
+            onChange={(v) => { setPage(1); setPropertyFilter(v); }}
+            placeholder={t('compliance.filter.property')}
+          />
+        )}
+        <MultiSelectDropdown
+          options={uniqueCycles.map((c) => ({ value: c, label: formatCycle(c) }))}
+          selected={cycleFilter}
+          onChange={(v) => { setPage(1); setCycleFilter(v); }}
+          placeholder={t('compliance.filter.cycle')}
+        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, padding: '0 10px' }}>
+          <Calendar size={14} color="#94A3B8" />
+          <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500, whiteSpace: 'nowrap' }}>{t('compliance.filter.expiryFrom')}</span>
+          <input type="date" value={expiryFrom} onChange={(e) => { setPage(1); setExpiryFrom(e.target.value); }} style={{ border: 'none', outline: 'none', fontSize: 12, padding: '8px 2px', background: 'transparent', color: expiryFrom ? 'var(--foreground)' : '#94A3B8', fontFamily: 'inherit' }} />
+          <span style={{ fontSize: 11, color: '#CBD5E1' }}>—</span>
+          <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500, whiteSpace: 'nowrap' }}>{t('compliance.filter.expiryTo')}</span>
+          <input type="date" value={expiryTo} onChange={(e) => { setPage(1); setExpiryTo(e.target.value); }} style={{ border: 'none', outline: 'none', fontSize: 12, padding: '8px 2px', background: 'transparent', color: expiryTo ? 'var(--foreground)' : '#94A3B8', fontFamily: 'inherit' }} />
         </div>
         {[
           { key: 'Valid', label: t('compliance.valid'), icon: <CheckCircle size={13} />, activeBg: 'var(--success)', activeColor: '#fff', inactiveBg: 'var(--success-bg)', inactiveColor: 'var(--success)' },
@@ -258,34 +292,6 @@ export default function ComplianceVault({ selectedCenter }) {
             </button>
           );
         })}
-        <MultiSelectDropdown
-          options={COMPLIANCE_CATEGORIES.map((cat) => ({ value: cat, label: t(CATEGORY_KEY_MAP[cat] || cat) }))}
-          selected={selectedCategories}
-          onChange={setSelectedCategories}
-          placeholder={t('compliance.filter.category')}
-        />
-        <MultiSelectDropdown
-          options={uniqueCycles.map((c) => ({ value: c, label: formatCycle(c) }))}
-          selected={cycleFilter}
-          onChange={setCycleFilter}
-          placeholder={t('compliance.filter.cycle')}
-        />
-        {!isGlobalCentre && (
-          <MultiSelectDropdown
-            options={uniqueProperties.map((p) => ({ value: p, label: p.replace('PLK ', '') }))}
-            selected={propertyFilter}
-            onChange={setPropertyFilter}
-            placeholder={t('compliance.filter.property')}
-          />
-        )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, padding: '0 10px' }}>
-          <Calendar size={14} color="#94A3B8" />
-          <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500, whiteSpace: 'nowrap' }}>{t('compliance.filter.expiryFrom')}</span>
-          <input type="date" value={expiryFrom} onChange={(e) => setExpiryFrom(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: 12, padding: '8px 2px', background: 'transparent', color: expiryFrom ? 'var(--foreground)' : '#94A3B8', fontFamily: 'inherit' }} />
-          <span style={{ fontSize: 11, color: '#CBD5E1' }}>—</span>
-          <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500, whiteSpace: 'nowrap' }}>{t('compliance.filter.expiryTo')}</span>
-          <input type="date" value={expiryTo} onChange={(e) => setExpiryTo(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: 12, padding: '8px 2px', background: 'transparent', color: expiryTo ? 'var(--foreground)' : '#94A3B8', fontFamily: 'inherit' }} />
-        </div>
       </div>
 
       {/* Active Filter Pills */}
@@ -340,7 +346,7 @@ export default function ComplianceVault({ selectedCenter }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((doc) => {
+              {pagedDocs.map((doc) => {
                 const cfg = CATEGORY_CONFIG[doc.category] || {};
                 const IconComp = CATEGORY_ICON[doc.category];
                 return (
@@ -397,6 +403,29 @@ export default function ComplianceVault({ selectedCenter }) {
           </table>
         </div>
       </div>
+
+      {/* Pagination Footer */}
+      {filtered.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#64748B' }}>
+            <select value={perPage} onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }} style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 13, background: '#fff', cursor: 'pointer', outline: 'none' }}>
+              <option value={10}>10</option>
+              <option value={50}>50</option>
+              <option value={250}>250</option>
+            </select>
+            <span>{t('compliance.perPage')}</span>
+          </div>
+          <div style={{ fontSize: 13, color: '#64748B' }}>
+            {t('compliance.showing', { from: (safePage - 1) * perPage + 1, to: Math.min(safePage * perPage, filtered.length), total: filtered.length })}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button disabled={safePage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} style={{ padding: '5px 12px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 12, fontWeight: 600, color: safePage <= 1 ? '#CBD5E1' : '#475569', cursor: safePage <= 1 ? 'default' : 'pointer' }}>{t('compliance.prev')}</button>
+            <input type="number" min={1} max={totalPages} value={safePage} onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setPage(Math.max(1, Math.min(totalPages, v))); }} style={{ width: 44, padding: '5px 4px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 13, textAlign: 'center', outline: 'none', background: '#fff' }} />
+            <span style={{ fontSize: 13, color: '#64748B' }}>{t('compliance.ofPages', { total: totalPages })}</span>
+            <button disabled={safePage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} style={{ padding: '5px 12px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 12, fontWeight: 600, color: safePage >= totalPages ? '#CBD5E1' : '#475569', cursor: safePage >= totalPages ? 'default' : 'pointer' }}>{t('compliance.next')}</button>
+          </div>
+        </div>
+      )}
 
       {/* ── MODALS ────────────────────────────────── */}
       {modal === 'add' && <DocModal title={t('compliance.addTitle')} form={form} formUpdate={formUpdate} onSave={handleSave} onCancel={() => setModal(null)} t={t} isNew />}

@@ -358,6 +358,11 @@
   "compliance.filter.category": "Category",
   "compliance.filter.cycle": "Cycle",
   "compliance.filter.property": "Property",
+  "compliance.perPage": "records per page",
+  "compliance.showing": "Showing {from} to {to} of {total} entries",
+  "compliance.prev": "Previous",
+  "compliance.next": "Next",
+  "compliance.ofPages": "of {total}",
 
   "compliance.cat.FireSafety": "Fire Safety",
   "compliance.cat.Electrical": "Electrical",

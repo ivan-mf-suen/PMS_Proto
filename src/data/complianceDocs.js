@@ -27,13 +27,13 @@ export function formatCycle(months) {
   return `${months} mo`;
 }
 
-export function getDocStatus(expiry) {
-  if (!expiry) return 'Valid';
+export function getDocStatus(nextInspection) {
+  if (!nextInspection) return 'Valid';
   const now = new Date();
   now.setHours(0, 0, 0, 0);
-  const exp = new Date(expiry + 'T00:00:00');
-  if (exp < now) return 'Expired';
-  const diffDays = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
+  const due = new Date(nextInspection + 'T00:00:00');
+  if (due < now) return 'Expired';
+  const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
   return diffDays <= 30 ? 'Expiring' : 'Valid';
 }
 

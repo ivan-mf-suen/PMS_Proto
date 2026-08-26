@@ -157,7 +157,7 @@ export default function Dashboard({ selectedCenter }) {
   const committedCost = activeWOs.reduce((s, w) => s + (w.budget || 0), 0);
   const avgCost = filteredWOs.length > 0 ? Math.round(totalBudget / filteredWOs.length) : 0;
 
-  const expiredDocs = filteredDocs.filter((d) => getDocStatus(d.expiry) === 'Expired');
+  const expiredDocs = filteredDocs.filter((d) => getDocStatus(d.nextInspection) === 'Expired');
 
   // Upcoming inspections (next 3 months)
   const today = new Date(CURRENT_YEAR, 7, 24);

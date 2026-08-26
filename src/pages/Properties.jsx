@@ -222,9 +222,9 @@ export default function Properties({ onViewProperty, selectedCenter }) {
                 <div style={{ display: 'flex', gap: 12 }}>
                   {(() => {
                     const docs = getPropDocs(previewProp.name);
-                    const valid = docs.filter((d) => getDocStatus(d.expiry) === 'Valid').length;
-                    const expiring = docs.filter((d) => getDocStatus(d.expiry) === 'Expiring').length;
-                    const expired = docs.filter((d) => getDocStatus(d.expiry) === 'Expired').length;
+                    const valid = docs.filter((d) => getDocStatus(d.nextInspection) === 'Valid').length;
+                    const expiring = docs.filter((d) => getDocStatus(d.nextInspection) === 'Expiring').length;
+                    const expired = docs.filter((d) => getDocStatus(d.nextInspection) === 'Expired').length;
                     return (
                       <>
                         <div style={{ flex: 1, padding: 10, background: '#F0FDF4', borderRadius: 8, textAlign: 'center' }}><div style={{ fontSize: 18, fontWeight: 800, color: 'var(--success)' }}>{valid}</div><div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase' }}>{t('compliance.valid')}</div></div>

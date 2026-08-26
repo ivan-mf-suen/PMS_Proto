@@ -23,9 +23,9 @@ export default function PropertyDetail({ propertyId, onBack }) {
   const propAssets = ASSETS.filter((a) => a.location === prop.name);
   const propWOs = WORK_ORDERS.filter((w) => w.center === prop.name);
 
-  const validDocs = propDocs.filter((d) => getDocStatus(d.expiry) === 'Valid').length;
-  const expiringDocs = propDocs.filter((d) => getDocStatus(d.expiry) === 'Expiring').length;
-  const expiredDocs = propDocs.filter((d) => getDocStatus(d.expiry) === 'Expired').length;
+  const validDocs = propDocs.filter((d) => getDocStatus(d.nextInspection) === 'Valid').length;
+  const expiringDocs = propDocs.filter((d) => getDocStatus(d.nextInspection) === 'Expiring').length;
+  const expiredDocs = propDocs.filter((d) => getDocStatus(d.nextInspection) === 'Expired').length;
 
   const toggleSection = (key) => setExpandedSection((prev) => ({ ...prev, [key]: !prev[key] }));
 
@@ -132,7 +132,7 @@ export default function PropertyDetail({ propertyId, onBack }) {
                   <td style={{ padding: '10px 16px', fontSize: 12, color: '#64748B' }}>{doc.inspectionDate}</td>
                   <td style={{ padding: '10px 16px', fontSize: 12, color: '#64748B' }}>{doc.nextInspection}</td>
                   <td style={{ padding: '10px 16px' }}>
-                    {(() => { const s = getDocStatus(doc.expiry); return <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: statusColors[s]?.bg, color: statusColors[s]?.color }}>{s}</span>; })()}
+                    {(() => { const s = getDocStatus(doc.nextInspection); return <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: statusColors[s]?.bg, color: statusColors[s]?.color }}>{s}</span>; })()}
                   </td>
                 </tr>
               ))}

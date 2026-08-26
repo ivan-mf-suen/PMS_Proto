@@ -53,7 +53,7 @@ export default function ComplianceVault({ selectedCenter }) {
 
   const activeDocs = useMemo(() => docs.filter((d) => !d.removed), [docs]);
 
-  const docsWithStatus = useMemo(() => activeDocs.map((d) => ({ ...d, status: getDocStatus(d.expiry) })), [activeDocs]);
+  const docsWithStatus = useMemo(() => activeDocs.map((d) => ({ ...d, status: getDocStatus(d.nextInspection) })), [activeDocs]);
 
   // Summary docs: status/center/search only (no category filter)
   // Used by categoryCoverage grid so all categories always remain visible
@@ -87,7 +87,9 @@ export default function ComplianceVault({ selectedCenter }) {
   const expiredCount = filtered.filter((d) => d.status === 'Expired').length;
   const totalFiltered = filtered.length;
   const complianceRate = totalFiltered > 0 ? Math.round((validCount / totalFiltered) * 100) : 0;
+  const validPct = totalFiltered > 0 ? Math.round((validCount / totalFiltered) * 100) : 0;
   const expiringPct = totalFiltered > 0 ? Math.round((expiringCount / totalFiltered) * 100) : 0;
+  const expiredPct = totalFiltered > 0 ? Math.round((expiredCount / totalFiltered) * 100) : 0;
 
   // Coverage grid: from summaryDocs (ignores category filter so all categories always show)
   const categoryCoverage = useMemo(() => {
@@ -152,9 +154,9 @@ export default function ComplianceVault({ selectedCenter }) {
           </div>
         </div>
         {/* Status counts — inline */}
-        <StatusCount icon={<CheckCircle size={16} color="var(--success)" />} value={validCount} label={t('compliance.valid')} bg="var(--success-bg)" active={statusFilter === 'Valid'} onClick={() => toggleStatusFilter('Valid')} />
-        <StatusCount icon={<AlertTriangle size={16} color="#D97706" />} value={expiringCount} label={t('compliance.expiringSoon')} bg="#FEF3C7" active={statusFilter === 'Expiring'} onClick={() => toggleStatusFilter('Expiring')} pct={expiringPct} />
-        <StatusCount icon={<Clock size={16} color="#DC2626" />} value={expiredCount} label={t('compliance.expired')} bg="#FEE2E2" active={statusFilter === 'Expired'} onClick={() => toggleStatusFilter('Expired')} />
+        <StatusCount icon={<CheckCircle size={16} color="var(--success)" />} value={validCount} label={t('compliance.valid')} bg="var(--success-bg)" active={statusFilter === 'Valid'} onClick={() => toggleStatusFilter('Valid')} pct={validPct} />
+        <StatusCount icon={<AlertTriangle size={16} color="#D97706" />} value={expiringCount} label={t('compliance.expiringSoon')} bg="#FEF3C7" active={statusFilter === 'Expiring'} onClick={() => toggleStatusFilter('Expiring')} pct={expiringPct} tooltip={t('compliance.expiringDesc')} />
+        <StatusCount icon={<Clock size={16} color="#DC2626" />} value={expiredCount} label={t('compliance.expired')} bg="#FEE2E2" active={statusFilter === 'Expired'} onClick={() => toggleStatusFilter('Expired')} pct={expiredPct} />
       </div>
 
       {/* Coverage by Category */}
@@ -315,15 +317,22 @@ function ComplianceRateBar({ rate }) {
   );
 }
 
-function StatusCount({ icon, value, label, bg, active, onClick, pct }) {
+function StatusCount({ icon, value, label, bg, active, onClick, pct, tooltip }) {
+  const [hovered, setHovered] = useState(false);
   return (
-    <div onClick={onClick} style={{ flex: 1, background: active ? bg : '#fff', borderRadius: 12, border: `2px solid ${active ? 'var(--info)' : 'var(--border)'}`, boxShadow: active ? '0 0 0 3px rgba(37,99,235,0.12)' : 'var(--card-shadow)', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', transition: 'all 0.15s' }}
-      onMouseEnter={(e) => { if (!active) e.currentTarget.style.borderColor = 'var(--info)'; }}
-      onMouseLeave={(e) => { if (!active) e.currentTarget.style.borderColor = 'var(--border)'; }}>
+    <div onClick={onClick} style={{ position: 'relative', flex: 1, background: active ? bg : '#fff', borderRadius: 12, border: `2px solid ${active ? 'var(--info)' : 'var(--border)'}`, boxShadow: active ? '0 0 0 3px rgba(37,99,235,0.12)' : 'var(--card-shadow)', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', transition: 'all 0.15s' }}
+      onMouseEnter={(e) => { setHovered(true); if (!active) e.currentTarget.style.borderColor = 'var(--info)'; }}
+      onMouseLeave={(e) => { setHovered(false); if (!active) e.currentTarget.style.borderColor = 'var(--border)'; }}>
+      {tooltip && hovered && !active && (
+        <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: 6, background: '#1E293B', color: '#F8FAFC', fontSize: 11, fontWeight: 500, lineHeight: 1.4, padding: '6px 10px', borderRadius: 6, whiteSpace: 'nowrap', zIndex: 100, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+          {tooltip}
+          <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', border: '5px solid transparent', borderTopColor: '#1E293B' }} />
+        </div>
+      )}
       <div style={{ width: 34, height: 34, borderRadius: 8, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
       <div>
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--foreground)', lineHeight: 1.1 }}>{value}</div>
-        <div style={{ fontSize: 11, fontWeight: 600, color: '#475569', marginTop: 1 }}>{label}{pct != null && <span style={{ color: '#94A3B8', fontWeight: 500, marginLeft: 4 }}>({pct}%)</span>}</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: '#475569', marginTop: 1 }}>{label}{pct != null && !active && <span style={{ color: '#94A3B8', fontWeight: 500, marginLeft: 4 }}>({pct}%)</span>}</div>
       </div>
     </div>
   );

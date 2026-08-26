@@ -94,10 +94,10 @@ describe('ComplianceVault', () => {
     }
   });
 
-  it('Add Alert button opens add modal', async () => {
+  it('Add Record button opens add modal', async () => {
     const user = userEvent.setup();
     renderVault();
-    await user.click(screen.getByText('Add Alert'));
+    await user.click(screen.getByText('Add Record'));
     expect(screen.getByText('Category *')).toBeInTheDocument();
     expect(screen.getByText('Property *')).toBeInTheDocument();
   });

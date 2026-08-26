@@ -909,8 +909,6 @@ function MultiSelectDropdown({ options, selected, onChange, placeholder }) {
     else onChange([...selected, val]);
   };
 
-  const removeTag = (val, e) => { e.stopPropagation(); onChange(selected.filter((v) => v !== val)); };
-
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button onClick={() => setIsOpen(!isOpen)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 12, fontWeight: 600, color: selected.length > 0 ? 'var(--foreground)' : '#64748B', cursor: 'pointer', minHeight: 32, maxWidth: 200, overflow: 'hidden', textAlign: 'left' }}>
@@ -919,20 +917,6 @@ function MultiSelectDropdown({ options, selected, onChange, placeholder }) {
         </span>
         <ChevronDown size={12} />
       </button>
-      {selected.length > 0 && (
-        <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginTop: 4, maxWidth: 200 }}>
-          {selected.slice(0, 3).map((val) => {
-            const opt = options.find((o) => o.value === val);
-            return (
-              <span key={val} style={{ display: 'inline-flex', alignItems: 'center', gap: 2, padding: '1px 6px', borderRadius: 4, background: '#E2E8F0', fontSize: 10, fontWeight: 500, color: '#475569' }}>
-                {opt ? opt.label : val}
-                <button onClick={(e) => removeTag(val, e)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: '#64748B' }}><X size={10} /></button>
-              </span>
-            );
-          })}
-          {selected.length > 3 && <span style={{ fontSize: 10, color: '#94A3B8' }}>+{selected.length - 3}</span>}
-        </div>
-      )}
       {isOpen && (
         <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, width: 220, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 100, overflow: 'hidden' }}>
           <div style={{ padding: '6px 8px', borderBottom: '1px solid #F1F5F9' }}>

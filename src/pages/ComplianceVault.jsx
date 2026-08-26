@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { COMPLIANCE_CATEGORIES, PROPERTIES, CATEGORY_CONFIG, formatCycle, getDocStatus } from '../data/constants';
 import { useCompliance } from '../context/ComplianceContext';
 import { useAuth } from '../context/AuthContext';
@@ -198,9 +198,9 @@ export default function ComplianceVault({ selectedCenter }) {
           </div>
         </div>
         {/* Status counts — display only */}
-        <StatusCount icon={<CheckCircle size={16} color="var(--success)" />} value={validCount} label={t('compliance.valid')} bg="var(--success-bg)" pct={statusFilter.length === 0 ? validPct : undefined} />
-        <StatusCount icon={<AlertTriangle size={16} color="#D97706" />} value={expiringCount} label={t('compliance.expiring')} bg="#FEF3C7" pct={statusFilter.length === 0 ? expiringPct : undefined} />
-        <StatusCount icon={<Clock size={16} color="#DC2626" />} value={expiredCount} label={t('compliance.expired')} bg="#FEE2E2" pct={statusFilter.length === 0 ? expiredPct : undefined} />
+        <StatusCount icon={<CheckCircle size={16} color="var(--success)" />} value={validCount} label={t('compliance.valid')} bg="var(--success-bg)" pct={statusFilter.length === 0 ? validPct : undefined} subLabel={t('compliance.documents')} />
+        <StatusCount icon={<AlertTriangle size={16} color="#D97706" />} value={expiringCount} label={t('compliance.expiringSoon')} bg="#FEF3C7" pct={statusFilter.length === 0 ? expiringPct : undefined} subLabel={t('compliance.documents')} />
+        <StatusCount icon={<Clock size={16} color="#DC2626" />} value={expiredCount} label={t('compliance.expired')} bg="#FEE2E2" pct={statusFilter.length === 0 ? expiredPct : undefined} subLabel={t('compliance.documents')} />
       </div>
 
       {/* Coverage by Category */}
@@ -258,6 +258,26 @@ export default function ComplianceVault({ selectedCenter }) {
             </button>
           );
         })}
+        <MultiSelectDropdown
+          options={COMPLIANCE_CATEGORIES.map((cat) => ({ value: cat, label: t(CATEGORY_KEY_MAP[cat] || cat) }))}
+          selected={selectedCategories}
+          onChange={setSelectedCategories}
+          placeholder={t('compliance.filter.category')}
+        />
+        <MultiSelectDropdown
+          options={uniqueCycles.map((c) => ({ value: c, label: formatCycle(c) }))}
+          selected={cycleFilter}
+          onChange={setCycleFilter}
+          placeholder={t('compliance.filter.cycle')}
+        />
+        {!isGlobalCentre && (
+          <MultiSelectDropdown
+            options={uniqueProperties.map((p) => ({ value: p, label: p.replace('PLK ', '') }))}
+            selected={propertyFilter}
+            onChange={setPropertyFilter}
+            placeholder={t('compliance.filter.property')}
+          />
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, padding: '0 10px' }}>
           <Calendar size={14} color="#94A3B8" />
           <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500, whiteSpace: 'nowrap' }}>{t('compliance.filter.expiryFrom')}</span>
@@ -317,30 +337,6 @@ export default function ComplianceVault({ selectedCenter }) {
                     </span>
                   </th>
                 ))}
-              </tr>
-              <tr style={{ background: '#F8FAFC', borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '4px 14px' }}>
-                  <select multiple value={selectedCategories} onChange={(e) => setSelectedCategories([...e.target.selectedOptions].map((o) => o.value))} style={{ width: '100%', fontSize: 11, padding: '3px 4px', border: '1px solid var(--border)', borderRadius: 4, background: '#fff', outline: 'none', minHeight: 52, cursor: 'pointer' }}>
-                    {COMPLIANCE_CATEGORIES.map((cat) => <option key={cat} value={cat}>{t(CATEGORY_KEY_MAP[cat] || cat)}</option>)}
-                  </select>
-                </th>
-                <th style={{ padding: '4px 14px' }} />
-                {!isGlobalCentre && (
-                  <th style={{ padding: '4px 14px' }}>
-                    <select multiple value={propertyFilter} onChange={(e) => setPropertyFilter([...e.target.selectedOptions].map((o) => o.value))} style={{ width: '100%', fontSize: 11, padding: '3px 4px', border: '1px solid var(--border)', borderRadius: 4, background: '#fff', outline: 'none', minHeight: 52, cursor: 'pointer' }}>
-                      {uniqueProperties.map((p) => <option key={p} value={p}>{p.replace('PLK ', '')}</option>)}
-                    </select>
-                  </th>
-                )}
-                <th style={{ padding: '4px 14px' }} />
-                <th style={{ padding: '4px 14px' }}>
-                  <select multiple value={cycleFilter.map(String)} onChange={(e) => setCycleFilter([...e.target.selectedOptions].map((o) => Number(o.value)))} style={{ width: '100%', fontSize: 11, padding: '3px 4px', border: '1px solid var(--border)', borderRadius: 4, background: '#fff', outline: 'none', minHeight: 52, cursor: 'pointer' }}>
-                    {uniqueCycles.map((c) => <option key={c} value={c}>{formatCycle(c)}</option>)}
-                  </select>
-                </th>
-                <th style={{ padding: '4px 14px' }} />
-                <th style={{ padding: '4px 14px' }} />
-                <th style={{ padding: '4px 14px' }} />
               </tr>
             </thead>
             <tbody>
@@ -429,15 +425,13 @@ function ComplianceRateBar({ rate }) {
   );
 }
 
-function StatusCount({ icon, value, label, bg, active, onClick, pct }) {
+function StatusCount({ icon, value, label, bg, active, onClick, pct, subLabel }) {
   return (
-    <div onClick={onClick} style={{ position: 'relative', flex: 1, background: active ? bg : '#fff', borderRadius: 12, border: `2px solid ${active ? 'var(--info)' : 'var(--border)'}`, boxShadow: active ? '0 0 0 3px rgba(37,99,235,0.12)' : 'var(--card-shadow)', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'default', transition: 'all 0.15s' }}
-      onMouseEnter={(e) => { if (!active) e.currentTarget.style.borderColor = 'var(--info)'; }}
-      onMouseLeave={(e) => { if (!active) e.currentTarget.style.borderColor = 'var(--border)'; }}>
-      <div style={{ width: 34, height: 34, borderRadius: 8, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
+    <div onClick={onClick} style={{ position: 'relative', flex: 1, background: active ? bg : '#fff', borderRadius: 12, border: `2px solid ${active ? 'var(--info)' : 'var(--border)'}`, boxShadow: active ? '0 0 0 3px rgba(37,99,235,0.12)' : 'var(--card-shadow)', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'default' }}>
+      <div style={{ width: 38, height: 38, borderRadius: 10, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
       <div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--foreground)', lineHeight: 1.1 }}>{value}</div>
-        <div style={{ fontSize: 11, fontWeight: 600, color: '#475569', marginTop: 1 }}>{label}{pct != null && !active && <span style={{ color: '#94A3B8', fontWeight: 500, marginLeft: 4 }}>({pct}%)</span>}</div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', lineHeight: 1.1 }}>{pct != null ? `${pct}%` : value}</div>
+        <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{pct != null ? `${value} ${subLabel || 'documents'}` : label}</div>
       </div>
     </div>
   );
@@ -858,5 +852,79 @@ function DeleteModal({ doc, onConfirm, onCancel, t }) {
         <button onClick={onConfirm} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.remove')}</button>
       </div>
     </ModalShell>
+  );
+}
+
+function MultiSelectDropdown({ options, selected, onChange, placeholder }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const ref = useRef(null);
+  const allSelected = options.length > 0 && options.every((o) => selected.includes(o.value));
+  const filtered = options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase()));
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setIsOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [isOpen]);
+
+  const toggleAll = () => {
+    if (allSelected) onChange([]);
+    else onChange(options.map((o) => o.value));
+  };
+
+  const toggleOption = (val) => {
+    if (selected.includes(val)) onChange(selected.filter((v) => v !== val));
+    else onChange([...selected, val]);
+  };
+
+  const removeTag = (val, e) => { e.stopPropagation(); onChange(selected.filter((v) => v !== val)); };
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button onClick={() => setIsOpen(!isOpen)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 12, fontWeight: 500, color: selected.length > 0 ? 'var(--foreground)' : '#94A3B8', cursor: 'pointer', minHeight: 32, maxWidth: 200, overflow: 'hidden', textAlign: 'left' }}>
+        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {selected.length === 0 ? (placeholder || 'All') : `${selected.length} selected`}
+        </span>
+        <ChevronDown size={12} color="#94A3B8" />
+      </button>
+      {selected.length > 0 && (
+        <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginTop: 4, maxWidth: 200 }}>
+          {selected.slice(0, 3).map((val) => {
+            const opt = options.find((o) => o.value === val);
+            return (
+              <span key={val} style={{ display: 'inline-flex', alignItems: 'center', gap: 2, padding: '1px 6px', borderRadius: 4, background: '#E2E8F0', fontSize: 10, fontWeight: 500, color: '#475569' }}>
+                {opt ? opt.label : val}
+                <button onClick={(e) => removeTag(val, e)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: '#64748B' }}><X size={10} /></button>
+              </span>
+            );
+          })}
+          {selected.length > 3 && <span style={{ fontSize: 10, color: '#94A3B8' }}>+{selected.length - 3}</span>}
+        </div>
+      )}
+      {isOpen && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, width: 220, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 100, overflow: 'hidden' }}>
+          <div style={{ padding: '6px 8px', borderBottom: '1px solid #F1F5F9' }}>
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." style={{ width: '100%', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 11, outline: 'none', background: '#F8FAFC' }} />
+          </div>
+          <div style={{ padding: '4px 8px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }} onClick={toggleAll}>
+            <input type="checkbox" checked={allSelected} readOnly style={{ cursor: 'pointer' }} />
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#475569' }}>Select All</span>
+          </div>
+          <div style={{ maxHeight: 200, overflowY: 'auto', padding: '4px 0' }}>
+            {filtered.map((opt) => (
+              <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px', cursor: 'pointer', fontSize: 11, color: '#334155' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#F1F5F9'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
+                <input type="checkbox" checked={selected.includes(opt.value)} onChange={() => toggleOption(opt.value)} style={{ cursor: 'pointer' }} />
+                {opt.label}
+              </label>
+            ))}
+            {filtered.length === 0 && <div style={{ padding: '8px', fontSize: 11, color: '#94A3B8', textAlign: 'center' }}>No results</div>}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

@@ -48,11 +48,11 @@ describe('ComplianceVault', () => {
 
   it('renders table with expected columns', () => {
     renderVault();
-    expect(screen.getByText('Category')).toBeInTheDocument();
+    expect(screen.getAllByText('Category').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Certificate Name')).toBeInTheDocument();
-    expect(screen.getByText('Property')).toBeInTheDocument();
+    expect(screen.getAllByText('Property').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Next Due')).toBeInTheDocument();
-    expect(screen.getByText('Cycle')).toBeInTheDocument();
+    expect(screen.getAllByText('Cycle').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Last Inspected')).toBeInTheDocument();
     expect(screen.getByText('Actions')).toBeInTheDocument();
   });
@@ -122,7 +122,7 @@ describe('ComplianceVault', () => {
 
   it('shows property column when no global centre', () => {
     renderVault('All');
-    expect(screen.getByText('Property')).toBeInTheDocument();
+    expect(screen.getAllByText('Property').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders the subtitle text', () => {
@@ -205,8 +205,8 @@ describe('ComplianceVault', () => {
   it('renders Export CSV and download toolbar buttons', () => {
     renderVault();
     expect(screen.getByText('Export CSV')).toBeInTheDocument();
-    expect(screen.getByText('Download Active')).toBeInTheDocument();
-    expect(screen.getByText('Download All')).toBeInTheDocument();
+    expect(screen.getByText('Download Active Documents')).toBeInTheDocument();
+    expect(screen.getByText('Download All Documents')).toBeInTheDocument();
   });
 
   it('renders status filter buttons between search and table', () => {
@@ -216,10 +216,13 @@ describe('ComplianceVault', () => {
     expect(validBtn).toBeTruthy();
   });
 
-  it('renders column filter dropdowns for category, cycle, and property', () => {
+  it('renders MultiSelectDropdown filters for category, cycle, and property', () => {
     renderVault();
-    const selects = document.querySelectorAll('thead select[multiple]');
-    expect(selects.length).toBeGreaterThanOrEqual(2);
+    const dropdownBtns = document.querySelectorAll('button');
+    const categoryBtn = Array.from(dropdownBtns).find((b) => b.textContent === 'Category');
+    const cycleBtn = Array.from(dropdownBtns).find((b) => b.textContent === 'Cycle');
+    expect(categoryBtn).toBeTruthy();
+    expect(cycleBtn).toBeTruthy();
   });
 
   it('status filter buttons support multi-select', async () => {

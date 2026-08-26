@@ -91,11 +91,12 @@ export default function ComplianceVault({ selectedCenter }) {
   const expiringPct = totalFiltered > 0 ? Math.round((expiringCount / totalFiltered) * 100) : 0;
   const expiredPct = totalFiltered > 0 ? Math.round((expiredCount / totalFiltered) * 100) : 0;
 
-  // Coverage grid: from summaryDocs (ignores category filter so all categories always show)
+  // Coverage grid: from summaryDocs — only categories with docs matching the active status filter
+  // Expiring docs count as valid (not yet expired)
   const categoryCoverage = useMemo(() => {
     return COMPLIANCE_CATEGORIES.map((cat) => {
       const catDocs = summaryDocs.filter((d) => d.category === cat);
-      const catValid = catDocs.filter((d) => d.status === 'Valid').length;
+      const catValid = catDocs.filter((d) => d.status !== 'Expired').length;
       const pct = catDocs.length > 0 ? Math.round((catValid / catDocs.length) * 100) : 0;
       return { cat, total: catDocs.length, valid: catValid, pct };
     }).filter((c) => c.total > 0);

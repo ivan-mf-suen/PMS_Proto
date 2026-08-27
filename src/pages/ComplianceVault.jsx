@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { COMPLIANCE_CATEGORIES, PROPERTIES, CATEGORY_CONFIG, formatCycle, getDocStatus } from '../data/constants';
+import { COMPLIANCE_CATEGORIES, PROPERTIES, CATEGORY_CONFIG, CATEGORY_ICON, formatCycle, getDocStatus } from '../data/constants';
 import { useCompliance } from '../context/ComplianceContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { listAttachments, getAttachmentUrl, isAttachmentActive } from '../services/complianceFileService';
+import ComboBox from '../components/ComboBox';
 import {
   Search, CheckCircle, Clock, Bell, X, Eye, Trash2,
-  ChevronDown, ChevronUp, Wind, Zap, Flame, ArrowUp, Droplets, Leaf,
-  CircleHelp, FileText, AlertTriangle, Filter,
+  ChevronDown, ChevronUp,
+  FileText, AlertTriangle, Filter,
   Download,
 } from 'lucide-react';
 
@@ -22,15 +23,9 @@ const CATEGORY_KEY_MAP = {
   '年檢項目 租約': 'compliance.cat.Lease',
 };
 
-const CATEGORY_ICON = {
-  '年檢項目 通風系統': Wind, '定期檢測項目 電力檢查WR2': Zap, '年檢項目 消防': Flame,
-  '年檢項目 升降機/餐𨋢': ArrowUp, '年檢項目 水務': Droplets, '年檢項目 環境': Leaf,
-  '年檢項目 煤氣': Flame, '年檢項目 其他': CircleHelp, '年檢項目 租約': FileText,
-};
-
 const EMPTY_FORM = { name: '', category: '', center: '', documentRef: '', issuedBy: '', inspectionDate: '', nextInspection: '', expiry: '', cycleMonths: 12, responsible: '', notes: '', status: 'Valid' };
 
-export default function ComplianceVault({ selectedCenter, onViewDoc }) {
+export default function ComplianceVault({ selectedCenter, onViewDoc, onCreateDoc }) {
   const { t } = useTranslation();
   const { docs, addDoc, updateDoc, removeDoc } = useCompliance();
   const [search, setSearch] = useState('');
@@ -125,7 +120,7 @@ export default function ComplianceVault({ selectedCenter, onViewDoc }) {
 
   const handleSort = (col) => { if (sortCol === col) setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortCol(col); setSortDir('asc'); } };
 
-  const openAdd = () => { setForm({ ...EMPTY_FORM, cycleMonths: 12 }); setModal('add'); };
+  const openAdd = () => { if (onCreateDoc) { onCreateDoc(); } else { setForm({ ...EMPTY_FORM, cycleMonths: 12 }); setModal('add'); } };
   const openDelete = (doc) => { setModal({ type: 'delete', doc }); };
 
   const handleSave = () => {
@@ -635,45 +630,6 @@ function MultiSelectDropdown({ options, selected, onChange, placeholder }) {
             ))}
             {filtered.length === 0 && <div style={{ padding: '8px', fontSize: 11, color: '#94A3B8', textAlign: 'center' }}>No results</div>}
           </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ComboBox({ value, onChange, options, placeholder }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const ref = useRef(null);
-  const filtered = options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase()));
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setIsOpen(false); };
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
-  }, [isOpen]);
-
-  return (
-    <div ref={ref} style={{ position: 'relative' }}>
-      <input
-        value={isOpen ? search : value}
-        onChange={(e) => { setSearch(e.target.value); onChange(e.target.value); }}
-        onFocus={() => { setSearch(''); setIsOpen(true); }}
-        placeholder={placeholder}
-        style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: '#fff', outline: 'none', boxSizing: 'border-box' }}
-      />
-      {isOpen && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 100, maxHeight: 200, overflowY: 'auto' }}>
-          {filtered.length === 0 && <div style={{ padding: '8px 12px', fontSize: 11, color: '#94A3B8' }}>Type custom value</div>}
-          {filtered.map((o) => (
-            <div key={o.value} onClick={() => { onChange(o.value); setSearch(''); setIsOpen(false); }}
-              style={{ padding: '6px 12px', fontSize: 12, cursor: 'pointer', color: o.value === value ? 'var(--primary)' : '#334155', fontWeight: o.value === value ? 600 : 400, background: o.value === value ? 'var(--info-bg)' : 'transparent' }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = '#F1F5F9'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = o.value === value ? 'var(--info-bg)' : 'transparent'; }}>
-              {o.label}
-            </div>
-          ))}
         </div>
       )}
     </div>

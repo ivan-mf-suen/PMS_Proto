@@ -1,3 +1,5 @@
+import { Wind, Zap, Flame, ArrowUp, Droplets, Leaf, CircleHelp, FileText } from 'lucide-react';
+
 export const COMPLIANCE_CATEGORIES = [
   "年檢項目 通風系統",
   "定期檢測項目 電力檢查WR2",
@@ -20,6 +22,12 @@ export const CATEGORY_CONFIG = {
   "年檢項目 煤氣":             { color: "#F97316", bg: "#FFF7ED", icon: "flame",         defaultCycle: 12 },
   "年檢項目 其他":             { color: "#6B7280", bg: "#F9FAFB", icon: "circle-help",   defaultCycle: 12 },
   "年檢項目 租約":             { color: "#6366F1", bg: "#EEF2FF", icon: "file-text",     defaultCycle: 12 },
+};
+
+export const CATEGORY_ICON = {
+  '年檢項目 通風系統': Wind, '定期檢測項目 電力檢查WR2': Zap, '年檢項目 消防': Flame,
+  '年檢項目 升降機/餐𨋢': ArrowUp, '年檢項目 水務': Droplets, '年檢項目 環境': Leaf,
+  '年檢項目 煤氣': Flame, '年檢項目 其他': CircleHelp, '年檢項目 租約': FileText,
 };
 
 export function formatCycle(months) {

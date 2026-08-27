@@ -706,7 +706,7 @@ export const ASSETS = [
   ] },
 ];
 
-export { COMPLIANCE_CATEGORIES, COMPLIANCE_DOCS, CATEGORY_CONFIG, formatCycle, getDocStatus } from './complianceDocs';
+export { COMPLIANCE_CATEGORIES, COMPLIANCE_DOCS, CATEGORY_CONFIG, CATEGORY_ICON, formatCycle, getDocStatus } from './complianceDocs';
 
 export const REPORTS_DATA = [
   { id: 1, name: "Monthly Portfolio Summary - August 2026", date: "2026-08-15", status: "Ready" },

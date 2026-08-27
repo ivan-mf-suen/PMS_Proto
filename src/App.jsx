@@ -15,6 +15,7 @@ import PropertyDetail from './pages/PropertyDetail';
 import Assets from './pages/Assets';
 import ComplianceVault from './pages/ComplianceVault';
 import ComplianceDetail from './pages/ComplianceDetail';
+import ComplianceAddRecord from './pages/ComplianceAddRecord';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 
@@ -70,6 +71,10 @@ function AppLayout() {
     setSubView('complianceDetail');
   };
 
+  const handleCreateDoc = () => {
+    setSubView('complianceCreate');
+  };
+
   const PageComponent = PAGES[activeTab] || Dashboard;
 
   return (
@@ -104,12 +109,18 @@ function AppLayout() {
               docId={viewDocId}
               onBack={() => { setSubView(null); setViewDocId(null); }}
             />
+          ) : subView === 'complianceCreate' ? (
+            <ComplianceAddRecord
+              onBack={() => setSubView(null)}
+              onCreated={(id) => { setSubView(null); handleViewDoc(id); }}
+            />
           ) : (
             <PageComponent
               onCreateWorkOrder={() => setSubView('workOrderCreate')}
               onViewWO={handleViewWO}
               onViewProperty={handleViewProperty}
               onViewDoc={handleViewDoc}
+              onCreateDoc={handleCreateDoc}
               selectedCenter={selectedCenter}
             />
           )}

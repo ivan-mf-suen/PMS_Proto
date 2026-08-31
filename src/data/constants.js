@@ -43,6 +43,7 @@ export const ROLES = {
     canSubmitWO: true,
     canEditTaskDetails: true,
     canAddMapAssets: true,
+    canEditFloorMap: true,
   },
   IT_ADMIN: {
     name: "IT Administrator",

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { ROLES } from '../data/constants';
@@ -9,19 +10,21 @@ import {
 } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: 'Dashboard', key: 'sidebar.dashboard' },
-  { icon: Building2, label: 'Properties', key: 'sidebar.properties' },
-  { icon: ShieldCheck, label: 'Compliance Vault', key: 'sidebar.complianceVault', badge: 3, badgeCritical: true },
-  { icon: ClipboardList, label: 'Work Orders', key: 'sidebar.workOrders', badge: 42 },
-  { icon: Package, label: 'Assets', key: 'sidebar.assets' },
-  { icon: Map, label: 'Floor Plan', key: 'sidebar.floorPlan' },
-  { icon: ChartColumn, label: 'Reports', key: 'sidebar.reports' },
-  { icon: Settings, label: 'Settings', key: 'sidebar.settings' },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/', key: 'sidebar.dashboard' },
+  { icon: Building2, label: 'Properties', path: '/properties', key: 'sidebar.properties' },
+  { icon: ShieldCheck, label: 'Compliance Vault', path: '/compliance', key: 'sidebar.complianceVault', badge: 3, badgeCritical: true },
+  { icon: ClipboardList, label: 'Work Orders', path: '/work-orders', key: 'sidebar.workOrders', badge: 42 },
+  { icon: Package, label: 'Assets', path: '/assets', key: 'sidebar.assets' },
+  { icon: Map, label: 'Floor Plan', path: '/floor-plan', key: 'sidebar.floorPlan' },
+  { icon: ChartColumn, label: 'Reports', path: '/reports', key: 'sidebar.reports' },
+  { icon: Settings, label: 'Settings', path: '/settings', key: 'sidebar.settings' },
 ];
 
-export default function Sidebar({ collapsed, onToggle, activeTab, onNavigate }) {
+export default function Sidebar({ collapsed, onToggle }) {
   const { role, logout } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   return (
@@ -48,13 +51,13 @@ export default function Sidebar({ collapsed, onToggle, activeTab, onNavigate }) 
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto' }}>
-        {NAV_ITEMS.map(({ icon: Icon, label, key, badge, badgeCritical }) => {
+        {NAV_ITEMS.map(({ icon: Icon, label, path, key, badge, badgeCritical }) => {
           const displayLabel = t(key);
-          const isActive = label === activeTab;
+          const isActive = path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
           return (
             <button
               key={label}
-              onClick={() => onNavigate?.(label)}
+              onClick={() => navigate(path)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: collapsed ? '10px 18px' : '10px 16px',

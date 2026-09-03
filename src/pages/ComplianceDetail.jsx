@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { formatCycle, CATEGORY_CONFIG, CATEGORY_ICON, COMPLIANCE_CATEGORIES, PROPERTIES } from '../data/constants';
 import { useCompliance } from '../context/ComplianceContext';
 import { useAuth } from '../context/AuthContext';
@@ -83,13 +84,15 @@ Cycle: {cycle}
 
 Thank you.`;
 
-export default function ComplianceDetail({ docId, onBack }) {
+export default function ComplianceDetail() {
   const { t } = useTranslation();
   const { permissions } = useAuth();
   const { docs, updateDoc } = useCompliance();
+  const navigate = useNavigate();
+  const { id } = useParams();
   const uploaderName = permissions?.name || 'System';
 
-  const doc = docs.find((d) => d.id === docId);
+  const doc = docs.find((d) => d.id === id);
 
   const [attachments, setAttachments] = useState(() => doc ? listAttachments(doc.id, doc) : []);
   const [previewing, setPreviewing] = useState(null);
@@ -135,7 +138,7 @@ export default function ComplianceDetail({ docId, onBack }) {
   if (!doc) {
     return (
       <div style={{ padding: 24 }}>
-        <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginBottom: 20 }}>
+        <button onClick={() => navigate('/compliance')} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginBottom: 20 }}>
           <ArrowLeft size={16} /> {t('compliance.detail.back')}
         </button>
         <div style={{ padding: 48, textAlign: 'center', color: '#94A3B8' }}>{t('compliance.noDocs')}</div>
@@ -259,7 +262,7 @@ export default function ComplianceDetail({ docId, onBack }) {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
-          <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginBottom: 12 }}>
+          <button onClick={() => navigate('/compliance')} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginBottom: 12 }}>
             <ArrowLeft size={16} /> {t('compliance.detail.back')}
           </button>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.02em' }}>{t('compliance.detail.pageTitle')}</h1>

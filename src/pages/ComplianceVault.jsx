@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { COMPLIANCE_CATEGORIES, PROPERTIES, CATEGORY_CONFIG, CATEGORY_ICON, formatCycle, getDocStatus } from '../data/constants';
 import { useCompliance } from '../context/ComplianceContext';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -25,8 +26,9 @@ const CATEGORY_KEY_MAP = {
 
 const EMPTY_FORM = { name: '', category: '', center: '', documentRef: '', issuedBy: '', inspectionDate: '', nextInspection: '', expiry: '', cycleMonths: 12, responsible: '', notes: '', status: 'Valid' };
 
-export default function ComplianceVault({ selectedCenter, onViewDoc, onCreateDoc }) {
+export default function ComplianceVault({ selectedCenter }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { docs, addDoc, updateDoc, removeDoc } = useCompliance();
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -120,7 +122,7 @@ export default function ComplianceVault({ selectedCenter, onViewDoc, onCreateDoc
 
   const handleSort = (col) => { if (sortCol === col) setSortDir((d) => d === 'asc' ? 'desc' : 'asc'); else { setSortCol(col); setSortDir('asc'); } };
 
-  const openAdd = () => { if (onCreateDoc) { onCreateDoc(); } else { setForm({ ...EMPTY_FORM, cycleMonths: 12 }); setModal('add'); } };
+  const openAdd = () => navigate('/compliance/new');
   const openDelete = (doc) => { setModal({ type: 'delete', doc }); };
 
   const handleSave = () => {
@@ -359,7 +361,7 @@ export default function ComplianceVault({ selectedCenter, onViewDoc, onCreateDoc
                     </td>
                     <td style={{ padding: '10px 14px' }}>
                       <div style={{ display: 'flex', gap: 2, alignItems: 'center', position: 'relative' }}>
-                        <ActionBtn icon={<Eye size={14} />} color="var(--info)" title={t('compliance.action.viewDetails')} onClick={() => onViewDoc(doc.id)} />
+                        <ActionBtn icon={<Eye size={14} />} color="var(--info)" title={t('compliance.action.viewDetails')} onClick={() => navigate(`/compliance/${doc.id}`)} />
                         <div style={{ position: 'relative' }}>
                           <ActionBtn icon={<Download size={14} />} color="#475569" title={t('compliance.download')} onClick={() => setDownloadMenu(downloadMenu === doc.id ? null : doc.id)} />
                           {downloadMenu === doc.id && (

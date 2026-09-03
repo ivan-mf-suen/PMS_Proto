@@ -644,14 +644,14 @@ export const NOTIFICATIONS = [
 ];
 
 export const FLOOR_PLAN_ASSETS = [
-  { id: "A1", type: "HVAC", x: 15, y: 20, status: "active", label: "AHU-01" },
-  { id: "A2", type: "Fire", x: 45, y: 15, status: "alert", label: "FD-02" },
-  { id: "A3", type: "Elevator", x: 75, y: 25, status: "active", label: "ELV-01" },
-  { id: "A4", type: "Generator", x: 85, y: 60, status: "maintenance", label: "GEN-01" },
-  { id: "A5", type: "Pump", x: 25, y: 70, status: "active", label: "PMP-03" },
-  { id: "A6", type: "CCTV", x: 55, y: 45, status: "active", label: "CAM-12" },
-  { id: "A7", type: "Fire", x: 35, y: 80, status: "active", label: "EXT-05" },
-  { id: "A8", type: "HVAC", x: 65, y: 75, status: "active", label: "FCU-08" },
+  { id: "A1", type: "HVAC", x: 15, y: 20, status: "active", name: "AHU-01" },
+  { id: "A2", type: "Fire", x: 45, y: 15, status: "alert", name: "FD-02" },
+  { id: "A3", type: "Elevator", x: 75, y: 25, status: "active", name: "ELV-01" },
+  { id: "A4", type: "Generator", x: 85, y: 60, status: "maintenance", name: "GEN-01" },
+  { id: "A5", type: "Pump", x: 25, y: 70, status: "active", name: "PMP-03" },
+  { id: "A6", type: "CCTV", x: 55, y: 45, status: "active", name: "CAM-12" },
+  { id: "A7", type: "Fire", x: 35, y: 80, status: "active", name: "EXT-05" },
+  { id: "A8", type: "HVAC", x: 65, y: 75, status: "active", name: "FCU-08" },
 ];
 
 export const PROPERTIES = [

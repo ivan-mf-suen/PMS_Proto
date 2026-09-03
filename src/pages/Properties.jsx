@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PROPERTIES, COMPLIANCE_DOCS, getDocStatus } from '../data/constants';
 import { useTranslation } from '../i18n/LanguageContext';
 import { Plus, Search, Eye, Pencil, X, ArrowUpDown, ArrowUp, ArrowDown, MapPin, Building2, Phone, Mail, User } from 'lucide-react';
@@ -48,8 +49,9 @@ function TypeBadge({ lsgNlsg }) {
   );
 }
 
-export default function Properties({ onViewProperty, selectedCenter }) {
+export default function Properties({ selectedCenter }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [lsgFilter, setLsgFilter] = useState('All');
   const [sortCol, setSortCol] = useState('unitCode');
@@ -171,7 +173,7 @@ export default function Properties({ onViewProperty, selectedCenter }) {
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}>
                       <button onClick={() => setPreviewProp(prop)} title={t('common.view')} style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Eye size={14} color="#64748B" /></button>
-                      <button onClick={() => onViewProperty(prop.id)} title={t('common.edit')} style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Pencil size={14} color="#64748B" /></button>
+                      <button onClick={() => navigate(`/properties/${prop.id}`)} title={t('common.edit')} style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Pencil size={14} color="#64748B" /></button>
                     </div>
                   </td>
                 </tr>
@@ -237,7 +239,7 @@ export default function Properties({ onViewProperty, selectedCenter }) {
               </div>
             </div>
             <div style={{ padding: '14px 24px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}>
-              <button onClick={() => { setPreviewProp(null); onViewProperty(previewProp.id); }} style={{ padding: '7px 16px', borderRadius: 6, border: '1px solid #E2E8F0', background: '#fff', fontSize: 12, fontWeight: 600, color: '#334155', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button onClick={() => { setPreviewProp(null); navigate(`/properties/${previewProp.id}`); }} style={{ padding: '7px 16px', borderRadius: 6, border: '1px solid #E2E8F0', background: '#fff', fontSize: 12, fontWeight: 600, color: '#334155', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Pencil size={13} /> {t('common.viewDetails')}
               </button>
               <button onClick={() => setPreviewProp(null)} style={{ padding: '7px 16px', borderRadius: 6, border: 'none', background: '#0F172A', fontSize: 12, fontWeight: 600, color: '#fff', cursor: 'pointer' }}>

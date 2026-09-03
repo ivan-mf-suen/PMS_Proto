@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useWorkOrders } from '../context/WorkOrderContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
@@ -73,9 +74,10 @@ const MOCK_ASSETS = [
   },
 ];
 
-export default function WorkOrderCreate({ onBack, onViewWO }) {
+export default function WorkOrderCreate() {
   const { addWorkOrder, getNextWoId } = useWorkOrders();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const today = 'Tuesday, 18 August 2026';
   const portfolio = 'PLK Shek Kip Mei Community Services Centre';
 
@@ -138,13 +140,13 @@ export default function WorkOrderCreate({ onBack, onViewWO }) {
   const handleSave = () => {
     const wo = generateWO('Draft');
     addWorkOrder(wo);
-    onBack();
+    navigate('/work-orders');
   };
 
   const handleSubmitToSM = () => {
     const wo = generateWO('Pending SSD Service Manager Endorsement');
     addWorkOrder(wo);
-    onViewWO(wo.id);
+    navigate(`/work-orders/${wo.id}`);
   };
 
   return (
@@ -159,7 +161,7 @@ export default function WorkOrderCreate({ onBack, onViewWO }) {
           boxShadow: '0 1px 3px rgba(15,23,42,0.04)', flexShrink: 0,
         }}>
           <button
-            onClick={onBack}
+            onClick={() => navigate('/work-orders')}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '6px 12px', borderRadius: 6,
@@ -203,7 +205,7 @@ export default function WorkOrderCreate({ onBack, onViewWO }) {
           </div>
           <div style={{ display: 'flex', gap: 8, position: 'relative' }}>
             <button
-              onClick={onBack}
+              onClick={() => navigate('/work-orders')}
               style={{
                 padding: '7px 16px', borderRadius: 6,
                 border: '1px solid var(--border)', background: '#fff',

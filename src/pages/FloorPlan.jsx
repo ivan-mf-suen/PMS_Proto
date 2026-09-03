@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FLOOR_PLAN_ASSETS } from '../data/constants';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -10,10 +11,19 @@ const STATUS_COLORS = {
   maintenance: '#F59E0B',
 };
 
-const STATUS_LABELS = {
-  active: 'Operational',
-  alert: 'Alert',
-  maintenance: 'Maintenance',
+const STATUS_LABEL_KEYS = {
+  active: 'floorPlan.operational',
+  alert: 'floorPlan.alert',
+  maintenance: 'floorPlan.maintenance',
+};
+
+const TYPE_LABEL_KEYS = {
+  HVAC: 'floorPlan.hvac',
+  Fire: 'floorPlan.fire',
+  Elevator: 'floorPlan.elevator',
+  Generator: 'floorPlan.generator',
+  Pump: 'floorPlan.pump',
+  CCTV: 'floorPlan.cctv',
 };
 
 const TYPE_ICONS = {
@@ -36,6 +46,7 @@ function getStoredImage() {
 export default function FloorPlan() {
   const { permissions } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const mapRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -49,10 +60,10 @@ export default function FloorPlan() {
   const [contextMenu, setContextMenu] = useState(null);
   const [pinning, setPinning] = useState(false);
   const [pinCoords, setPinCoords] = useState(null);
-  const [pinForm, setPinForm] = useState({ type: 'HVAC', label: '', status: 'active' });
+  const [pinForm, setPinForm] = useState({ type: 'HVAC', name: '', status: 'active' });
   const [allAssets, setAllAssets] = useState(FLOOR_PLAN_ASSETS);
   const [editing, setEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ type: 'HVAC', label: '', status: 'active' });
+  const [editForm, setEditForm] = useState({ type: 'HVAC', name: '', status: 'active' });
   const [deleting, setDeleting] = useState(null);
 
   const nextId = useRef(allAssets.length + 1);
@@ -81,44 +92,44 @@ export default function FloorPlan() {
   }, [contextMenu]);
 
   const handleSavePin = useCallback(() => {
-    if (!pinForm.label.trim()) return;
+    if (!pinForm.name.trim()) return;
     const newAsset = {
       id: `A${nextId.current++}`,
       type: pinForm.type,
       x: pinCoords.x,
       y: pinCoords.y,
       status: pinForm.status,
-      label: pinForm.label.trim(),
+      name: pinForm.name.trim(),
     };
     setAllAssets((prev) => [...prev, newAsset]);
     setPinning(false);
     setPinCoords(null);
-    setPinForm({ type: 'HVAC', label: '', status: 'active' });
+    setPinForm({ type: 'HVAC', name: '', status: 'active' });
     setSelectedAsset(newAsset);
   }, [pinForm, pinCoords]);
 
   const handleCancelPin = useCallback(() => {
     setPinning(false);
     setPinCoords(null);
-    setPinForm({ type: 'HVAC', label: '', status: 'active' });
+    setPinForm({ type: 'HVAC', name: '', status: 'active' });
   }, []);
 
   const handleEditPin = useCallback(() => {
     if (!selectedAsset) return;
-    setEditForm({ type: selectedAsset.type, label: selectedAsset.label, status: selectedAsset.status });
+    setEditForm({ type: selectedAsset.type, name: selectedAsset.name, status: selectedAsset.status });
     setEditing(true);
   }, [selectedAsset]);
 
   const handleSaveEdit = useCallback(() => {
-    if (!editForm.label.trim() || !selectedAsset) return;
-    setAllAssets((prev) => prev.map((a) => a.id === selectedAsset.id ? { ...a, type: editForm.type, label: editForm.label.trim(), status: editForm.status } : a));
-    setSelectedAsset((prev) => prev ? { ...prev, type: editForm.type, label: editForm.label.trim(), status: editForm.status } : null);
+    if (!editForm.name.trim() || !selectedAsset) return;
+    setAllAssets((prev) => prev.map((a) => a.id === selectedAsset.id ? { ...a, type: editForm.type, name: editForm.name.trim(), status: editForm.status } : a));
+    setSelectedAsset((prev) => prev ? { ...prev, type: editForm.type, name: editForm.name.trim(), status: editForm.status } : null);
     setEditing(false);
   }, [editForm, selectedAsset]);
 
   const handleCancelEdit = useCallback(() => {
     setEditing(false);
-    setEditForm({ type: 'HVAC', label: '', status: 'active' });
+    setEditForm({ type: 'HVAC', name: '', status: 'active' });
   }, []);
 
   const handleDeletePin = useCallback(() => {
@@ -165,6 +176,9 @@ export default function FloorPlan() {
     setPreviewImage(null);
   };
 
+  const statusLabel = (status) => t(STATUS_LABEL_KEYS[status] || status);
+  const typeLabel = (type) => t(TYPE_LABEL_KEYS[type] || type);
+
   const inputStyle = { width: '100%', padding: '8px 12px', fontSize: 13, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', outline: 'none', color: 'var(--foreground)' };
   const labelStyle = { fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', marginBottom: 4 };
 
@@ -174,11 +188,11 @@ export default function FloorPlan() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.02em' }}>{t('floorPlan.title')}</h1>
-          <p style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>Interactive asset map &middot; PLK Lee Chiu Kong Memorial Centre</p>
+          <p style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>{t('floorPlan.subtitle')}</p>
         </div>
         {permissions?.canEditFloorMap && (
           <button onClick={() => setShowUploadModal(true)} style={{ padding: '10px 20px', fontSize: 13, fontWeight: 600, borderRadius: 8, border: '1px solid var(--border)', background: '#fff', color: 'var(--foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: 'var(--card-shadow)' }}>
-            <Image size={16} /> Edit Floor Map
+            <Image size={16} /> {t('floorPlan.editFloorMap')}
           </button>
         )}
       </div>
@@ -227,14 +241,14 @@ export default function FloorPlan() {
               <svg width="100%" height="100%" viewBox="0 0 100 100" style={{ border: '1px solid #E2E8F0', borderRadius: 8, background: '#F8FAFC' }}>
                 {[20, 40, 60, 80].map((x) => <line key={`v${x}`} x1={x} y1={0} x2={x} y2={100} stroke="#E2E8F0" strokeWidth={0.3} />)}
                 {[20, 40, 60, 80].map((y) => <line key={`h${y}`} x1={0} y1={y} x2={100} y2={y} stroke="#E2E8F0" strokeWidth={0.3} />)}
-                <text x={10} y={12} fill="#94A3B8" fontSize={3} fontWeight={500}>Lobby</text>
-                <text x={30} y={12} fill="#94A3B8" fontSize={3} fontWeight={500}>Office A</text>
-                <text x={60} y={12} fill="#94A3B8" fontSize={3} fontWeight={500}>Office B</text>
-                <text x={10} y={42} fill="#94A3B8" fontSize={3} fontWeight={500}>Meeting</text>
-                <text x={30} y={42} fill="#94A3B8" fontSize={3} fontWeight={500}>Central</text>
-                <text x={60} y={42} fill="#94A3B8" fontSize={3} fontWeight={500}>Server</text>
-                <text x={10} y={62} fill="#94A3B8" fontSize={3} fontWeight={500}>Storage</text>
-                <text x={60} y={62} fill="#94A3B8" fontSize={3} fontWeight={500}>Workshop</text>
+                <text x={10} y={12} fill="#94A3B8" fontSize={3} fontWeight={500}>{t('floorPlan.lobby')}</text>
+                <text x={30} y={12} fill="#94A3B8" fontSize={3} fontWeight={500}>{t('floorPlan.officeA')}</text>
+                <text x={60} y={12} fill="#94A3B8" fontSize={3} fontWeight={500}>{t('floorPlan.officeB')}</text>
+                <text x={10} y={42} fill="#94A3B8" fontSize={3} fontWeight={500}>{t('floorPlan.meeting')}</text>
+                <text x={30} y={42} fill="#94A3B8" fontSize={3} fontWeight={500}>{t('floorPlan.central')}</text>
+                <text x={60} y={42} fill="#94A3B8" fontSize={3} fontWeight={500}>{t('floorPlan.server')}</text>
+                <text x={10} y={62} fill="#94A3B8" fontSize={3} fontWeight={500}>{t('floorPlan.storage')}</text>
+                <text x={60} y={62} fill="#94A3B8" fontSize={3} fontWeight={500}>{t('floorPlan.workshop')}</text>
                 {allAssets.map((asset) => {
                   const isSelected = selectedAsset?.id === asset.id;
                   const isHovered = hoveredAsset?.id === asset.id;
@@ -262,7 +276,7 @@ export default function FloorPlan() {
           {contextMenu && (
             <div onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y, zIndex: 100, background: '#fff', borderRadius: 8, border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', padding: 4, minWidth: 180 }}>
               <button onClick={handlePinHere} style={{ width: '100%', padding: '8px 12px', fontSize: 13, fontWeight: 500, borderRadius: 6, border: 'none', background: 'none', color: 'var(--foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' }} onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F5F9')} onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}>
-                <MapPin size={14} color="var(--primary)" /> Pin Asset Here
+                <MapPin size={14} color="var(--primary)" /> {t('floorPlan.pinAssetHere')}
               </button>
             </div>
           )}
@@ -273,16 +287,16 @@ export default function FloorPlan() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                 <div style={{ width: 28, height: 28, borderRadius: 7, background: STATUS_COLORS[selectedAsset.status] + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>{TYPE_ICONS[selectedAsset.type]}</div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>{selectedAsset.label}</div>
-                  <div style={{ fontSize: 11, color: '#64748B' }}>{selectedAsset.type} &middot; {STATUS_LABELS[selectedAsset.status]}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>{selectedAsset.name}</div>
+                  <div style={{ fontSize: 11, color: '#64748B' }}>{typeLabel(selectedAsset.type)} &middot; {statusLabel(selectedAsset.status)}</div>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button onClick={handleEditPin} style={{ flex: 1, padding: '6px 10px', fontSize: 12, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', color: 'var(--foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }} onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F5F9')} onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}>
-                  <Pencil size={12} /> Edit
+                  <Pencil size={12} /> {t('floorPlan.edit')}
                 </button>
                 <button onClick={handleDeletePin} style={{ flex: 1, padding: '6px 10px', fontSize: 12, fontWeight: 600, borderRadius: 6, border: '1px solid var(--critical)', background: '#fff', color: 'var(--critical)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }} onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--critical-bg)')} onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}>
-                  <Trash2 size={12} /> Delete
+                  <Trash2 size={12} /> {t('floorPlan.delete')}
                 </button>
               </div>
               {/* Arrow */}
@@ -294,10 +308,10 @@ export default function FloorPlan() {
           {showLegend && (
             <div style={{ position: 'absolute', bottom: 16, left: 16, background: '#fff', borderRadius: 8, padding: '12px 16px', border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', marginBottom: 8 }}>{t('floorPlan.legend')}</div>
-              {Object.entries(STATUS_LABELS).map(([key, label]) => (
+              {Object.keys(STATUS_LABEL_KEYS).map((key) => (
                 <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: STATUS_COLORS[key] }} />
-                  <span style={{ fontSize: 11, color: '#475569' }}>{label}</span>
+                  <span style={{ fontSize: 11, color: '#475569' }}>{statusLabel(key)}</span>
                 </div>
               ))}
             </div>
@@ -312,33 +326,33 @@ export default function FloorPlan() {
               /* Pin Asset Form */
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)' }}>Pin Asset</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)' }}>{t('floorPlan.pinAsset')}</div>
                   <button onClick={handleCancelPin} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><X size={16} color="#64748B" /></button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ padding: 10, background: 'var(--info-bg)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                     <MapPin size={14} color="var(--primary)" />
-                    <span style={{ fontSize: 12, color: 'var(--info)', fontWeight: 500 }}>Position: {pinCoords?.x.toFixed(1)}%, {pinCoords?.y.toFixed(1)}%</span>
+                    <span style={{ fontSize: 12, color: 'var(--info)', fontWeight: 500 }}>{t('floorPlan.position')}: {pinCoords?.x.toFixed(1)}%, {pinCoords?.y.toFixed(1)}%</span>
                   </div>
                   <div>
-                    <div style={labelStyle}>Asset Type</div>
+                    <div style={labelStyle}>{t('floorPlan.assetType')}</div>
                     <select value={pinForm.type} onChange={(e) => setPinForm({ ...pinForm, type: e.target.value })} style={{ ...inputStyle, cursor: 'pointer' }}>
-                      {ASSET_TYPES.map((tp) => <option key={tp} value={tp}>{tp}</option>)}
+                      {ASSET_TYPES.map((tp) => <option key={tp} value={tp}>{typeLabel(tp)}</option>)}
                     </select>
                   </div>
                   <div>
-                    <div style={labelStyle}>Asset Label</div>
-                    <input value={pinForm.label} onChange={(e) => setPinForm({ ...pinForm, label: e.target.value })} placeholder="e.g. AHU-09" style={inputStyle} autoFocus />
+                    <div style={labelStyle}>{t('floorPlan.assetName')}</div>
+                    <input value={pinForm.name} onChange={(e) => setPinForm({ ...pinForm, name: e.target.value })} placeholder={t('floorPlan.namePlaceholder')} style={inputStyle} autoFocus />
                   </div>
                   <div>
-                    <div style={labelStyle}>Status</div>
+                    <div style={labelStyle}>{t('floorPlan.statusValue')}</div>
                     <select value={pinForm.status} onChange={(e) => setPinForm({ ...pinForm, status: e.target.value })} style={{ ...inputStyle, cursor: 'pointer' }}>
-                      {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                      {Object.keys(STATUS_LABEL_KEYS).map((k) => <option key={k} value={k}>{statusLabel(k)}</option>)}
                     </select>
                   </div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                    <button onClick={handleCancelPin} style={{ flex: 1, padding: '9px 12px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', color: '#64748B' }}>Cancel</button>
-                    <button onClick={handleSavePin} disabled={!pinForm.label.trim()} style={{ flex: 1, padding: '9px 12px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: 'none', background: pinForm.label.trim() ? 'var(--primary)' : '#CBD5E1', color: '#fff', cursor: pinForm.label.trim() ? 'pointer' : 'not-allowed' }}>Save Pin</button>
+                    <button onClick={handleCancelPin} style={{ flex: 1, padding: '9px 12px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', color: '#64748B' }}>{t('floorPlan.cancel')}</button>
+                    <button onClick={handleSavePin} disabled={!pinForm.name.trim()} style={{ flex: 1, padding: '9px 12px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: 'none', background: pinForm.name.trim() ? 'var(--primary)' : '#CBD5E1', color: '#fff', cursor: pinForm.name.trim() ? 'pointer' : 'not-allowed' }}>{t('floorPlan.savePin')}</button>
                   </div>
                 </div>
               </>
@@ -346,29 +360,29 @@ export default function FloorPlan() {
               /* Edit Asset Form */
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)' }}>Edit Asset</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)' }}>{t('floorPlan.editAsset')}</div>
                   <button onClick={handleCancelEdit} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><X size={16} color="#64748B" /></button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div>
-                    <div style={labelStyle}>Asset Type</div>
+                    <div style={labelStyle}>{t('floorPlan.assetType')}</div>
                     <select value={editForm.type} onChange={(e) => setEditForm({ ...editForm, type: e.target.value })} style={{ ...inputStyle, cursor: 'pointer' }}>
-                      {ASSET_TYPES.map((tp) => <option key={tp} value={tp}>{tp}</option>)}
+                      {ASSET_TYPES.map((tp) => <option key={tp} value={tp}>{typeLabel(tp)}</option>)}
                     </select>
                   </div>
                   <div>
-                    <div style={labelStyle}>Asset Label</div>
-                    <input value={editForm.label} onChange={(e) => setEditForm({ ...editForm, label: e.target.value })} placeholder="e.g. AHU-09" style={inputStyle} autoFocus />
+                    <div style={labelStyle}>{t('floorPlan.assetName')}</div>
+                    <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} placeholder={t('floorPlan.namePlaceholder')} style={inputStyle} autoFocus />
                   </div>
                   <div>
-                    <div style={labelStyle}>Status</div>
+                    <div style={labelStyle}>{t('floorPlan.statusValue')}</div>
                     <select value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })} style={{ ...inputStyle, cursor: 'pointer' }}>
-                      {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                      {Object.keys(STATUS_LABEL_KEYS).map((k) => <option key={k} value={k}>{statusLabel(k)}</option>)}
                     </select>
                   </div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                    <button onClick={handleCancelEdit} style={{ flex: 1, padding: '9px 12px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', color: '#64748B' }}>Cancel</button>
-                    <button onClick={handleSaveEdit} disabled={!editForm.label.trim()} style={{ flex: 1, padding: '9px 12px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: 'none', background: editForm.label.trim() ? 'var(--primary)' : '#CBD5E1', color: '#fff', cursor: editForm.label.trim() ? 'pointer' : 'not-allowed' }}>Save Changes</button>
+                    <button onClick={handleCancelEdit} style={{ flex: 1, padding: '9px 12px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', color: '#64748B' }}>{t('floorPlan.cancel')}</button>
+                    <button onClick={handleSaveEdit} disabled={!editForm.name.trim()} style={{ flex: 1, padding: '9px 12px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: 'none', background: editForm.name.trim() ? 'var(--primary)' : '#CBD5E1', color: '#fff', cursor: editForm.name.trim() ? 'pointer' : 'not-allowed' }}>{t('floorPlan.saveChanges')}</button>
                   </div>
                 </div>
               </>
@@ -382,23 +396,23 @@ export default function FloorPlan() {
                       {TYPE_ICONS[selectedAsset.type]}
                     </div>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>{selectedAsset.label}</div>
-                      <div style={{ fontSize: 12, color: '#64748B' }}>{selectedAsset.type}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>{selectedAsset.name}</div>
+                      <div style={{ fontSize: 12, color: '#64748B' }}>{typeLabel(selectedAsset.type)}</div>
                     </div>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                     <div style={{ padding: 10, background: '#F8FAFC', borderRadius: 6 }}>
                       <div style={{ fontSize: 10, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase' }}>{t('floorPlan.status')}</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: STATUS_COLORS[selectedAsset.status], marginTop: 2 }}>{STATUS_LABELS[selectedAsset.status]}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: STATUS_COLORS[selectedAsset.status], marginTop: 2 }}>{statusLabel(selectedAsset.status)}</div>
                     </div>
                     <div style={{ padding: 10, background: '#F8FAFC', borderRadius: 6 }}>
                       <div style={{ fontSize: 10, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase' }}>{t('assets.col.type')}</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', marginTop: 2 }}>{selectedAsset.type}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', marginTop: 2 }}>{typeLabel(selectedAsset.type)}</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button style={{ flex: 1, padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}>{t('floorPlan.viewHistory')}</button>
-                    <button style={{ flex: 1, padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}>{t('floorPlan.createWO')}</button>
+                    <button onClick={() => navigate('/assets')} style={{ flex: 1, padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}>{t('floorPlan.viewHistory')}</button>
+                    <button onClick={() => navigate('/work-orders/new')} style={{ flex: 1, padding: '8px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}>{t('floorPlan.createWO')}</button>
                   </div>
                 </div>
               </>
@@ -409,7 +423,7 @@ export default function FloorPlan() {
                 {permissions?.canAddMapAssets && (
                   <div style={{ marginTop: 8, padding: '10px 12px', background: '#F8FAFC', borderRadius: 8, border: '1px dashed var(--border)', textAlign: 'center' }}>
                     <MapPin size={16} color="#94A3B8" style={{ marginBottom: 4 }} />
-                    <div style={{ fontSize: 12, color: '#94A3B8' }}>Right-click the map to pin an asset</div>
+                    <div style={{ fontSize: 12, color: '#94A3B8' }}>{t('floorPlan.rightClickHint')}</div>
                   </div>
                 )}
               </>
@@ -424,8 +438,8 @@ export default function FloorPlan() {
                 <div key={asset.id} onClick={() => { setSelectedAsset(asset); setPinning(false); }} style={{ padding: 10, borderRadius: 8, cursor: 'pointer', border: selectedAsset?.id === asset.id ? '1px solid var(--info)' : '1px solid var(--border)', background: selectedAsset?.id === asset.id ? 'var(--info-bg)' : '#F8FAFC', display: 'flex', alignItems: 'center', gap: 10, transition: 'all 0.15s' }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: STATUS_COLORS[asset.status], flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>{asset.label}</div>
-                    <div style={{ fontSize: 11, color: '#94A3B8' }}>{asset.type}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>{asset.name}</div>
+                    <div style={{ fontSize: 11, color: '#94A3B8' }}>{typeLabel(asset.type)}</div>
                   </div>
                 </div>
               ))}
@@ -444,17 +458,17 @@ export default function FloorPlan() {
                 <Trash2 size={18} color="var(--critical)" />
               </div>
               <div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)' }}>Delete Asset Pin</div>
-                <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>This action cannot be undone.</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)' }}>{t('floorPlan.deleteTitle')}</div>
+                <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>{t('floorPlan.deleteWarning')}</div>
               </div>
             </div>
             <div style={{ padding: 12, background: '#F8FAFC', borderRadius: 8, marginBottom: 20 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>{deleting.label}</div>
-              <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{deleting.type} &middot; {STATUS_LABELS[deleting.status]}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>{deleting.name}</div>
+              <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{typeLabel(deleting.type)} &middot; {statusLabel(deleting.status)}</div>
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setDeleting(null)} style={{ padding: '9px 20px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', color: '#64748B' }}>Cancel</button>
-              <button onClick={handleConfirmDelete} style={{ padding: '9px 20px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: 'none', background: 'var(--critical)', color: '#fff', cursor: 'pointer' }}>Delete Pin</button>
+              <button onClick={() => setDeleting(null)} style={{ padding: '9px 20px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', color: '#64748B' }}>{t('floorPlan.cancel')}</button>
+              <button onClick={handleConfirmDelete} style={{ padding: '9px 20px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: 'none', background: 'var(--critical)', color: '#fff', cursor: 'pointer' }}>{t('floorPlan.deletePin')}</button>
             </div>
           </div>
         </div>
@@ -466,7 +480,7 @@ export default function FloorPlan() {
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }} onClick={handleCancelUpload} />
           <div style={{ position: 'relative', background: '#fff', borderRadius: 12, width: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
             <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)' }}>Edit Floor Map</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)' }}>{t('floorPlan.editFloorMap')}</div>
               <button onClick={handleCancelUpload} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><X size={18} color="#64748B" /></button>
             </div>
             <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -476,7 +490,7 @@ export default function FloorPlan() {
                 </div>
               ) : floorImage ? (
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', marginBottom: 8 }}>Current Floor Map</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', marginBottom: 8 }}>{t('floorPlan.currentFloorMap')}</div>
                   <div style={{ borderRadius: 8, border: '1px solid var(--border)', overflow: 'hidden', background: '#F8FAFC' }}>
                     <img src={floorImage} alt="Current" style={{ width: '100%', height: 200, objectFit: 'contain', display: 'block' }} />
                   </div>
@@ -484,21 +498,21 @@ export default function FloorPlan() {
               ) : (
                 <div style={{ padding: 40, border: '2px dashed var(--border)', borderRadius: 8, textAlign: 'center', background: '#F8FAFC' }}>
                   <Image size={32} color="#CBD5E1" style={{ marginBottom: 8 }} />
-                  <div style={{ fontSize: 13, color: '#94A3B8' }}>No floor map uploaded</div>
-                  <div style={{ fontSize: 12, color: '#CBD5E1', marginTop: 4 }}>Upload a PNG, JPG, or SVG file</div>
+                  <div style={{ fontSize: 13, color: '#94A3B8' }}>{t('floorPlan.noFloorMap')}</div>
+                  <div style={{ fontSize: 12, color: '#CBD5E1', marginTop: 4 }}>{t('floorPlan.uploadFormat')}</div>
                 </div>
               )}
               <div style={{ display: 'flex', gap: 8 }}>
                 {floorImage && !previewImage && (
-                  <button onClick={handleRemoveImage} style={{ padding: '9px 16px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: '1px solid var(--critical)', background: '#fff', color: 'var(--critical)', cursor: 'pointer' }}>Remove Image</button>
+                  <button onClick={handleRemoveImage} style={{ padding: '9px 16px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: '1px solid var(--critical)', background: '#fff', color: 'var(--critical)', cursor: 'pointer' }}>{t('floorPlan.removeImage')}</button>
                 )}
-                <button onClick={handleUploadClick} style={{ flex: 1, padding: '9px 16px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: '1px solid var(--primary)', background: 'var(--info-bg)', color: 'var(--primary)', cursor: 'pointer' }}>{floorImage ? 'Replace Image' : 'Upload Image'}</button>
+                <button onClick={handleUploadClick} style={{ flex: 1, padding: '9px 16px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: '1px solid var(--primary)', background: 'var(--info-bg)', color: 'var(--primary)', cursor: 'pointer' }}>{floorImage ? t('floorPlan.replaceImage') : t('floorPlan.uploadImage')}</button>
               </div>
               <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/svg+xml" onChange={handleFileChange} style={{ display: 'none' }} />
             </div>
             <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={handleCancelUpload} style={{ padding: '9px 20px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', color: '#64748B' }}>Cancel</button>
-              <button onClick={handleConfirmUpload} disabled={!previewImage} style={{ padding: '9px 20px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: 'none', background: previewImage ? 'var(--primary)' : '#CBD5E1', color: '#fff', cursor: previewImage ? 'pointer' : 'not-allowed' }}>Confirm</button>
+              <button onClick={handleCancelUpload} style={{ padding: '9px 20px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', color: '#64748B' }}>{t('floorPlan.cancel')}</button>
+              <button onClick={handleConfirmUpload} disabled={!previewImage} style={{ padding: '9px 20px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: 'none', background: previewImage ? 'var(--primary)' : '#CBD5E1', color: '#fff', cursor: previewImage ? 'pointer' : 'not-allowed' }}>{t('floorPlan.confirm')}</button>
             </div>
           </div>
         </div>

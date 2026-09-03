@@ -1,17 +1,20 @@
 import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Building2, MapPin, User, Phone, Mail, ShieldCheck, AlertTriangle, CheckCircle, Clock, Package, ClipboardList, ChevronDown, ChevronUp } from 'lucide-react';
 import { PROPERTIES, COMPLIANCE_DOCS, getDocStatus, ASSETS, WORK_ORDERS } from '../data/constants';
 import { useTranslation } from '../i18n/LanguageContext';
 
-export default function PropertyDetail({ propertyId, onBack }) {
+export default function PropertyDetail() {
   const { t } = useTranslation();
-  const prop = PROPERTIES.find((p) => p.id === propertyId);
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const prop = PROPERTIES.find((p) => p.id === id);
   const [expandedSection, setExpandedSection] = useState({ compliance: true, attachments: false, wo: false, assets: false });
 
   if (!prop) {
     return (
       <div style={{ padding: 24 }}>
-        <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginBottom: 20 }}>
+        <button onClick={() => navigate('/properties')} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginBottom: 20 }}>
           <ArrowLeft size={16} /> {t('propertyDetail.back')}
         </button>
         <div style={{ padding: 48, textAlign: 'center', color: '#94A3B8' }}>Property not found</div>
@@ -37,7 +40,7 @@ export default function PropertyDetail({ propertyId, onBack }) {
 
   return (
     <div style={{ padding: 24, maxWidth: 1000 }}>
-      <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginBottom: 20 }}>
+      <button onClick={() => navigate('/properties')} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginBottom: 20 }}>
           <ArrowLeft size={16} /> {t('propertyDetail.back')}
       </button>
 

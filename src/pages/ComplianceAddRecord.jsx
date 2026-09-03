@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CATEGORY_CONFIG, CATEGORY_ICON, COMPLIANCE_CATEGORIES, PROPERTIES } from '../data/constants';
 import { useCompliance } from '../context/ComplianceContext';
 import { useAuth } from '../context/AuthContext';
@@ -58,10 +59,11 @@ Thank you.`;
 
 const EMPTY_FORM = { name: '', category: '', center: '', documentRef: '', issuedBy: '', inspectionDate: '', cycleMonths: 12, responsible: '', notes: '' };
 
-export default function ComplianceAddRecord({ onBack, onCreated }) {
+export default function ComplianceAddRecord() {
   const { t } = useTranslation();
   const { permissions } = useAuth();
   const { addDoc } = useCompliance();
+  const navigate = useNavigate();
   const uploaderName = permissions?.name || 'System';
 
   const [form, setForm] = useState({ ...EMPTY_FORM });
@@ -128,8 +130,9 @@ export default function ComplianceAddRecord({ onBack, onCreated }) {
       const reminders = [{ ...reminder, id: `rem-${Date.now()}`, docId: newId, active: true, createdAt: new Date().toISOString() }];
       try { localStorage.setItem(`cv-reminders-${newId}`, JSON.stringify(reminders)); } catch {}
     }
-    onCreated(newId);
+    navigate(`/compliance/${newId}`);
   };
+
 
   const fieldStyle = { width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12, background: '#fff', outline: 'none', boxSizing: 'border-box' };
   const labelStyle = { display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 };
@@ -139,7 +142,7 @@ export default function ComplianceAddRecord({ onBack, onCreated }) {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
-          <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginBottom: 12 }}>
+          <button onClick={() => navigate('/compliance')} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginBottom: 12 }}>
             <ArrowLeft size={16} /> {t('compliance.detail.back')}
           </button>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.02em' }}>{t('compliance.addTitle')}</h1>
@@ -316,7 +319,7 @@ export default function ComplianceAddRecord({ onBack, onCreated }) {
 
       {/* Save / Cancel Footer */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingBottom: 24 }}>
-        <button onClick={onBack} style={{ padding: '10px 24px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.reminder.form.cancel')}</button>
+        <button onClick={() => navigate('/compliance')} style={{ padding: '10px 24px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.reminder.form.cancel')}</button>
         <button onClick={handleSave} disabled={!form.name || !form.category || !form.center} style={{ padding: '10px 24px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: (!form.name || !form.category || !form.center) ? 0.5 : 1 }}>{t('compliance.reminder.form.save')}</button>
       </div>
     </div>

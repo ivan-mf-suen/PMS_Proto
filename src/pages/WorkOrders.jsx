@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useWorkOrders } from '../context/WorkOrderContext';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -168,10 +169,11 @@ function FilterDropdown({ label, options, selected, onSelect, counts, groups, t,
   );
 }
 
-export default function WorkOrders({ onCreateWorkOrder, onViewWO, selectedCenter }) {
+export default function WorkOrders({ selectedCenter }) {
   const { permissions } = useAuth();
   const { workOrders, deleteWorkOrder } = useWorkOrders();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState('All');
@@ -267,7 +269,7 @@ export default function WorkOrders({ onCreateWorkOrder, onViewWO, selectedCenter
           </p>
         </div>
         {permissions?.canCreateWO && (
-          <button onClick={onCreateWorkOrder} style={{ padding: '10px 20px', fontSize: 13, fontWeight: 600, borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 1px 3px rgba(37,99,235,0.3)' }}>
+          <button onClick={() => navigate('/work-orders/new')} style={{ padding: '10px 20px', fontSize: 13, fontWeight: 600, borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 1px 3px rgba(37,99,235,0.3)' }}>
             <Plus size={16} /> {t('workOrders.create')}
           </button>
         )}
@@ -482,7 +484,7 @@ export default function WorkOrders({ onCreateWorkOrder, onViewWO, selectedCenter
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', gap: 4 }} onClick={(e) => e.stopPropagation()}>
                       <button onClick={() => setPreviewWO(wo)} title="Preview Work Order" style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Eye size={14} color="#64748B" /></button>
-                      <button onClick={() => onViewWO(wo.id)} title="Edit Work Order" style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Pencil size={14} color="#64748B" /></button>
+                      <button onClick={() => navigate(`/work-orders/${wo.id}`)} title="Edit Work Order" style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Pencil size={14} color="#64748B" /></button>
                       <button onClick={() => { if (window.confirm(`Delete work order ${wo.id}? This action cannot be undone.`)) { deleteWorkOrder(wo.id); } }} title="Delete Work Order" style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={14} color="#DC2626" /></button>
                     </div>
                   </td>
@@ -543,7 +545,7 @@ export default function WorkOrders({ onCreateWorkOrder, onViewWO, selectedCenter
             </div>
             {/* Footer */}
             <div style={{ padding: '14px 24px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button onClick={() => { setPreviewWO(null); onViewWO(previewWO.id); }} style={{ padding: '7px 16px', borderRadius: 6, border: '1px solid #E2E8F0', background: '#fff', fontSize: 12, fontWeight: 600, color: '#334155', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button onClick={() => { setPreviewWO(null); navigate(`/work-orders/${previewWO.id}`); }} style={{ padding: '7px 16px', borderRadius: 6, border: '1px solid #E2E8F0', background: '#fff', fontSize: 12, fontWeight: 600, color: '#334155', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Pencil size={13} /> {t('workOrders.previewEdit')}
               </button>
               <button onClick={() => setPreviewWO(null)} style={{ padding: '7px 16px', borderRadius: 6, border: 'none', background: '#0F172A', fontSize: 12, fontWeight: 600, color: '#fff', cursor: 'pointer' }}>

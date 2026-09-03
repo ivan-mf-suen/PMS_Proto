@@ -1,18 +1,30 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ComplianceVault from '../../pages/ComplianceVault';
 import { ComplianceProvider } from '../../context/ComplianceContext';
 import { LanguageProvider } from '../../i18n/LanguageContext';
 import { isAttachmentActive } from '../../services/complianceFileService';
 
-function renderVault({ selectedCenter, onViewDoc } = {}) {
+function renderVault({ selectedCenter, withRouter } = {}) {
+  const vault = (
+    <ComplianceVault selectedCenter={selectedCenter || 'All'} />
+  );
   return render(
-    <LanguageProvider>
-      <ComplianceProvider>
-        <ComplianceVault selectedCenter={selectedCenter || 'All'} onViewDoc={onViewDoc || vi.fn()} />
-      </ComplianceProvider>
-    </LanguageProvider>
+    <MemoryRouter initialEntries={['/compliance']}>
+      <LanguageProvider>
+        <ComplianceProvider>
+          {withRouter ? (
+            <Routes>
+              <Route path="/compliance" element={vault} />
+              <Route path="/compliance/:id" element={<div>DOC DETAIL PAGE</div>} />
+              <Route path="/compliance/new" element={<div>NEW RECORD PAGE</div>} />
+            </Routes>
+          ) : vault}
+        </ComplianceProvider>
+      </LanguageProvider>
+    </MemoryRouter>
   );
 }
 
@@ -97,23 +109,20 @@ describe('ComplianceVault', () => {
     }
   });
 
-  it('Add Record button opens add modal', async () => {
+  it('Add Record button navigates to new-record page', async () => {
     const user = userEvent.setup();
-    renderVault();
+    renderVault({ withRouter: true });
     await user.click(screen.getByText('Add Record'));
-    expect(screen.getByText('Category *')).toBeInTheDocument();
-    expect(screen.getByText('Property *')).toBeInTheDocument();
+    expect(screen.getByText('NEW RECORD PAGE')).toBeInTheDocument();
   });
 
-  it('view button calls onViewDoc with document id', async () => {
+  it('view button navigates to the detail page', async () => {
     const user = userEvent.setup();
-    const onViewDoc = vi.fn();
-    renderVault({ onViewDoc });
+    renderVault({ withRouter: true });
     const viewBtns = document.querySelectorAll('table tbody tr button');
     if (viewBtns.length > 0) {
       await user.click(viewBtns[0]);
-      expect(onViewDoc).toHaveBeenCalled();
-      expect(typeof onViewDoc.mock.calls[0][0]).toBe('number');
+      expect(screen.getByText('DOC DETAIL PAGE')).toBeInTheDocument();
     }
   });
 

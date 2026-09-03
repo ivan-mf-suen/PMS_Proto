@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useWorkOrders } from '../context/WorkOrderContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -189,11 +190,13 @@ function ChecklistBadge({ state }) {
   return null;
 }
 
-export default function WorkOrderDetail({ woId, onBack }) {
+export default function WorkOrderDetail() {
   const { role } = useAuth();
   const { workOrders, updateWorkOrderStatus } = useWorkOrders();
   const { t } = useTranslation();
-  const wo = workOrders.find((w) => w.id === woId);
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const wo = workOrders.find((w) => w.id === id);
 
   const [iasHovered, setIasHovered] = useState(false);
 
@@ -304,7 +307,7 @@ export default function WorkOrderDetail({ woId, onBack }) {
           boxShadow: '0 1px 3px rgba(15,23,42,0.04)', flexShrink: 0,
         }}>
           <button
-            onClick={onBack}
+            onClick={() => navigate('/work-orders')}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '6px 12px', borderRadius: 6,
@@ -348,13 +351,13 @@ export default function WorkOrderDetail({ woId, onBack }) {
           {isSM && (
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => { updateWorkOrderStatus(wo.id, 'Draft'); onBack(); }}
+                onClick={() => { updateWorkOrderStatus(wo.id, 'Draft'); navigate('/work-orders'); }}
                 style={{ ...BTN_SECONDARY, border: '1px solid #DC2626', background: '#FEF2F2', color: '#DC2626' }}
               >
                 <RotateCcw size={14} /> Return to Draft
               </button>
               <button
-                onClick={() => { updateWorkOrderStatus(wo.id, 'Pending SSD AS Endorsement'); onBack(); }}
+                onClick={() => { updateWorkOrderStatus(wo.id, 'Pending SSD AS Endorsement'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#059669' }}
               >
                 <Send size={14} /> Submit to AS for Endorsement
@@ -364,13 +367,13 @@ export default function WorkOrderDetail({ woId, onBack }) {
           {isAS && (
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => { updateWorkOrderStatus(wo.id, 'Draft'); onBack(); }}
+                onClick={() => { updateWorkOrderStatus(wo.id, 'Draft'); navigate('/work-orders'); }}
                 style={{ ...BTN_SECONDARY, border: '1px solid #DC2626', background: '#FEF2F2', color: '#DC2626' }}
               >
                 <RotateCcw size={14} /> Return to Draft
               </button>
               <button
-                onClick={() => { updateWorkOrderStatus(wo.id, 'Pending SSD G&C Review'); onBack(); }}
+                onClick={() => { updateWorkOrderStatus(wo.id, 'Pending SSD G&C Review'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#059669' }}
               >
                 <Send size={14} /> Submit to G&C for Review
@@ -380,13 +383,13 @@ export default function WorkOrderDetail({ woId, onBack }) {
           {isGC && (
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => { updateWorkOrderStatus(wo.id, 'Draft'); onBack(); }}
+                onClick={() => { updateWorkOrderStatus(wo.id, 'Draft'); navigate('/work-orders'); }}
                 style={{ ...BTN_SECONDARY, border: '1px solid #DC2626', background: '#FEF2F2', color: '#DC2626' }}
               >
                 <RotateCcw size={14} /> Return to Draft
               </button>
               <button
-                onClick={() => { updateWorkOrderStatus(wo.id, 'Pending OIC Review'); onBack(); }}
+                onClick={() => { updateWorkOrderStatus(wo.id, 'Pending OIC Review'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#059669' }}
               >
                 <Send size={14} /> Submit to OIC for Review
@@ -396,13 +399,13 @@ export default function WorkOrderDetail({ woId, onBack }) {
           {isOIC && (
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => { updateWorkOrderStatus(wo.id, 'Draft'); onBack(); }}
+                onClick={() => { updateWorkOrderStatus(wo.id, 'Draft'); navigate('/work-orders'); }}
                 style={{ ...BTN_SECONDARY, border: '1px solid #DC2626', background: '#FEF2F2', color: '#DC2626' }}
               >
                 <RotateCcw size={14} /> Return to Draft
               </button>
               <button
-                onClick={() => { updateWorkOrderStatus(wo.id, 'Under PWD Grouping'); onBack(); }}
+                onClick={() => { updateWorkOrderStatus(wo.id, 'Under PWD Grouping'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#059669' }}
               >
                 <Send size={14} /> Submit to PWD
@@ -412,7 +415,7 @@ export default function WorkOrderDetail({ woId, onBack }) {
           {isOICDraft && (
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => { updateWorkOrderStatus(wo.id, 'Pending SSD Service Manager Endorsement'); onBack(); }}
+                onClick={() => { updateWorkOrderStatus(wo.id, 'Pending SSD Service Manager Endorsement'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#059669' }}
               >
                 <Send size={14} /> Submit to Service Manager
@@ -422,7 +425,7 @@ export default function WorkOrderDetail({ woId, onBack }) {
           {isPWDGrouping && (
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => { updateWorkOrderStatus(wo.id, 'Pending PWD Proceed IAS'); onBack(); }}
+                onClick={() => { updateWorkOrderStatus(wo.id, 'Pending PWD Proceed IAS'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#7C3AED', boxShadow: '0 2px 8px rgba(124,58,237,0.3)' }}
               >
                 <Send size={14} /> Submit to IAS
@@ -475,7 +478,7 @@ export default function WorkOrderDetail({ woId, onBack }) {
           {isApprovedIAS && (role === 'PWD' || role === 'SSD_GC') && (
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => { updateWorkOrderStatus(wo.id, 'In Progress'); onBack(); }}
+                onClick={() => { updateWorkOrderStatus(wo.id, 'In Progress'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#2563EB' }}
               >
                 <Send size={14} /> Start Work
@@ -485,7 +488,7 @@ export default function WorkOrderDetail({ woId, onBack }) {
           {isInProgress && (role === 'PWD' || role === 'SSD_GC') && (
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => { updateWorkOrderStatus(wo.id, 'Completed'); onBack(); }}
+                onClick={() => { updateWorkOrderStatus(wo.id, 'Completed'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#16A34A' }}
               >
                 <CheckCircle size={14} /> Mark Complete

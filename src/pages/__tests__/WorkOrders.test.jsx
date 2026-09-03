@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import WorkOrders from '../../pages/WorkOrders';
 import { WorkOrderProvider } from '../../context/WorkOrderContext';
 import { LanguageProvider } from '../../i18n/LanguageContext';
@@ -14,11 +15,13 @@ vi.mock('../../context/AuthContext', () => ({
 
 function renderWorkOrders(selectedCenter) {
   return render(
-    <LanguageProvider>
-      <WorkOrderProvider>
-        <WorkOrders selectedCenter={selectedCenter || 'All'} />
-      </WorkOrderProvider>
-    </LanguageProvider>
+    <MemoryRouter>
+      <LanguageProvider>
+        <WorkOrderProvider>
+          <WorkOrders selectedCenter={selectedCenter || 'All'} />
+        </WorkOrderProvider>
+      </LanguageProvider>
+    </MemoryRouter>
   );
 }
 

@@ -8,24 +8,7 @@ import {
   CheckCircle, Circle, Download, Upload, FileText, X, Check,
   CheckSquare, Plus, Trash2, MinusCircle,
 } from 'lucide-react';
-
-const WO_TYPE_KEY_MAP = {
-  'Concrete Repair': 'wo.type.concreteRepair',
-  'Waterproofing/Re-roofing Works': 'wo.type.waterproofing',
-  'Painting': 'wo.type.painting',
-  'Tile Replacement': 'wo.type.tileReplacement',
-  'Vinyl Flooring Replacement': 'wo.type.vinylFlooring',
-  'Timber Door/Cabinet Replacement': 'wo.type.timberDoorCabinet',
-  'Timber Furring/Dado Replacement': 'wo.type.timberFurring',
-  'Window Replacement': 'wo.type.windowReplacement',
-  'Replacement of False Ceiling': 'wo.type.falseCeiling',
-  'Replacement of Sanitary Fitments': 'wo.type.sanitaryFitments',
-  'Air-conditioning/Ventilation System Addition/Replacement': 'wo.type.airconVentilation',
-  'Lighting/Electrical System Addition/Replacement': 'wo.type.lightingElectrical',
-  'PD System Addition/Replacement': 'wo.type.pdSystem',
-  'ELV System (Call Bell, PA, etc.) Addition/Replacement': 'wo.type.elvSystem',
-  'Gas System Addition/Replacement': 'wo.type.gasSystem',
-};
+import { WO_TYPE_KEY_MAP } from '../data/workOrders';
 
 const STATUS_STYLES = {
   'Draft': { background: '#64748B', color: '#fff' },
@@ -173,19 +156,20 @@ function ChecklistIcon({ state }) {
 }
 
 function ChecklistBadge({ state }) {
+  const { t } = useTranslation();
   if (state === 'completed') return (
     <span style={{
       fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 6,
       background: '#DCFCE7', color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.04em',
       marginLeft: 6, flexShrink: 0,
-    }}>Complete</span>
+    }}>{t('workOrderDetail.badgeComplete')}</span>
   );
   if (state === 'noNeed') return (
     <span style={{
       fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 6,
       background: '#FFF7ED', color: '#EA580C', textTransform: 'uppercase', letterSpacing: '0.04em',
       marginLeft: 6, flexShrink: 0,
-    }}>No Need</span>
+    }}>{t('workOrderDetail.badgeNoNeed')}</span>
   );
   return null;
 }
@@ -315,12 +299,12 @@ export default function WorkOrderDetail() {
               cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#475569',
             }}
           >
-            <ArrowLeft size={14} /> Back to Work Orders
+            <ArrowLeft size={14} /> {t('workOrderDetail.backToWOs')}
           </button>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>Work Order Tracking</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>{t('workOrderDetail.tracking')}</div>
             <div style={{ fontSize: 12, color: '#64748B', marginTop: 1 }}>
-              {today} &middot; Portfolio: {portfolio}
+              {today} &middot; {t('workOrderDetail.portfolio', { portfolio })}
             </div>
           </div>
           {/* Status badge — flat label style */}
@@ -329,7 +313,7 @@ export default function WorkOrderDetail() {
             fontSize: 12, fontWeight: 600, letterSpacing: '0.02em',
             background: sStyle.background, color: sStyle.color,
           }}>
-            Current Status: {wo.status}
+            {t('workOrderDetail.currentStatus', { status: wo.status })}
           </div>
         </div>
 
@@ -354,13 +338,13 @@ export default function WorkOrderDetail() {
                 onClick={() => { updateWorkOrderStatus(wo.id, 'Draft'); navigate('/work-orders'); }}
                 style={{ ...BTN_SECONDARY, border: '1px solid #DC2626', background: '#FEF2F2', color: '#DC2626' }}
               >
-                <RotateCcw size={14} /> Return to Draft
+                <RotateCcw size={14} /> {t('workOrderDetail.returnDraft')}
               </button>
               <button
                 onClick={() => { updateWorkOrderStatus(wo.id, 'Pending SSD AS Endorsement'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#059669' }}
               >
-                <Send size={14} /> Submit to AS for Endorsement
+                <Send size={14} /> {t('workOrderDetail.submitAS')}
               </button>
             </div>
           )}
@@ -370,13 +354,13 @@ export default function WorkOrderDetail() {
                 onClick={() => { updateWorkOrderStatus(wo.id, 'Draft'); navigate('/work-orders'); }}
                 style={{ ...BTN_SECONDARY, border: '1px solid #DC2626', background: '#FEF2F2', color: '#DC2626' }}
               >
-                <RotateCcw size={14} /> Return to Draft
+                <RotateCcw size={14} /> {t('workOrderDetail.returnDraft')}
               </button>
               <button
                 onClick={() => { updateWorkOrderStatus(wo.id, 'Pending SSD G&C Review'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#059669' }}
               >
-                <Send size={14} /> Submit to G&C for Review
+                <Send size={14} /> {t('workOrderDetail.submitGC')}
               </button>
             </div>
           )}
@@ -386,13 +370,13 @@ export default function WorkOrderDetail() {
                 onClick={() => { updateWorkOrderStatus(wo.id, 'Draft'); navigate('/work-orders'); }}
                 style={{ ...BTN_SECONDARY, border: '1px solid #DC2626', background: '#FEF2F2', color: '#DC2626' }}
               >
-                <RotateCcw size={14} /> Return to Draft
+                <RotateCcw size={14} /> {t('workOrderDetail.returnDraft')}
               </button>
               <button
                 onClick={() => { updateWorkOrderStatus(wo.id, 'Pending OIC Review'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#059669' }}
               >
-                <Send size={14} /> Submit to OIC for Review
+                <Send size={14} /> {t('workOrderDetail.submitOIC')}
               </button>
             </div>
           )}
@@ -402,13 +386,13 @@ export default function WorkOrderDetail() {
                 onClick={() => { updateWorkOrderStatus(wo.id, 'Draft'); navigate('/work-orders'); }}
                 style={{ ...BTN_SECONDARY, border: '1px solid #DC2626', background: '#FEF2F2', color: '#DC2626' }}
               >
-                <RotateCcw size={14} /> Return to Draft
+                <RotateCcw size={14} /> {t('workOrderDetail.returnDraft')}
               </button>
               <button
                 onClick={() => { updateWorkOrderStatus(wo.id, 'Under PWD Grouping'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#059669' }}
               >
-                <Send size={14} /> Submit to PWD
+                <Send size={14} /> {t('workOrderDetail.submitPWD')}
               </button>
             </div>
           )}
@@ -418,7 +402,7 @@ export default function WorkOrderDetail() {
                 onClick={() => { updateWorkOrderStatus(wo.id, 'Pending SSD Service Manager Endorsement'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#059669' }}
               >
-                <Send size={14} /> Submit to Service Manager
+                <Send size={14} /> {t('workOrderDetail.submitSM')}
               </button>
             </div>
           )}
@@ -428,7 +412,7 @@ export default function WorkOrderDetail() {
                 onClick={() => { updateWorkOrderStatus(wo.id, 'Pending PWD Proceed IAS'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#7C3AED', boxShadow: '0 2px 8px rgba(124,58,237,0.3)' }}
               >
-                <Send size={14} /> Submit to IAS
+                <Send size={14} /> {t('workOrderDetail.submitIAS')}
               </button>
             </div>
           )}
@@ -442,7 +426,7 @@ export default function WorkOrderDetail() {
                   ...BTN_PRIMARY, background: '#7C3AED',
                   boxShadow: '0 2px 8px rgba(124,58,237,0.3)',
                 }}>
-                  <Send size={14} /> Create in IAS
+                  <Send size={14} /> {t('workOrderDetail.createInIAS')}
                 </button>
                 {iasHovered && (
                   <div style={{
@@ -453,13 +437,13 @@ export default function WorkOrderDetail() {
                     boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
                   }}>
                     <div style={{ fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6, color: '#F8FAFC' }}>
-                      <Info size={14} color="#A78BFA" /> IAS Integration
+                      <Info size={14} color="#A78BFA" /> {t('workOrderDetail.iasIntegration')}
                     </div>
                     <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <li>After all parties have endorsed the work order, this button will appear.</li>
-                      <li>Once clicked, the WO status updates to <span style={{ color: '#A78BFA', fontWeight: 600 }}>"Submitted to IAS for Tendering"</span> and the WO becomes <span style={{ color: '#F87171', fontWeight: 600 }}>read-only</span>.</li>
-                      <li>When clicked, it sends an API call to IAS with the endorsed WO details, so the user can continue input in IAS for the approval process (e.g. Tender analysis, quotation, etc.).</li>
-                      <li>When the WO is approved in IAS, the user can return to this system to continue the WO process (e.g. assign tasks, schedule, etc.).</li>
+                      <li>{t('workOrderDetail.iasTip1')}</li>
+                      <li>{t('workOrderDetail.iasTip2a')} <span style={{ color: '#A78BFA', fontWeight: 600 }}>{t('workOrderDetail.iasTip2submitted')}</span> {t('workOrderDetail.iasTip2b')} <span style={{ color: '#F87171', fontWeight: 600 }}>{t('workOrderDetail.iasTip2readonly')}</span>.</li>
+                      <li>{t('workOrderDetail.iasTip3')}</li>
+                      <li>{t('workOrderDetail.iasTip4')}</li>
                     </ul>
                     <div style={{ position: 'absolute', top: -5, right: 16, width: 10, height: 10, background: '#0F172A', transform: 'rotate(45deg)' }} />
                   </div>
@@ -471,7 +455,7 @@ export default function WorkOrderDetail() {
                   ...BTN_SECONDARY, border: '1px solid #B45309', background: manualApprovalOpen ? '#FFFBEB' : '#fff', color: '#B45309',
                 }}
               >
-                <Check size={14} /> Manual Approval
+                <Check size={14} /> {t('workOrderDetail.manualApproval')}
               </button>
             </div>
           )}
@@ -481,7 +465,7 @@ export default function WorkOrderDetail() {
                 onClick={() => { updateWorkOrderStatus(wo.id, 'In Progress'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#2563EB' }}
               >
-                <Send size={14} /> Start Work
+                <Send size={14} /> {t('workOrderDetail.startWork')}
               </button>
             </div>
           )}
@@ -491,13 +475,13 @@ export default function WorkOrderDetail() {
                 onClick={() => { updateWorkOrderStatus(wo.id, 'Completed'); navigate('/work-orders'); }}
                 style={{ ...BTN_PRIMARY, background: '#16A34A' }}
               >
-                <CheckCircle size={14} /> Mark Complete
+                <CheckCircle size={14} /> {t('workOrderDetail.markComplete')}
               </button>
             </div>
           )}
           {isCompleted && (
             <div style={{ padding: '6px 14px', borderRadius: 6, background: '#F0FDF4', border: '1px solid rgba(5,150,105,0.2)', fontSize: 12, fontWeight: 600, color: '#059669', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <CheckCircle size={14} /> Work Order Completed
+              <CheckCircle size={14} /> {t('workOrderDetail.woCompleted')}
             </div>
           )}
         </div>
@@ -511,9 +495,9 @@ export default function WorkOrderDetail() {
           }}>
             <Info size={20} color="#7C3AED" />
             <div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#7C3AED' }}>IAS Status: PENDING</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#7C3AED' }}>{t('workOrderDetail.iasPending')}</div>
               <div style={{ fontSize: 12, color: '#6D28D9', marginTop: 2 }}>
-                This work order has been submitted to IAS for tendering and is now read-only.
+                {t('workOrderDetail.iasPendingMsg')}
               </div>
             </div>
           </div>
@@ -528,9 +512,9 @@ export default function WorkOrderDetail() {
           }}>
             <CheckCircle size={20} color="#059669" />
             <div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#059669' }}>IAS Status: Approved</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#059669' }}>{t('workOrderDetail.iasApproved')}</div>
               <div style={{ fontSize: 12, color: '#047857', marginTop: 2 }}>
-                This work order has been approved by IAS. Proceed with post-approval actions below.
+                {t('workOrderDetail.iasApprovedMsg')}
               </div>
             </div>
           </div>
@@ -541,10 +525,10 @@ export default function WorkOrderDetail() {
 
           {/* ═══ Manual Approval Section ═══ */}
           {isPendingIAS && manualApprovalOpen && (
-            <DetailCard title="Manual Approval" number={<Check size={14} color="#fff" />} compact>
+            <DetailCard title={t('workOrderDetail.manualApproval')} number={<Check size={14} color="#fff" />} compact>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
-                  <FieldLabel>Approval Attachments</FieldLabel>
+                  <FieldLabel>{t('workOrderDetail.approvalAttachments')}</FieldLabel>
                   <input ref={manualInputRef} type="file" multiple style={{ display: 'none' }}
                     onChange={(e) => {
                       if (e.target.files) {
@@ -553,7 +537,7 @@ export default function WorkOrderDetail() {
                       }
                     }} />
                   <button onClick={() => manualInputRef.current?.click()} style={BTN_SM}>
-                    <Upload size={12} /> Choose Files
+                    <Upload size={12} /> {t('workOrderDetail.chooseFiles')}
                   </button>
                   {manualFiles.length > 0 && (
                     <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -574,12 +558,12 @@ export default function WorkOrderDetail() {
                   )}
                 </div>
                 <div>
-                  <FieldLabel>Remarks</FieldLabel>
+                  <FieldLabel>{t('workOrderDetail.remarks')}</FieldLabel>
                   <textarea
                     style={{ ...INPUT_BASE, minHeight: 60, resize: 'vertical', fontFamily: 'inherit' }}
                     value={manualRemarks}
                     onChange={(e) => setManualRemarks(e.target.value)}
-                    placeholder="Enter approval remarks"
+                    placeholder={t('workOrderDetail.remarksPh')}
                   />
                 </div>
               </div>
@@ -588,14 +572,14 @@ export default function WorkOrderDetail() {
 
           {/* ═══ Checklist ═══ */}
           {isApprovedIAS && (
-            <DetailCard title="Checklist" number={<CheckSquare size={14} color="#fff" />} compact>
+            <DetailCard title={t('workOrderDetail.checklist')} number={<CheckSquare size={14} color="#fff" />} compact>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
 
                 {/* Item 1: Upload Tender Document */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', background: '#fff', borderBottom: '1px solid #F1F5F9' }}>
                   <ChecklistIcon state={itemStates.tender} />
                   <span style={{ fontSize: 13, fontWeight: 600, color: itemStates.tender === 'completed' ? '#059669' : 'var(--foreground)', flex: 1 }}>
-                    Upload Tender Document
+                    {t('workOrderDetail.uploadTender')}
                   </span>
                   <ChecklistBadge state={itemStates.tender} />
                   {itemStates.tender === 'pending' && (
@@ -603,7 +587,7 @@ export default function WorkOrderDetail() {
                       <input ref={tenderInputRef} type="file" style={{ display: 'none' }}
                         onChange={(e) => { if (e.target.files?.[0]) { setTenderFile(e.target.files[0].name); setItem('tender', 'completed'); } }} />
                       <button onClick={() => tenderInputRef.current?.click()} style={BTN_SM}>
-                        <Upload size={12} /> Choose File
+                        <Upload size={12} /> {t('workOrderDetail.chooseFile')}
                       </button>
                     </>
                   )}
@@ -613,10 +597,10 @@ export default function WorkOrderDetail() {
                         <FileText size={11} style={{ verticalAlign: 'middle', marginRight: 4 }} />{tenderFile}
                       </span>
                       <button onClick={() => tenderInputRef.current?.click()} style={{ ...BTN_SM, color: '#475569' }}>
-                        <Upload size={11} /> Replace
+                        <Upload size={11} /> {t('workOrderDetail.replace')}
                       </button>
                       <button style={{ ...BTN_SM, color: '#059669', borderColor: '#059669' }}>
-                        <Download size={11} /> Download
+                        <Download size={11} /> {t('common.download')}
                       </button>
                     </div>
                   )}
@@ -626,19 +610,19 @@ export default function WorkOrderDetail() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', background: '#FAFBFC', borderBottom: '1px solid #F1F5F9' }}>
                   <ChecklistIcon state={itemStates.loa} />
                   <span style={{ fontSize: 13, fontWeight: 600, color: itemStates.loa === 'completed' ? '#059669' : 'var(--foreground)', flex: 1 }}>
-                    Proceed Letter of Award (LOA)
+                    {t('workOrderDetail.loa')}
                   </span>
                   <ChecklistBadge state={itemStates.loa} />
                   {itemStates.loa !== 'completed' && (
                     <button onClick={() => { setLoaPopupOpen(true); setLoaState('initial'); }}
                       style={{ ...BTN_SM, border: '1px solid #7C3AED', background: '#F5F3FF', color: '#7C3AED' }}>
-                      <FileText size={12} /> LOA
+                      <FileText size={12} /> {t('workOrderDetail.loaBtn')}
                     </button>
                   )}
                   {itemStates.loa === 'completed' && (
                     <button onClick={() => { setLoaPopupOpen(true); setLoaState('confirmed'); }}
                       style={{ ...BTN_SM, color: '#059669', borderColor: '#059669' }}>
-                      <Download size={12} /> Download
+                      <Download size={12} /> {t('common.download')}
                     </button>
                   )}
                 </div>
@@ -647,19 +631,19 @@ export default function WorkOrderDetail() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', background: '#fff', borderBottom: '1px solid #F1F5F9' }}>
                   <ChecklistIcon state={itemStates.csA} />
                   <span style={{ fontSize: 13, fontWeight: 600, color: itemStates.csA === 'completed' ? '#059669' : 'var(--foreground)', flex: 1 }}>
-                    Proceed Control Sheet Part A
+                    {t('workOrderDetail.csA')}
                   </span>
                   <ChecklistBadge state={itemStates.csA} />
                   {itemStates.csA !== 'completed' && (
                     <button onClick={() => setCsAPopupOpen(true)}
                       style={{ ...BTN_SM, border: '1px solid #B45309', background: '#FFFBEB', color: '#B45309' }}>
-                      <FileText size={12} /> Part A
+                      <FileText size={12} /> {t('workOrderDetail.csAbtn')}
                     </button>
                   )}
                   {itemStates.csA === 'completed' && (
                     <button onClick={() => setCsAPopupOpen(true)}
                       style={{ ...BTN_SM, color: '#059669', borderColor: '#059669' }}>
-                      <FileText size={12} /> View
+                      <FileText size={12} /> {t('common.view')}
                     </button>
                   )}
                 </div>
@@ -668,19 +652,19 @@ export default function WorkOrderDetail() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', background: '#FAFBFC', borderBottom: '1px solid #F1F5F9' }}>
                   <ChecklistIcon state={itemStates.csB} />
                   <span style={{ fontSize: 13, fontWeight: 600, color: itemStates.csB === 'completed' ? '#059669' : 'var(--foreground)', flex: 1 }}>
-                    Proceed Control Sheet Part B
+                    {t('workOrderDetail.csB')}
                   </span>
                   <ChecklistBadge state={itemStates.csB} />
                   {itemStates.csB !== 'completed' && (
                     <button onClick={() => setCsBPopupOpen(true)}
                       style={{ ...BTN_SM, border: '1px solid #B45309', background: '#FFFBEB', color: '#B45309' }}>
-                      <FileText size={12} /> Part B
+                      <FileText size={12} /> {t('workOrderDetail.csBbtn')}
                     </button>
                   )}
                   {itemStates.csB === 'completed' && (
                     <button onClick={() => setCsBPopupOpen(true)}
                       style={{ ...BTN_SM, color: '#059669', borderColor: '#059669' }}>
-                      <FileText size={12} /> View
+                      <FileText size={12} /> {t('common.view')}
                     </button>
                   )}
                 </div>
@@ -689,31 +673,31 @@ export default function WorkOrderDetail() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', background: '#fff', borderBottom: '1px solid #F1F5F9' }}>
                   <ChecklistIcon state={itemStates.eot} />
                   <span style={{ fontSize: 13, fontWeight: 600, color: itemStates.eot === 'completed' ? '#059669' : 'var(--foreground)', flex: 1 }}>
-                    Submit Extension Of Time (EOT)
+                    {t('workOrderDetail.eot')}
                   </span>
                   <ChecklistBadge state={itemStates.eot} />
                   {itemStates.eot === 'pending' && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <button onClick={() => setEotPopupOpen(true)}
                         style={{ ...BTN_SM, border: '1px solid #7C3AED', background: '#F5F3FF', color: '#7C3AED' }}>
-                        <FileText size={12} /> EOT
+                        <FileText size={12} /> {t('workOrderDetail.eotBtn')}
                       </button>
                       <button onClick={() => setItem('eot', 'noNeed')}
                         style={{ fontSize: 11, color: '#FB923C', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>
-                        No Need
+                        {t('workOrderDetail.noNeed')}
                       </button>
                     </div>
                   )}
                   {itemStates.eot === 'completed' && (
                     <button onClick={() => setEotPopupOpen(true)}
                       style={{ ...BTN_SM, color: '#059669', borderColor: '#059669' }}>
-                      <FileText size={12} /> View
+                      <FileText size={12} /> {t('common.view')}
                     </button>
                   )}
                   {itemStates.eot === 'noNeed' && (
                     <button onClick={() => setItem('eot', 'pending')}
                       style={{ fontSize: 11, color: '#64748B', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>
-                      Undo
+                      {t('workOrderDetail.undo')}
                     </button>
                   )}
                 </div>
@@ -722,7 +706,7 @@ export default function WorkOrderDetail() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', background: '#FAFBFC', borderBottom: '1px solid #F1F5F9' }}>
                   <ChecklistIcon state={itemStates.interimInvoice} />
                   <span style={{ fontSize: 13, fontWeight: 600, color: itemStates.interimInvoice === 'completed' ? '#059669' : 'var(--foreground)', flex: 1 }}>
-                    Upload Interim Invoice
+                    {t('workOrderDetail.interimInvoice')}
                   </span>
                   <ChecklistBadge state={itemStates.interimInvoice} />
                   {itemStates.interimInvoice === 'pending' && (
@@ -730,7 +714,7 @@ export default function WorkOrderDetail() {
                       <input ref={interimInputRef} type="file" style={{ display: 'none' }}
                         onChange={(e) => { if (e.target.files?.[0]) { setInterimFile(e.target.files[0].name); setItem('interimInvoice', 'completed'); } }} />
                       <button onClick={() => interimInputRef.current?.click()} style={BTN_SM}>
-                        <Upload size={12} /> Choose File
+                        <Upload size={12} /> {t('workOrderDetail.chooseFile')}
                       </button>
                     </>
                   )}
@@ -740,10 +724,10 @@ export default function WorkOrderDetail() {
                         <FileText size={11} style={{ verticalAlign: 'middle', marginRight: 4 }} />{interimFile}
                       </span>
                       <button onClick={() => interimInputRef.current?.click()} style={{ ...BTN_SM, color: '#475569' }}>
-                        <Upload size={11} /> Replace
+                        <Upload size={11} /> {t('workOrderDetail.replace')}
                       </button>
                       <button style={{ ...BTN_SM, color: '#059669', borderColor: '#059669' }}>
-                        <Download size={11} /> Download
+                        <Download size={11} /> {t('common.download')}
                       </button>
                     </div>
                   )}
@@ -753,31 +737,31 @@ export default function WorkOrderDetail() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', background: '#fff', borderBottom: '1px solid #F1F5F9' }}>
                   <ChecklistIcon state={itemStates.vo} />
                   <span style={{ fontSize: 13, fontWeight: 600, color: itemStates.vo === 'completed' ? '#059669' : 'var(--foreground)', flex: 1 }}>
-                    Add V.O.
+                    {t('workOrderDetail.vo')}
                   </span>
                   <ChecklistBadge state={itemStates.vo} />
                   {itemStates.vo === 'pending' && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <button onClick={() => setVoPopupOpen(true)}
                         style={{ ...BTN_SM, border: '1px solid #7C3AED', background: '#F5F3FF', color: '#7C3AED' }}>
-                        <Plus size={12} /> Add V.O.
+                        <Plus size={12} /> {t('workOrderDetail.vo')}
                       </button>
                       <button onClick={() => setItem('vo', 'noNeed')}
                         style={{ fontSize: 11, color: '#FB923C', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>
-                        No Need
+                        {t('workOrderDetail.noNeed')}
                       </button>
                     </div>
                   )}
                   {itemStates.vo === 'completed' && (
                     <button onClick={() => setVoPopupOpen(true)}
                       style={{ ...BTN_SM, color: '#059669', borderColor: '#059669' }}>
-                      <FileText size={12} /> View
+                      <FileText size={12} /> {t('common.view')}
                     </button>
                   )}
                   {itemStates.vo === 'noNeed' && (
                     <button onClick={() => setItem('vo', 'pending')}
                       style={{ fontSize: 11, color: '#64748B', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>
-                      Undo
+                      {t('workOrderDetail.undo')}
                     </button>
                   )}
                 </div>
@@ -786,7 +770,7 @@ export default function WorkOrderDetail() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', background: '#FAFBFC' }}>
                   <ChecklistIcon state={itemStates.finalInvoice} />
                   <span style={{ fontSize: 13, fontWeight: 600, color: itemStates.finalInvoice === 'completed' ? '#059669' : 'var(--foreground)', flex: 1 }}>
-                    Upload Final Invoice
+                    {t('workOrderDetail.finalInvoice')}
                   </span>
                   <ChecklistBadge state={itemStates.finalInvoice} />
                   {itemStates.finalInvoice === 'pending' && (
@@ -794,7 +778,7 @@ export default function WorkOrderDetail() {
                       <input ref={finalInputRef} type="file" style={{ display: 'none' }}
                         onChange={(e) => { if (e.target.files?.[0]) { setFinalFile(e.target.files[0].name); setItem('finalInvoice', 'completed'); } }} />
                       <button onClick={() => finalInputRef.current?.click()} style={BTN_SM}>
-                        <Upload size={12} /> Choose File
+                        <Upload size={12} /> {t('workOrderDetail.chooseFile')}
                       </button>
                     </>
                   )}
@@ -804,10 +788,10 @@ export default function WorkOrderDetail() {
                         <FileText size={11} style={{ verticalAlign: 'middle', marginRight: 4 }} />{finalFile}
                       </span>
                       <button onClick={() => finalInputRef.current?.click()} style={{ ...BTN_SM, color: '#475569' }}>
-                        <Upload size={11} /> Replace
+                        <Upload size={11} /> {t('workOrderDetail.replace')}
                       </button>
                       <button style={{ ...BTN_SM, color: '#059669', borderColor: '#059669' }}>
-                        <Download size={11} /> Download
+                        <Download size={11} /> {t('common.download')}
                       </button>
                     </div>
                   )}
@@ -818,30 +802,30 @@ export default function WorkOrderDetail() {
           )}
 
           {/* Section 1: Administrative Details */}
-          <DetailCard title="Administrative Details" number="1">
+          <DetailCard title={t('workOrderDetail.adminDetails')} number="1">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24 }}>
-              <div><FieldLabel>Work Order ID</FieldLabel><FieldValue highlight>{wo.id}</FieldValue></div>
-              <div><FieldLabel>Title</FieldLabel><FieldValue highlight>{wo.title}</FieldValue></div>
+              <div><FieldLabel>{t('workOrderDetail.woId')}</FieldLabel><FieldValue highlight>{wo.id}</FieldValue></div>
+              <div><FieldLabel>{t('workOrderDetail.title')}</FieldLabel><FieldValue highlight>{wo.title}</FieldValue></div>
               <div>
-                <FieldLabel>Priority</FieldLabel>
+                <FieldLabel>{t('workOrderDetail.priority')}</FieldLabel>
                 <FieldValue>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 12px', borderRadius: 10, background: pStyle.bg, color: pStyle.color, fontSize: 12, fontWeight: 600 }}>
                     <span style={{ width: 7, height: 7, borderRadius: '50%', background: pStyle.color }} />{wo.priority}
                   </span>
                 </FieldValue>
               </div>
-              <div><FieldLabel>Start Date</FieldLabel><FieldValue>{wo.created}</FieldValue></div>
-              <div><FieldLabel>End Date / Due Date</FieldLabel><FieldValue>{wo.dueDate}</FieldValue></div>
-              <div><FieldLabel>Estimated Budget</FieldLabel><FieldValue highlight>${wo.budget.toLocaleString()}</FieldValue></div>
-              <div><FieldLabel>Funding Source</FieldLabel><FieldValue>{wo.fundingSource}</FieldValue></div>
-              <div><FieldLabel>PWD Involvement</FieldLabel><FieldValue>{wo.pwdInvolvement === 'with' ? 'With PWD' : 'Without PWD'}</FieldValue></div>
-              <div><FieldLabel>Category</FieldLabel><FieldValue>{t(WO_TYPE_KEY_MAP[wo.category] || wo.category)}</FieldValue></div>
-              <div><FieldLabel>Center</FieldLabel><FieldValue>{wo.center}</FieldValue></div>
-              <div><FieldLabel>Assignee</FieldLabel><FieldValue>{wo.assignee}</FieldValue></div>
-              <div><FieldLabel>Created By</FieldLabel><FieldValue>{wo.createdBy}</FieldValue></div>
+              <div><FieldLabel>{t('workOrderDetail.startDate')}</FieldLabel><FieldValue>{wo.created}</FieldValue></div>
+              <div><FieldLabel>{t('workOrderDetail.dueDate')}</FieldLabel><FieldValue>{wo.dueDate}</FieldValue></div>
+              <div><FieldLabel>{t('workOrderDetail.budget')}</FieldLabel><FieldValue highlight>${wo.budget.toLocaleString()}</FieldValue></div>
+              <div><FieldLabel>{t('workOrderDetail.fundingSource')}</FieldLabel><FieldValue>{wo.fundingSource}</FieldValue></div>
+              <div><FieldLabel>{t('workOrderDetail.pwd')}</FieldLabel><FieldValue>{wo.pwdInvolvement === 'with' ? t('workOrderCreate.pwdWith') : t('workOrderCreate.pwdWithout')}</FieldValue></div>
+              <div><FieldLabel>{t('workOrderDetail.category')}</FieldLabel><FieldValue>{t(WO_TYPE_KEY_MAP[wo.category] || wo.category)}</FieldValue></div>
+              <div><FieldLabel>{t('workOrderDetail.center')}</FieldLabel><FieldValue>{wo.center}</FieldValue></div>
+              <div><FieldLabel>{t('workOrderDetail.assignee')}</FieldLabel><FieldValue>{wo.assignee}</FieldValue></div>
+              <div><FieldLabel>{t('workOrderDetail.createdBy')}</FieldLabel><FieldValue>{wo.createdBy}</FieldValue></div>
             </div>
             <div style={{ marginTop: 20 }}>
-              <FieldLabel>Description</FieldLabel>
+              <FieldLabel>{t('workOrderDetail.description')}</FieldLabel>
               <div style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.7, padding: '12px 16px', background: '#F8FAFC', borderRadius: 8, border: '1px solid var(--border)' }}>
                 {wo.description}
               </div>
@@ -849,7 +833,7 @@ export default function WorkOrderDetail() {
           </DetailCard>
 
           {/* Section 2: Selected Assets */}
-          <DetailCard title={`Selected Assets & Items (${wo.assets?.length || 0} Items)`} number="2">
+          <DetailCard title={t('workOrderDetail.assetsSection', { count: wo.assets?.length || 0 })} number="2">
             {wo.assets && wo.assets.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {wo.assets.map((tag, idx) => (
@@ -857,17 +841,17 @@ export default function WorkOrderDetail() {
                     <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--info-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <AlertTriangle size={18} color="var(--info)" />
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>Asset Tag: {tag}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{t('workOrderDetail.assetTag', { tag })}</div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div style={{ color: '#94A3B8', fontSize: 13 }}>No assets attached.</div>
+              <div style={{ color: '#94A3B8', fontSize: 13 }}>{t('workOrderDetail.noAssets')}</div>
             )}
           </DetailCard>
 
           {/* Section 3: Attachments */}
-          <DetailCard title="Attachments" number="3">
+          <DetailCard title={t('workOrderDetail.attachments')} number="3">
             {wo.attachments && wo.attachments.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {wo.attachments.map((file, idx) => (
@@ -878,7 +862,7 @@ export default function WorkOrderDetail() {
                 ))}
               </div>
             ) : (
-              <div style={{ color: '#94A3B8', fontSize: 13 }}>No attachments.</div>
+              <div style={{ color: '#94A3B8', fontSize: 13 }}>{t('workOrderDetail.noAttachments')}</div>
             )}
           </DetailCard>
 
@@ -895,7 +879,7 @@ export default function WorkOrderDetail() {
         <ModalOverlay onClose={() => setLoaPopupOpen(false)}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
             <FileText size={20} color="#7C3AED" />
-            <span style={{ fontSize: 16, fontWeight: 700 }}>Letter of Award (LOA)</span>
+            <span style={{ fontSize: 16, fontWeight: 700 }}>{t('workOrderDetail.loaTitle')}</span>
           </div>
 
           {(loaState === 'initial' || loaState === 'preview') && (
@@ -903,37 +887,37 @@ export default function WorkOrderDetail() {
               {loaState === 'initial' && (
                 <div style={{ textAlign: 'center', padding: '24px 0' }}>
                   <div style={{ fontSize: 13, color: '#64748B', marginBottom: 20, lineHeight: 1.6 }}>
-                    Generate a Letter of Award for this work order based on the approved IAS tender details.
+                    {t('workOrderDetail.loaGenerateMsg')}
                   </div>
                   <button onClick={() => setLoaState('preview')} style={{ ...BTN_PRIMARY, background: '#7C3AED', padding: '10px 24px', fontSize: 14 }}>
-                    <FileText size={16} /> Generate LOA
+                    <FileText size={16} /> {t('workOrderDetail.loaGenerate')}
                   </button>
                 </div>
               )}
               {loaState === 'preview' && (
                 <div>
                   <div style={{ padding: 20, borderRadius: 8, border: '1px solid var(--border)', background: '#F8FAFC', marginBottom: 20 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Letter of Award</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('workOrderDetail.loaDocTitle')}</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                      <div><FieldLabel>Work Order ID</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>{wo.id}</div></div>
-                      <div><FieldLabel>Title</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>{wo.title}</div></div>
-                      <div><FieldLabel>Budget</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>${wo.budget.toLocaleString()}</div></div>
-                      <div><FieldLabel>Due Date</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>{wo.dueDate}</div></div>
-                      <div style={{ gridColumn: '1 / -1' }}><FieldLabel>Description</FieldLabel><div style={{ fontSize: 13, lineHeight: 1.6 }}>{wo.description}</div></div>
+                      <div><FieldLabel>{t('workOrderDetail.woId')}</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>{wo.id}</div></div>
+                      <div><FieldLabel>{t('workOrderDetail.title')}</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>{wo.title}</div></div>
+                      <div><FieldLabel>{t('workOrderDetail.loaBudget')}</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>${wo.budget.toLocaleString()}</div></div>
+                      <div><FieldLabel>{t('workOrderDetail.loaDue')}</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>{wo.dueDate}</div></div>
+                      <div style={{ gridColumn: '1 / -1' }}><FieldLabel>{t('workOrderDetail.description')}</FieldLabel><div style={{ fontSize: 13, lineHeight: 1.6 }}>{wo.description}</div></div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
                     <button onClick={() => { setLoaState('confirmed'); setItem('loa', 'completed'); }} style={{ ...BTN_PRIMARY, background: '#059669' }}>
-                      <Check size={14} /> Confirm LOA Details
+                      <Check size={14} /> {t('workOrderDetail.confirmLoa')}
                     </button>
                   </div>
                   <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-                    <FieldLabel>Upload Signed LOA</FieldLabel>
+                    <FieldLabel>{t('workOrderDetail.uploadSignedLoa')}</FieldLabel>
                     <input ref={loaSignedInputRef} type="file" style={{ display: 'none' }}
                       onChange={(e) => { if (e.target.files?.[0]) setLoaSignedFile(e.target.files[0].name); }}
                     />
                     <button onClick={() => loaSignedInputRef.current?.click()} style={{ ...BTN_SECONDARY, fontSize: 12 }}>
-                      <Upload size={14} /> Choose Signed LOA File
+                      <Upload size={14} /> {t('workOrderDetail.chooseSignedLoa')}
                     </button>
                     {loaSignedFile && (
                       <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 6, background: '#F0FDF4', border: '1px solid rgba(5,150,105,0.2)', fontSize: 12, color: '#059669' }}>
@@ -949,26 +933,26 @@ export default function WorkOrderDetail() {
           {loaState === 'confirmed' && (
             <div>
               <div style={{ padding: 20, borderRadius: 8, border: '1px solid var(--border)', background: '#F8FAFC', marginBottom: 20 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Letter of Award</div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('workOrderDetail.loaDocTitle')}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  <div><FieldLabel>Work Order ID</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>{wo.id}</div></div>
-                  <div><FieldLabel>Title</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>{wo.title}</div></div>
-                  <div><FieldLabel>Budget</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>${wo.budget.toLocaleString()}</div></div>
-                  <div><FieldLabel>Due Date</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>{wo.dueDate}</div></div>
-                  <div style={{ gridColumn: '1 / -1' }}><FieldLabel>Description</FieldLabel><div style={{ fontSize: 13, lineHeight: 1.6 }}>{wo.description}</div></div>
+                  <div><FieldLabel>{t('workOrderDetail.woId')}</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>{wo.id}</div></div>
+                  <div><FieldLabel>{t('workOrderDetail.title')}</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>{wo.title}</div></div>
+                  <div><FieldLabel>{t('workOrderDetail.loaBudget')}</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>${wo.budget.toLocaleString()}</div></div>
+                  <div><FieldLabel>{t('workOrderDetail.loaDue')}</FieldLabel><div style={{ fontSize: 13, fontWeight: 600 }}>{wo.dueDate}</div></div>
+                  <div style={{ gridColumn: '1 / -1' }}><FieldLabel>{t('workOrderDetail.description')}</FieldLabel><div style={{ fontSize: 13, lineHeight: 1.6 }}>{wo.description}</div></div>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-                <button style={{ ...BTN_PRIMARY, background: '#059669' }}><Download size={14} /> Download LOA</button>
-                <button onClick={() => setLoaPopupOpen(false)} style={BTN_SECONDARY}>Close</button>
+                <button style={{ ...BTN_PRIMARY, background: '#059669' }}><Download size={14} /> {t('workOrderDetail.downloadLoa')}</button>
+                <button onClick={() => setLoaPopupOpen(false)} style={BTN_SECONDARY}>{t('common.close')}</button>
               </div>
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-                <FieldLabel>Upload Signed LOA</FieldLabel>
+                <FieldLabel>{t('workOrderDetail.uploadSignedLoa')}</FieldLabel>
                 <input ref={loaSignedInputRef} type="file" style={{ display: 'none' }}
                   onChange={(e) => { if (e.target.files?.[0]) setLoaSignedFile(e.target.files[0].name); }}
                 />
                 <button onClick={() => loaSignedInputRef.current?.click()} style={{ ...BTN_SECONDARY, fontSize: 12 }}>
-                  <Upload size={14} /> Choose Signed LOA File
+                  <Upload size={14} /> {t('workOrderDetail.chooseSignedLoa')}
                 </button>
                 {loaSignedFile && (
                   <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 6, background: '#F0FDF4', border: '1px solid rgba(5,150,105,0.2)', fontSize: 12, color: '#059669' }}>
@@ -986,39 +970,39 @@ export default function WorkOrderDetail() {
         <ModalOverlay onClose={() => setCsAPopupOpen(false)}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
             <FileText size={20} color="#B45309" />
-            <span style={{ fontSize: 16, fontWeight: 700 }}>Control Sheet Part A</span>
+            <span style={{ fontSize: 16, fontWeight: 700 }}>{t('workOrderDetail.csATitle')}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <div><FieldLabel>1. Name of Project</FieldLabel><input style={INPUT_DISABLED} value={wo.title} readOnly /></div>
-            <div><FieldLabel>2. Nature of Works</FieldLabel><input style={INPUT_BASE} value={controlSheet.natureOfWorks} onChange={(e) => handleCsField('natureOfWorks', e.target.value)} placeholder="e.g. Renovation, Maintenance, Installation" /></div>
-            <div><FieldLabel>3. Name of Main Contractor</FieldLabel><input style={INPUT_BASE} value={controlSheet.contractor} onChange={(e) => handleCsField('contractor', e.target.value)} placeholder="Enter contractor name" /></div>
-            <div><FieldLabel>4. Name of Architect</FieldLabel><input style={INPUT_BASE} value={controlSheet.architect} onChange={(e) => handleCsField('architect', e.target.value)} placeholder="Enter architect name" /></div>
-            <div><FieldLabel>5. Name of Consultant(s)</FieldLabel><input style={INPUT_BASE} value={controlSheet.consultants} onChange={(e) => handleCsField('consultants', e.target.value)} placeholder="Enter consultant name(s)" /></div>
+            <div><FieldLabel>{t('workOrderDetail.csA1')}</FieldLabel><input style={INPUT_DISABLED} value={wo.title} readOnly /></div>
+            <div><FieldLabel>{t('workOrderDetail.csA2')}</FieldLabel><input style={INPUT_BASE} value={controlSheet.natureOfWorks} onChange={(e) => handleCsField('natureOfWorks', e.target.value)} placeholder={t('workOrderDetail.csAeotPh')} /></div>
+            <div><FieldLabel>{t('workOrderDetail.csA3')}</FieldLabel><input style={INPUT_BASE} value={controlSheet.contractor} onChange={(e) => handleCsField('contractor', e.target.value)} placeholder={t('workOrderDetail.csAcontractorPh')} /></div>
+            <div><FieldLabel>{t('workOrderDetail.csA4')}</FieldLabel><input style={INPUT_BASE} value={controlSheet.architect} onChange={(e) => handleCsField('architect', e.target.value)} placeholder={t('workOrderDetail.csAarchitectPh')} /></div>
+            <div><FieldLabel>{t('workOrderDetail.csA5')}</FieldLabel><input style={INPUT_BASE} value={controlSheet.consultants} onChange={(e) => handleCsField('consultants', e.target.value)} placeholder={t('workOrderDetail.csAconsultantsPh')} /></div>
             <div style={{ padding: 16, borderRadius: 8, border: '1px solid var(--border)', background: '#FAFBFC' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>6. Contract Sum</div>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>{t('workOrderDetail.csA6')}</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                <div><FieldLabel>Contract Sum ($)</FieldLabel><input style={INPUT_BASE} type="number" value={controlSheet.contractSum} onChange={(e) => handleCsField('contractSum', e.target.value)} /></div>
-                <div><FieldLabel>Incl. Equipment (specify)</FieldLabel><input style={INPUT_BASE} value={controlSheet.equipment} onChange={(e) => handleCsField('equipment', e.target.value)} placeholder="Specify equipment" /></div>
-                <div><FieldLabel>Contingency ($)</FieldLabel><input style={INPUT_BASE} type="number" value={controlSheet.contingency} onChange={(e) => handleCsField('contingency', e.target.value)} /></div>
-                <div><FieldLabel>Provisional Sum(s) ($)</FieldLabel><input style={INPUT_BASE} type="number" value={controlSheet.provisionalSum} onChange={(e) => handleCsField('provisionalSum', e.target.value)} /></div>
+                <div><FieldLabel>{t('workOrderDetail.csA6a')}</FieldLabel><input style={INPUT_BASE} type="number" value={controlSheet.contractSum} onChange={(e) => handleCsField('contractSum', e.target.value)} /></div>
+                <div><FieldLabel>{t('workOrderDetail.csA6b')}</FieldLabel><input style={INPUT_BASE} value={controlSheet.equipment} onChange={(e) => handleCsField('equipment', e.target.value)} placeholder={t('workOrderDetail.csAequipmentPh')} /></div>
+                <div><FieldLabel>{t('workOrderDetail.csA6c')}</FieldLabel><input style={INPUT_BASE} type="number" value={controlSheet.contingency} onChange={(e) => handleCsField('contingency', e.target.value)} /></div>
+                <div><FieldLabel>{t('workOrderDetail.csA6d')}</FieldLabel><input style={INPUT_BASE} type="number" value={controlSheet.provisionalSum} onChange={(e) => handleCsField('provisionalSum', e.target.value)} /></div>
               </div>
-              <div style={{ marginTop: 12 }}><FieldLabel>Total ($)</FieldLabel><input style={INPUT_DISABLED} value={csATotal.toLocaleString()} readOnly /></div>
+              <div style={{ marginTop: 12 }}><FieldLabel>{t('workOrderDetail.csA6e')}</FieldLabel><input style={INPUT_DISABLED} value={csATotal.toLocaleString()} readOnly /></div>
             </div>
-            <div><FieldLabel>7. Architect's Fees (%)</FieldLabel><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><input style={{ ...INPUT_BASE, width: 120 }} type="number" value={controlSheet.archPercent} onChange={(e) => handleCsField('archPercent', e.target.value)} placeholder="%" /><span style={{ fontSize: 13, color: '#64748B' }}>%</span></div></div>
-            <div><FieldLabel>8. Consultant's Fees (pl. specify)</FieldLabel><input style={INPUT_BASE} value={controlSheet.consultantFees} onChange={(e) => handleCsField('consultantFees', e.target.value)} placeholder="Specify fee structure" /></div>
-            <div><FieldLabel>9. Conditions for Payment of Contract Sum</FieldLabel><textarea style={{ ...INPUT_BASE, minHeight: 60, resize: 'vertical', fontFamily: 'inherit' }} value={controlSheet.paymentConditions} onChange={(e) => handleCsField('paymentConditions', e.target.value)} placeholder="Enter payment conditions" /></div>
-            <div><FieldLabel>10. Expected Date of Completion of Work</FieldLabel><input style={INPUT_BASE} type="date" value={controlSheet.completionDate} onChange={(e) => handleCsField('completionDate', e.target.value)} /></div>
-            <div><FieldLabel>11. L and A Damages ($ per day)</FieldLabel><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><input style={{ ...INPUT_BASE, width: 160 }} type="number" value={controlSheet.laDamages} onChange={(e) => handleCsField('laDamages', e.target.value)} placeholder="$" /><span style={{ fontSize: 13, color: '#64748B' }}>per day</span></div></div>
-            <div><FieldLabel>12. % of Certified Value Retained (%)</FieldLabel><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><input style={{ ...INPUT_BASE, width: 120 }} type="number" value={controlSheet.retentionPercent} onChange={(e) => handleCsField('retentionPercent', e.target.value)} placeholder="%" /><span style={{ fontSize: 12, color: '#94A3B8' }}>(To be reduced by 1% if authorised by Architect.)</span></div></div>
-            <div><FieldLabel>13. Limit of Retention Fund ($)</FieldLabel><input style={{ ...INPUT_BASE, width: 200 }} type="number" value={controlSheet.retentionLimit} onChange={(e) => handleCsField('retentionLimit', e.target.value)} placeholder="$" /></div>
-            <div><FieldLabel>14. Retention money attributable to sub-contractors for new buildings ($)</FieldLabel><input style={{ ...INPUT_BASE, width: 200 }} type="number" value={controlSheet.subRetention} onChange={(e) => handleCsField('subRetention', e.target.value)} placeholder="$" /></div>
-            <div><FieldLabel>15. Date of Release of Retention Fund</FieldLabel><input style={INPUT_BASE} type="date" value={controlSheet.retentionReleaseDate} onChange={(e) => handleCsField('retentionReleaseDate', e.target.value)} /></div>
+            <div><FieldLabel>{t('workOrderDetail.csA7')}</FieldLabel><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><input style={{ ...INPUT_BASE, width: 120 }} type="number" value={controlSheet.archPercent} onChange={(e) => handleCsField('archPercent', e.target.value)} placeholder="%" /><span style={{ fontSize: 13, color: '#64748B' }}>%</span></div></div>
+            <div><FieldLabel>{t('workOrderDetail.csA8')}</FieldLabel><input style={INPUT_BASE} value={controlSheet.consultantFees} onChange={(e) => handleCsField('consultantFees', e.target.value)} placeholder={t('workOrderDetail.csAfeesPh')} /></div>
+            <div><FieldLabel>{t('workOrderDetail.csA9')}</FieldLabel><textarea style={{ ...INPUT_BASE, minHeight: 60, resize: 'vertical', fontFamily: 'inherit' }} value={controlSheet.paymentConditions} onChange={(e) => handleCsField('paymentConditions', e.target.value)} placeholder={t('workOrderDetail.csAconditionsPh')} /></div>
+            <div><FieldLabel>{t('workOrderDetail.csA10')}</FieldLabel><input style={INPUT_BASE} type="date" value={controlSheet.completionDate} onChange={(e) => handleCsField('completionDate', e.target.value)} /></div>
+            <div><FieldLabel>{t('workOrderDetail.csA11')}</FieldLabel><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><input style={{ ...INPUT_BASE, width: 160 }} type="number" value={controlSheet.laDamages} onChange={(e) => handleCsField('laDamages', e.target.value)} placeholder="$" /><span style={{ fontSize: 13, color: '#64748B' }}>{t('workOrderDetail.perDay')}</span></div></div>
+            <div><FieldLabel>{t('workOrderDetail.csA12')}</FieldLabel><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><input style={{ ...INPUT_BASE, width: 120 }} type="number" value={controlSheet.retentionPercent} onChange={(e) => handleCsField('retentionPercent', e.target.value)} placeholder="%" /><span style={{ fontSize: 12, color: '#94A3B8' }}>{t('workOrderDetail.csA12note')}</span></div></div>
+            <div><FieldLabel>{t('workOrderDetail.csA13')}</FieldLabel><input style={{ ...INPUT_BASE, width: 200 }} type="number" value={controlSheet.retentionLimit} onChange={(e) => handleCsField('retentionLimit', e.target.value)} placeholder="$" /></div>
+            <div><FieldLabel>{t('workOrderDetail.csA14')}</FieldLabel><input style={{ ...INPUT_BASE, width: 200 }} type="number" value={controlSheet.subRetention} onChange={(e) => handleCsField('subRetention', e.target.value)} placeholder="$" /></div>
+            <div><FieldLabel>{t('workOrderDetail.csA15')}</FieldLabel><input style={INPUT_BASE} type="date" value={controlSheet.retentionReleaseDate} onChange={(e) => handleCsField('retentionReleaseDate', e.target.value)} /></div>
           </div>
           <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
             <button onClick={() => { setItem('csA', 'completed'); setCsAPopupOpen(false); }} style={{ ...BTN_PRIMARY, background: '#059669', padding: '10px 24px' }}>
-              <Check size={14} /> Confirm Control Sheet
+              <Check size={14} /> {t('workOrderDetail.confirmCsA')}
             </button>
-            <button onClick={() => setCsAPopupOpen(false)} style={BTN_SECONDARY}>Cancel</button>
+            <button onClick={() => setCsAPopupOpen(false)} style={BTN_SECONDARY}>{t('common.cancel')}</button>
           </div>
         </ModalOverlay>
       )}
@@ -1028,10 +1012,10 @@ export default function WorkOrderDetail() {
         <ModalOverlay onClose={() => setCsBPopupOpen(false)}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <FileText size={20} color="#B45309" />
-            <span style={{ fontSize: 16, fontWeight: 700 }}>Control Sheet Part B — Funding Allocation</span>
+            <span style={{ fontSize: 16, fontWeight: 700 }}>{t('workOrderDetail.csBTitle')}</span>
           </div>
           <div style={{ fontSize: 13, color: '#475569', marginBottom: 20, lineHeight: 1.6 }}>
-            The above-mentioned contract sum of <strong>${csATotal.toLocaleString()}</strong> should be charged to the following sources:
+            {t('workOrderDetail.csBMsg', { sum: `$${csATotal.toLocaleString()}` })}
           </div>
 
           {/* Funding Table */}
@@ -1039,10 +1023,10 @@ export default function WorkOrderDetail() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ background: '#F8FAFC' }}>
-                  <th style={{ padding: '10px 12px', textAlign: 'left', borderBottom: '2px solid var(--border)', fontWeight: 600, color: '#475569', width: '30%' }}>Centre Name</th>
-                  <th style={{ padding: '10px 12px', textAlign: 'left', borderBottom: '2px solid var(--border)', fontWeight: 600, color: '#475569', width: '25%' }}>Source of Funding</th>
-                  <th style={{ padding: '10px 12px', textAlign: 'right', borderBottom: '2px solid var(--border)', fontWeight: 600, color: '#475569', width: '25%' }}>HKD ($)</th>
-                  <th style={{ padding: '10px 12px', textAlign: 'left', borderBottom: '2px solid var(--border)', fontWeight: 600, color: '#475569', width: '15%' }}>Authorized By</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', borderBottom: '2px solid var(--border)', fontWeight: 600, color: '#475569', width: '30%' }}>{t('workOrderDetail.csBcentre')}</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', borderBottom: '2px solid var(--border)', fontWeight: 600, color: '#475569', width: '25%' }}>{t('workOrderDetail.csBfunding')}</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'right', borderBottom: '2px solid var(--border)', fontWeight: 600, color: '#475569', width: '25%' }}>{t('workOrderDetail.csBhkd')}</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', borderBottom: '2px solid var(--border)', fontWeight: 600, color: '#475569', width: '15%' }}>{t('workOrderDetail.csBauth')}</th>
                   <th style={{ padding: '10px 12px', borderBottom: '2px solid var(--border)', width: '5%' }}></th>
                 </tr>
               </thead>
@@ -1050,16 +1034,16 @@ export default function WorkOrderDetail() {
                 {csBRows.map((row, idx) => (
                   <tr key={idx}>
                     <td style={{ padding: '8px 4px', borderBottom: '1px solid var(--border)' }}>
-                      <input style={{ ...INPUT_BASE, fontSize: 12 }} value={row.centre} onChange={(e) => csBRowField(idx, 'centre', e.target.value)} placeholder="Centre name" />
+                      <input style={{ ...INPUT_BASE, fontSize: 12 }} value={row.centre} onChange={(e) => csBRowField(idx, 'centre', e.target.value)} placeholder={t('workOrderDetail.csBcentrePh')} />
                     </td>
                     <td style={{ padding: '8px 4px', borderBottom: '1px solid var(--border)' }}>
-                      <input style={{ ...INPUT_BASE, fontSize: 12 }} value={row.funding} onChange={(e) => csBRowField(idx, 'funding', e.target.value)} placeholder="Funding source" />
+                      <input style={{ ...INPUT_BASE, fontSize: 12 }} value={row.funding} onChange={(e) => csBRowField(idx, 'funding', e.target.value)} placeholder={t('workOrderDetail.csBfundingPh')} />
                     </td>
                     <td style={{ padding: '8px 4px', borderBottom: '1px solid var(--border)' }}>
-                      <input style={{ ...INPUT_BASE, fontSize: 12, textAlign: 'right' }} type="number" value={row.hkd} onChange={(e) => csBRowField(idx, 'hkd', e.target.value)} placeholder="0" />
+                      <input style={{ ...INPUT_BASE, fontSize: 12, textAlign: 'right' }} type="number" value={row.hkd} onChange={(e) => csBRowField(idx, 'hkd', e.target.value)} placeholder={t('workOrderDetail.csBhkdPh')} />
                     </td>
                     <td style={{ padding: '8px 4px', borderBottom: '1px solid var(--border)' }}>
-                      <input style={{ ...INPUT_BASE, fontSize: 12 }} value={row.auth} onChange={(e) => csBRowField(idx, 'auth', e.target.value)} placeholder="Name" />
+                      <input style={{ ...INPUT_BASE, fontSize: 12 }} value={row.auth} onChange={(e) => csBRowField(idx, 'auth', e.target.value)} placeholder={t('workOrderDetail.csBauthPh')} />
                     </td>
                     <td style={{ padding: '8px 4px', borderBottom: '1px solid var(--border)', textAlign: 'center' }}>
                       {csBRows.length > 1 && (
@@ -1074,7 +1058,7 @@ export default function WorkOrderDetail() {
               </tbody>
               <tfoot>
                 <tr style={{ background: '#F8FAFC' }}>
-                  <td colSpan={2} style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, borderTop: '2px solid var(--border)' }}>Total</td>
+                  <td colSpan={2} style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, borderTop: '2px solid var(--border)' }}>{t('workOrderDetail.total')}</td>
                   <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, borderTop: '2px solid var(--border)' }}>${csBTotal.toLocaleString()}</td>
                   <td style={{ borderTop: '2px solid var(--border)' }}></td>
                   <td style={{ borderTop: '2px solid var(--border)' }}></td>
@@ -1085,14 +1069,14 @@ export default function WorkOrderDetail() {
 
           <button onClick={() => setCsBRows((prev) => [...prev, { centre: '', funding: '', hkd: '', auth: '' }])}
             style={{ ...BTN_SECONDARY, fontSize: 12, padding: '6px 14px', marginBottom: 20 }}>
-            <Plus size={14} /> Add Row
+            <Plus size={14} /> {t('workOrderDetail.addRow')}
           </button>
 
           <div style={{ display: 'flex', gap: 12, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
             <button onClick={() => { setItem('csB', 'completed'); setCsBPopupOpen(false); }} style={{ ...BTN_PRIMARY, background: '#059669', padding: '10px 24px' }}>
-              <Check size={14} /> Confirm Control Sheet Part B
+              <Check size={14} /> {t('workOrderDetail.confirmCsB')}
             </button>
-            <button onClick={() => setCsBPopupOpen(false)} style={BTN_SECONDARY}>Cancel</button>
+            <button onClick={() => setCsBPopupOpen(false)} style={BTN_SECONDARY}>{t('common.cancel')}</button>
           </div>
         </ModalOverlay>
       )}
@@ -1102,19 +1086,19 @@ export default function WorkOrderDetail() {
         <ModalOverlay onClose={() => setEotPopupOpen(false)}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
             <FileText size={20} color="#7C3AED" />
-            <span style={{ fontSize: 16, fontWeight: 700 }}>Extension Of Time (EOT)</span>
+            <span style={{ fontSize: 16, fontWeight: 700 }}>{t('workOrderDetail.eotTitle')}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <div><FieldLabel>Reason for Extension</FieldLabel><textarea style={{ ...INPUT_BASE, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} value={eot.reason} onChange={(e) => setEot((p) => ({ ...p, reason: e.target.value }))} placeholder="Describe the reason for the extension request" /></div>
-            <div><FieldLabel>Number of Days Requested</FieldLabel><input style={{ ...INPUT_BASE, width: 200 }} type="number" value={eot.days} onChange={(e) => setEot((p) => ({ ...p, days: e.target.value }))} placeholder="Days" /></div>
-            <div><FieldLabel>New Expected Completion Date</FieldLabel><input style={INPUT_BASE} type="date" value={eot.newDate} onChange={(e) => setEot((p) => ({ ...p, newDate: e.target.value }))} /></div>
-            <div><FieldLabel>Supporting Remarks</FieldLabel><textarea style={{ ...INPUT_BASE, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} value={eot.remarks} onChange={(e) => setEot((p) => ({ ...p, remarks: e.target.value }))} placeholder="Additional supporting information" /></div>
+            <div><FieldLabel>{t('workOrderDetail.eotReason')}</FieldLabel><textarea style={{ ...INPUT_BASE, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} value={eot.reason} onChange={(e) => setEot((p) => ({ ...p, reason: e.target.value }))} placeholder={t('workOrderDetail.eotReasonPh')} /></div>
+            <div><FieldLabel>{t('workOrderDetail.eotDays')}</FieldLabel><input style={{ ...INPUT_BASE, width: 200 }} type="number" value={eot.days} onChange={(e) => setEot((p) => ({ ...p, days: e.target.value }))} placeholder={t('workOrderDetail.eotDaysPh')} /></div>
+            <div><FieldLabel>{t('workOrderDetail.eotNewDate')}</FieldLabel><input style={INPUT_BASE} type="date" value={eot.newDate} onChange={(e) => setEot((p) => ({ ...p, newDate: e.target.value }))} /></div>
+            <div><FieldLabel>{t('workOrderDetail.eotRemarks')}</FieldLabel><textarea style={{ ...INPUT_BASE, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} value={eot.remarks} onChange={(e) => setEot((p) => ({ ...p, remarks: e.target.value }))} placeholder={t('workOrderDetail.eotRemarksPh')} /></div>
           </div>
           <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
             <button onClick={() => { setItem('eot', 'completed'); setEotPopupOpen(false); }} style={{ ...BTN_PRIMARY, background: '#059669', padding: '10px 24px' }}>
-              <Check size={14} /> Submit EOT
+              <Check size={14} /> {t('workOrderDetail.eotSubmit')}
             </button>
-            <button onClick={() => setEotPopupOpen(false)} style={BTN_SECONDARY}>Cancel</button>
+            <button onClick={() => setEotPopupOpen(false)} style={BTN_SECONDARY}>{t('common.cancel')}</button>
           </div>
         </ModalOverlay>
       )}
@@ -1124,26 +1108,26 @@ export default function WorkOrderDetail() {
         <ModalOverlay onClose={() => setVoPopupOpen(false)}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
             <Plus size={20} color="#7C3AED" />
-            <span style={{ fontSize: 16, fontWeight: 700 }}>Variation Order (V.O.)</span>
+            <span style={{ fontSize: 16, fontWeight: 700 }}>{t('workOrderDetail.voTitle')}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <div><FieldLabel>V.O. Description</FieldLabel><textarea style={{ ...INPUT_BASE, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} value={vo.description} onChange={(e) => setVo((p) => ({ ...p, description: e.target.value }))} placeholder="Describe the variation order" /></div>
-            <div><FieldLabel>Amount ($)</FieldLabel><input style={{ ...INPUT_BASE, width: 200 }} type="number" value={vo.amount} onChange={(e) => setVo((p) => ({ ...p, amount: e.target.value }))} placeholder="$" /></div>
-            <div><FieldLabel>Justification</FieldLabel><textarea style={{ ...INPUT_BASE, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} value={vo.justification} onChange={(e) => setVo((p) => ({ ...p, justification: e.target.value }))} placeholder="Explain why this variation is needed" /></div>
+            <div><FieldLabel>{t('workOrderDetail.voDesc')}</FieldLabel><textarea style={{ ...INPUT_BASE, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} value={vo.description} onChange={(e) => setVo((p) => ({ ...p, description: e.target.value }))} placeholder={t('workOrderDetail.voDescPh')} /></div>
+            <div><FieldLabel>{t('workOrderDetail.voAmount')}</FieldLabel><input style={{ ...INPUT_BASE, width: 200 }} type="number" value={vo.amount} onChange={(e) => setVo((p) => ({ ...p, amount: e.target.value }))} placeholder={t('workOrderDetail.voAmountPh')} /></div>
+            <div><FieldLabel>{t('workOrderDetail.voJust')}</FieldLabel><textarea style={{ ...INPUT_BASE, minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }} value={vo.justification} onChange={(e) => setVo((p) => ({ ...p, justification: e.target.value }))} placeholder={t('workOrderDetail.voJustPh')} /></div>
             <div>
-              <FieldLabel>Approval Status</FieldLabel>
+              <FieldLabel>{t('workOrderDetail.voApprovalStatus')}</FieldLabel>
               <select style={{ ...INPUT_BASE, padding: '8px 12px' }} value={vo.status} onChange={(e) => setVo((p) => ({ ...p, status: e.target.value }))}>
-                <option value="Pending">Pending</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
+                <option value="Pending">{t('workOrderDetail.voStatusPending')}</option>
+                <option value="Approved">{t('workOrderDetail.voStatusApproved')}</option>
+                <option value="Rejected">{t('workOrderDetail.voStatusRejected')}</option>
               </select>
             </div>
           </div>
           <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
             <button onClick={() => { setItem('vo', 'completed'); setVoPopupOpen(false); }} style={{ ...BTN_PRIMARY, background: '#059669', padding: '10px 24px' }}>
-              <Check size={14} /> Add V.O.
+              <Check size={14} /> {t('workOrderDetail.vo')}
             </button>
-            <button onClick={() => setVoPopupOpen(false)} style={BTN_SECONDARY}>Cancel</button>
+            <button onClick={() => setVoPopupOpen(false)} style={BTN_SECONDARY}>{t('common.cancel')}</button>
           </div>
         </ModalOverlay>
       )}

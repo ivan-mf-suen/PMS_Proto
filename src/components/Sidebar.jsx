@@ -121,13 +121,13 @@ export default function Sidebar({ collapsed, onToggle }) {
                   <User size={20} color="#fff" />
                 </div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#F8FAFC' }}>{role ? ROLES[role].name : 'User'}</div>
-                  <div style={{ fontSize: 12, color: '#94A3B8' }}>{role ? ROLES[role].label : 'Property Manager'}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#F8FAFC' }}>{role ? ROLES[role].name : t('sidebar.user')}</div>
+                  <div style={{ fontSize: 12, color: '#94A3B8' }}>{role ? ROLES[role].label : t('sidebar.propertyManager')}</div>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, padding: '8px 12px', backgroundColor: '#1E293B', borderRadius: 6 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#10B981' }} />
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#F8FAFC' }}>SSO Authenticated</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#F8FAFC' }}>{t('sidebar.sso')}</span>
               </div>
               <button
                 onClick={() => { setUserMenuOpen(false); logout(); }}
@@ -135,7 +135,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                 onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#B91C1C')}
                 onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#DC2626')}
               >
-                Log Out (SSO)
+                {t('sidebar.logout')}
               </button>
             </div>
           </>

@@ -155,44 +155,44 @@ function ProfileSection({ role, t }) {
 
       {/* Change Password */}
       <div style={{ marginBottom: 28 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}><Lock size={15} /> Change Password</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}><Lock size={15} /> {t('settings.profile.changePassword')}</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 400 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Current Password</label>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>{t('settings.profile.currentPassword')}</label>
             <div style={{ position: 'relative' }}>
-              <input type={showPassword ? 'text' : 'password'} placeholder="Enter current password" style={{ ...inputStyle, paddingRight: 38 }} />
+              <input type={showPassword ? 'text' : 'password'} placeholder={t('settings.profile.currentPasswordPh')} style={{ ...inputStyle, paddingRight: 38 }} />
               <button onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}>
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>New Password</label>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>{t('settings.profile.newPassword')}</label>
             <div style={{ position: 'relative' }}>
-              <input type={showPassword ? 'text' : 'password'} placeholder="Enter new password" style={{ ...inputStyle, paddingRight: 38 }} />
+              <input type={showPassword ? 'text' : 'password'} placeholder={t('settings.profile.newPasswordPh')} style={{ ...inputStyle, paddingRight: 38 }} />
               <button onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}>
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Confirm New Password</label>
+            <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>{t('settings.profile.confirmNewPassword')}</label>
             <div style={{ position: 'relative' }}>
-              <input type={showPassword ? 'text' : 'password'} placeholder="Re-enter new password" style={{ ...inputStyle, paddingRight: 38 }} />
+              <input type={showPassword ? 'text' : 'password'} placeholder={t('settings.profile.confirmNewPasswordPh')} style={{ ...inputStyle, paddingRight: 38 }} />
               <button onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}>
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
           <div style={{ fontSize: 11, color: '#94A3B8', lineHeight: 1.5 }}>
-            Password must be at least 8 characters, including uppercase, lowercase, and a number.
+            {t('settings.profile.passwordHint')}
           </div>
         </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <button style={primaryBtnStyle}><Save size={14} /> {t('settings.profile.save')}</button>
-        <button style={ghostBtnStyle}>Cancel</button>
+        <button style={ghostBtnStyle}>{t('common.cancel')}</button>
       </div>
     </div>
   );
@@ -475,7 +475,7 @@ function NotificationsSection({ t }) {
 /* ═══════════════════════════════════════════════════════════
    SMTP SECTION
    ═══════════════════════════════════════════════════════════ */
-function SMTPSection({ t: _t }) {
+function SMTPSection({ t }) {
   const [showPassword, setShowPassword] = useState(false);
   const [smtp, setSmtp] = useState({
     host: '',
@@ -497,43 +497,43 @@ function SMTPSection({ t: _t }) {
 
   return (
     <div>
-      <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--foreground)', marginBottom: 20 }}>SMTP Email Settings</h2>
-      <p style={{ fontSize: 13, color: '#64748B', marginBottom: 24 }}>Configure the outgoing mail server for compliance reminders and notifications.</p>
+      <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--foreground)', marginBottom: 20 }}>{t('settings.smtp.title')}</h2>
+      <p style={{ fontSize: 13, color: '#64748B', marginBottom: 24 }}>{t('settings.smtp.subtitle')}</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, maxWidth: 600, marginBottom: 24 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>SMTP Server *</label>
-          <input value={smtp.host} onChange={(e) => update('host', e.target.value)} placeholder="smtp.example.com" style={inputStyle} />
+          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>{t('settings.smtp.server')} *</label>
+          <input value={smtp.host} onChange={(e) => update('host', e.target.value)} placeholder={t('settings.smtp.serverPh')} style={inputStyle} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Port *</label>
-          <input value={smtp.port} onChange={(e) => update('port', e.target.value)} placeholder="587" style={inputStyle} />
+          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>{t('settings.smtp.port')} *</label>
+          <input value={smtp.port} onChange={(e) => update('port', e.target.value)} placeholder={t('settings.smtp.portPh')} style={inputStyle} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Username</label>
-          <input value={smtp.username} onChange={(e) => update('username', e.target.value)} placeholder="user@example.com" style={inputStyle} />
+          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>{t('settings.smtp.username')}</label>
+          <input value={smtp.username} onChange={(e) => update('username', e.target.value)} placeholder={t('settings.smtp.usernamePh')} style={inputStyle} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Password</label>
+          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>{t('settings.smtp.password')}</label>
           <div style={{ position: 'relative' }}>
-            <input type={showPassword ? 'text' : 'password'} value={smtp.password} onChange={(e) => update('password', e.target.value)} placeholder="Enter password" style={{ ...inputStyle, paddingRight: 38 }} />
+            <input type={showPassword ? 'text' : 'password'} value={smtp.password} onChange={(e) => update('password', e.target.value)} placeholder={t('settings.smtp.passwordPh')} style={{ ...inputStyle, paddingRight: 38 }} />
             <button onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}>
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>From Email *</label>
-          <input value={smtp.fromEmail} onChange={(e) => update('fromEmail', e.target.value)} placeholder="noreply@gov.hk" style={inputStyle} />
+          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>{t('settings.smtp.fromEmail')} *</label>
+          <input value={smtp.fromEmail} onChange={(e) => update('fromEmail', e.target.value)} placeholder={t('settings.smtp.fromEmailPh')} style={inputStyle} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>From Name</label>
-          <input value={smtp.fromName} onChange={(e) => update('fromName', e.target.value)} placeholder="PMS System" style={inputStyle} />
+          <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>{t('settings.smtp.fromName')}</label>
+          <input value={smtp.fromName} onChange={(e) => update('fromName', e.target.value)} placeholder={t('settings.smtp.fromNamePh')} style={inputStyle} />
         </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-        <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Encryption</label>
+        <label style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>{t('settings.smtp.encryption')}</label>
         <div style={{ display: 'flex', gap: 4, background: '#F1F5F9', borderRadius: 8, padding: 3 }}>
           {['None', 'STARTTLS', 'SSL/TLS'].map((opt) => (
             <button key={opt} onClick={() => update('useTLS', opt !== 'None')}
@@ -547,18 +547,18 @@ function SMTPSection({ t: _t }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', background: '#F8FAFC', borderRadius: 8, border: '1px solid var(--border)', marginBottom: 24, maxWidth: 600 }}>
         <Mail size={18} style={{ color: 'var(--info)', flexShrink: 0 }} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>Test Connection</div>
-          <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>Send a test email to verify your SMTP configuration</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{t('settings.smtp.testTitle')}</div>
+          <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{t('settings.smtp.testDesc')}</div>
         </div>
-        {testStatus === 'success' && <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--success)' }}>Sent successfully</span>}
+        {testStatus === 'success' && <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--success)' }}>{t('settings.smtp.sent')}</span>}
         <button onClick={handleTest} disabled={!smtp.host || !smtp.port} style={{ ...ghostBtnStyle, fontSize: 12, padding: '6px 14px', opacity: (!smtp.host || !smtp.port) ? 0.5 : 1 }}>
-          {testStatus === 'sending' ? 'Sending...' : 'Send Test'}
+          {testStatus === 'sending' ? t('settings.smtp.sending') : t('settings.smtp.sendTest')}
         </button>
       </div>
 
       <div style={{ display: 'flex', gap: 8 }}>
-        <button style={primaryBtnStyle}><Save size={14} /> Save SMTP Settings</button>
-        <button style={ghostBtnStyle}>Cancel</button>
+        <button style={primaryBtnStyle}><Save size={14} /> {t('settings.smtp.save')}</button>
+        <button style={ghostBtnStyle}>{t('common.cancel')}</button>
       </div>
     </div>
   );

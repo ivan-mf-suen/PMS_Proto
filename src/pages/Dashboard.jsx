@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useWorkOrders } from '../context/WorkOrderContext';
 import { COMPLIANCE_DOCS, PROPERTIES, ASSETS, WORK_ORDER_STATUSES, getDocStatus } from '../data/constants';
+import { deriveDistrict } from '../data/district';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -9,8 +10,10 @@ import {
 import {
   ClipboardList,
   Clock, CheckCircle, FileText,
-  DollarSign, Package, Hammer, Wrench, Filter, X, ChevronDown,
+  DollarSign, Package, Hammer, Wrench, X,
 } from 'lucide-react';
+import FilterBar from '../components/FilterBar';
+import MultiSelectDropdown from '../components/MultiSelectDropdown';
 
 const CURRENT_YEAR = 2026;
 
@@ -18,6 +21,7 @@ const BUILDER_CATS = ['Concrete Repair', 'Waterproofing/Re-roofing Works', 'Pain
 const SERVICE_CATS = ['Air-conditioning/Ventilation System Addition/Replacement', 'Lighting/Electrical System Addition/Replacement', 'PD System Addition/Replacement', 'ELV System (Call Bell, PA, etc.) Addition/Replacement', 'Gas System Addition/Replacement'];
 
 const PIE_COLORS = ['#6366F1', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6'];
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function Card({ title, children, style = {}, headerRight }) {
   return (
@@ -46,45 +50,6 @@ function KPISquare({ icon: Icon, iconBg, value, label, sub, color }) {
   );
 }
 
-function FilterPill({ label, value, onClear }) {
-  return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, background: 'var(--info-bg)', fontSize: 12, fontWeight: 600, color: 'var(--primary)' }}>
-      {label}: {value}
-      <button onClick={onClear} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}><X size={12} /></button>
-    </div>
-  );
-}
-
-function FilterDropdown({ label, options, selected, onSelect }) {
-  const [open, setOpen] = useState(false);
-  const isAll = !selected || selected === 'All';
-  return (
-    <div style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(!open)} style={{
-        padding: '6px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
-        border: `1px solid ${isAll ? 'var(--border)' : 'var(--primary)'}`,
-        background: isAll ? '#fff' : 'var(--info-bg)', color: isAll ? '#64748B' : 'var(--primary)',
-        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
-      }}>
-        {label} <ChevronDown size={12} />
-      </button>
-      {open && (
-        <>
-          <div style={{ position: 'fixed', inset: 0, zIndex: 90 }} onClick={() => setOpen(false)} />
-          <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 16px rgba(15,23,42,0.12)', zIndex: 100, minWidth: 160, maxHeight: 240, overflowY: 'auto' }}>
-            {options.map((opt) => (
-              <button key={opt} onClick={() => { onSelect(opt); setOpen(false); }} style={{
-                width: '100%', textAlign: 'left', padding: '7px 12px', background: opt === selected ? 'var(--info-bg)' : 'transparent',
-                border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--foreground)', fontWeight: opt === selected ? 600 : 400,
-              }}>{opt}</button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
 const ChartTooltipStyle = { contentStyle: { fontSize: 12, borderRadius: 8, border: '1px solid var(--border)' } };
 
 export default function Dashboard({ selectedCenter }) {
@@ -92,54 +57,91 @@ export default function Dashboard({ selectedCenter }) {
   const { workOrders, contracts, contractors } = useWorkOrders();
 
   // ── FILTERS ──────────────────────────────────────────
-  const [districtFilter, setDistrictFilter] = useState('All');
-  const [typeFilter, setTypeFilter] = useState('All');
-  const [categoryFilter, setCategoryFilter] = useState('All');
+  const [selectedDistricts, setSelectedDistricts] = useState([]);
+  const [selectedTypes, setSelectedTypes] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedContractors, setSelectedContractors] = useState([]);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [contractorFilter, setContractorFilter] = useState('All');
 
-  const serviceTypes = ['All', ...new Set(PROPERTIES.map((p) => p.service))];
-  const lsgNlsgTypes = ['All', ...new Set(PROPERTIES.map((p) => p.lsgNlsg))];
-  const workCategories = ['All', ...BUILDER_CATS, ...SERVICE_CATS];
-  const contractorNames = ['All', ...contractors.map((c) => c.name)];
+  const propertyDistrictMap = useMemo(() => {
+    const m = {};
+    PROPERTIES.forEach((p) => { m[p.name] = deriveDistrict(p.address); });
+    return m;
+  }, []);
+
+  const lsgNlsgTypes = [...new Set(PROPERTIES.map((p) => p.lsgNlsg))];
+  const typeOptions = lsgNlsgTypes.map((type) => ({ value: type, label: type, count: PROPERTIES.filter((p) => p.lsgNlsg === type).length }));
+  const workCategories = [...BUILDER_CATS, ...SERVICE_CATS];
+  const categoryCounts = useMemo(() => {
+    const counts = {};
+    [...BUILDER_CATS, ...SERVICE_CATS].forEach((c) => { counts[c] = workOrders.filter((w) => w.category === c).length; });
+    return counts;
+  }, [workOrders]);
+  const categoryOptions = workCategories.map((c) => ({ value: c, label: c, count: categoryCounts[c] || 0 }));
+
+  const districtCounts = useMemo(() => {
+    const counts = {};
+    PROPERTIES.forEach((p) => {
+      const d = propertyDistrictMap[p.name];
+      counts[d] = (counts[d] || 0) + 1;
+    });
+    return counts;
+  }, [propertyDistrictMap]);
+  const districtOptions = Object.keys(districtCounts).map((d) => ({ value: d, label: d, count: districtCounts[d] }));
+
+  const contractorCounts = useMemo(() => {
+    const counts = {};
+    contractors.forEach((c) => {
+      const ctrWOs = contracts.filter((ct) => ct.contractorId === c.id).flatMap((ct) => ct.workOrders);
+      counts[c.name] = ctrWOs.length;
+    });
+    return counts;
+  }, [contractors, contracts]);
+  const contractorOptions = contractors.map((c) => ({ value: c.name, label: c.name, count: contractorCounts[c.name] || 0 }));
 
   const filteredWOs = useMemo(() => {
     let list = workOrders;
     if (selectedCenter && selectedCenter !== 'All') list = list.filter((w) => w.center === selectedCenter);
-    if (districtFilter !== 'All') {
-      const centreNames = PROPERTIES.filter((p) => p.service === districtFilter).map((p) => p.name);
+    if (selectedDistricts.length > 0) {
+      const centreNames = PROPERTIES.filter((p) => selectedDistricts.includes(propertyDistrictMap[p.name])).map((p) => p.name);
       list = list.filter((w) => centreNames.includes(w.center));
     }
-    if (typeFilter !== 'All') {
-      const centreNames = PROPERTIES.filter((p) => p.lsgNlsg === typeFilter).map((p) => p.name);
+    if (selectedTypes.length > 0) {
+      const centreNames = PROPERTIES.filter((p) => selectedTypes.includes(p.lsgNlsg)).map((p) => p.name);
       list = list.filter((w) => centreNames.includes(w.center));
     }
-    if (categoryFilter !== 'All') list = list.filter((w) => w.category === categoryFilter);
+    if (selectedCategories.length > 0) list = list.filter((w) => selectedCategories.includes(w.category));
     if (dateFrom) list = list.filter((w) => w.created >= dateFrom);
     if (dateTo) list = list.filter((w) => w.created <= dateTo);
-    if (contractorFilter !== 'All') {
-      const ctr = contractors.find((c) => c.name === contractorFilter);
-      if (ctr) {
-        const ctrWOs = contracts.filter((ct) => ct.contractorId === ctr.id).flatMap((ct) => ct.workOrders);
-        list = list.filter((w) => ctrWOs.includes(w.id));
-      }
+    if (selectedContractors.length > 0) {
+      const ctrIds = contractors.filter((c) => selectedContractors.includes(c.name)).map((c) => c.id);
+      const ctrWOs = contracts.filter((ct) => ctrIds.includes(ct.contractorId)).flatMap((ct) => ct.workOrders);
+      list = list.filter((w) => ctrWOs.includes(w.id));
     }
     return list;
-  }, [workOrders, selectedCenter, districtFilter, typeFilter, categoryFilter, dateFrom, dateTo, contractorFilter, contractors, contracts]);
+  }, [workOrders, selectedCenter, selectedDistricts, selectedTypes, selectedCategories, dateFrom, dateTo, selectedContractors, contractors, contracts, propertyDistrictMap]);
 
   const filteredDocs = useMemo(() => {
     let docs = COMPLIANCE_DOCS;
     if (selectedCenter && selectedCenter !== 'All') docs = docs.filter((d) => d.center === selectedCenter);
-    if (districtFilter !== 'All') {
-      const centreNames = PROPERTIES.filter((p) => p.service === districtFilter).map((p) => p.name);
+    if (selectedDistricts.length > 0) {
+      const centreNames = PROPERTIES.filter((p) => selectedDistricts.includes(propertyDistrictMap[p.name])).map((p) => p.name);
       docs = docs.filter((d) => centreNames.includes(d.center));
     }
     return docs;
-  }, [selectedCenter, districtFilter]);
+  }, [selectedCenter, selectedDistricts, propertyDistrictMap]);
 
-  const hasFilters = districtFilter !== 'All' || typeFilter !== 'All' || categoryFilter !== 'All' || dateFrom || dateTo || contractorFilter !== 'All';
-  const clearFilters = () => { setDistrictFilter('All'); setTypeFilter('All'); setCategoryFilter('All'); setDateFrom(''); setDateTo(''); setContractorFilter('All'); };
+  const hasFilters = selectedDistricts.length > 0 || selectedTypes.length > 0 || selectedCategories.length > 0 || selectedContractors.length > 0 || dateFrom || dateTo;
+  const clearFilters = () => { setSelectedDistricts([]); setSelectedTypes([]); setSelectedCategories([]); setSelectedContractors([]); setDateFrom(''); setDateTo(''); };
+
+  const activeFilters = [];
+  selectedDistricts.forEach((d) => activeFilters.push({ key: `district-${d}`, label: `${t('dashboard.filter.district')}: ${d}`, clear: () => setSelectedDistricts((prev) => prev.filter((x) => x !== d)) }));
+  selectedTypes.forEach((ty) => activeFilters.push({ key: `type-${ty}`, label: `${t('dashboard.filter.facilityType')}: ${ty}`, clear: () => setSelectedTypes((prev) => prev.filter((x) => x !== ty)) }));
+  selectedCategories.forEach((c) => activeFilters.push({ key: `cat-${c}`, label: `${t('dashboard.filter.workCategory')}: ${c}`, clear: () => setSelectedCategories((prev) => prev.filter((x) => x !== c)) }));
+  selectedContractors.forEach((c) => activeFilters.push({ key: `ctr-${c}`, label: `${t('dashboard.filter.contractor')}: ${c}`, clear: () => setSelectedContractors((prev) => prev.filter((x) => x !== c)) }));
+  if (dateFrom) activeFilters.push({ key: 'from', label: `${t('dashboard.filter.from')}: ${dateFrom}`, clear: () => setDateFrom('') });
+  if (dateTo) activeFilters.push({ key: 'to', label: `${t('dashboard.filter.to')}: ${dateTo}`, clear: () => setDateTo('') });
 
   // ── COMPUTED METRICS ─────────────────────────────────
   const activeWOs = filteredWOs.filter((w) => w.status !== 'Completed');
@@ -156,12 +158,13 @@ export default function Dashboard({ selectedCenter }) {
   const totalBudget = filteredWOs.reduce((s, w) => s + (w.budget || 0), 0);
   const committedCost = activeWOs.reduce((s, w) => s + (w.budget || 0), 0);
   const avgCost = filteredWOs.length > 0 ? Math.round(totalBudget / filteredWOs.length) : 0;
+  const committedRatio = totalBudget > 0 ? committedCost / totalBudget : 0;
 
   const expiredDocs = filteredDocs.filter((d) => getDocStatus(d.nextInspection) === 'Expired');
 
-  // Upcoming inspections (next 3 months)
-  const today = new Date(CURRENT_YEAR, 7, 24);
-  const threeMonths = new Date(CURRENT_YEAR, 10, 24);
+  // Upcoming inspections (next 3 months) — real date
+  const today = new Date();
+  const threeMonths = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate());
   const upcomingInspections = filteredDocs.filter((d) => {
     const ni = new Date(d.nextInspection);
     return ni >= today && ni <= threeMonths;
@@ -188,33 +191,36 @@ export default function Dashboard({ selectedCenter }) {
   PROPERTIES.forEach((p) => { typeCounts[p.lsgNlsg] = (typeCounts[p.lsgNlsg] || 0) + 1; });
   const facilityByTypeData = Object.entries(typeCounts).map(([name, value]) => ({ name, value }));
 
-  const serviceCounts = {};
-  PROPERTIES.forEach((p) => { serviceCounts[p.service] = (serviceCounts[p.service] || 0) + 1; });
-  const facilityByDistrictData = Object.entries(serviceCounts).map(([name, value]) => ({ name, value }));
+  // By district (derived from address) — sorted by count
+  const facilityByDistrictData = Object.entries(districtCounts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
 
-  const agingAssets = ASSETS.filter((a) => CURRENT_YEAR - a.installYear >= 8).sort((a, b) => a.installYear - b.installYear);
-  const over30 = agingAssets.filter((a) => CURRENT_YEAR - a.installYear >= 15);
+  // Aging buildings: over 20yr, and among those over 30yr
+  const agingAssets = ASSETS.filter((a) => CURRENT_YEAR - a.installYear >= 20).sort((a, b) => a.installYear - b.installYear);
+  const over30 = agingAssets.filter((a) => CURRENT_YEAR - a.installYear >= 30);
 
   // Top facilities by WO count
   const woByCenter = {};
   filteredWOs.forEach((w) => { woByCenter[w.center] = (woByCenter[w.center] || 0) + 1; });
   const topFacilities = Object.entries(woByCenter).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
-  // Monthly WO trend (last 12 months)
-  const monthlyTrend = [];
-  for (let m = 0; m < 12; m++) {
-    const monthNum = (7 + m) % 12;
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const monthWOs = filteredWOs.filter((w) => {
-      const d = new Date(w.created);
-      return d.getMonth() === monthNum && (m < 5 ? d.getFullYear() === CURRENT_YEAR : d.getFullYear() === CURRENT_YEAR - 1);
-    });
-    monthlyTrend.push({
-      month: monthNames[monthNum],
-      count: monthWOs.length,
-      cost: monthWOs.reduce((s, w) => s + (w.budget || 0), 0),
-    });
-  }
+  // Monthly WO trend — real months present in data, chronological
+  const monthTrendMap = {};
+  filteredWOs.forEach((w) => {
+    const d = new Date(w.created);
+    if (Number.isNaN(d.getTime())) return;
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    if (!monthTrendMap[key]) monthTrendMap[key] = { year: d.getFullYear(), month: d.getMonth(), count: 0, cost: 0 };
+    monthTrendMap[key].count += 1;
+    monthTrendMap[key].cost += (w.budget || 0);
+  });
+  const monthlyTrend = Object.keys(monthTrendMap).sort().map((k) => {
+    const m = monthTrendMap[k];
+    return {
+      month: `${MONTH_NAMES[m.month]} '${String(m.year).slice(2)}`,
+      count: m.count,
+      cost: m.cost,
+    };
+  });
 
   // Repeat failures — WOs with same category on same center
   const repeatMap = {};
@@ -233,46 +239,57 @@ export default function Dashboard({ selectedCenter }) {
   filteredWOs.forEach((w) => { costByCenter[w.center] = (costByCenter[w.center] || 0) + (w.budget || 0); });
   const highCostFacilities = Object.entries(costByCenter).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-  // Spend vs Budget (simulated — 65% spent)
-  const spentRatio = 0.65;
-  const spentAmount = Math.round(totalBudget * spentRatio);
-
   const centreLabel = selectedCenter && selectedCenter !== 'All' ? selectedCenter : t('dashboard.allCentres');
 
   // ── RENDER ───────────────────────────────────────────
   return (
     <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 1500 }}>
       {/* ── FILTER BAR ──────────────────────────────── */}
-      <Card style={{ padding: '12px 16px', overflow: 'visible' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <Filter size={14} color="#64748B" />
-          <FilterDropdown label={t('dashboard.filter.district')} options={serviceTypes} selected={districtFilter} onSelect={setDistrictFilter} />
-          <FilterDropdown label={t('dashboard.filter.facilityType')} options={lsgNlsgTypes} selected={typeFilter} onSelect={setTypeFilter} />
-          <FilterDropdown label={t('dashboard.filter.workCategory')} options={workCategories} selected={categoryFilter} onSelect={setCategoryFilter} />
-          <FilterDropdown label={t('dashboard.filter.contractor')} options={contractorNames} selected={contractorFilter} onSelect={setContractorFilter} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#64748B' }}>
-            <span>{t('dashboard.filter.from')}</span>
-            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12 }} />
-            <span>{t('dashboard.filter.to')}</span>
-            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12 }} />
-          </div>
-          {hasFilters && (
-            <button onClick={clearFilters} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--critical)', background: '#FEF2F2', color: 'var(--critical)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-              {t('dashboard.filter.clearAll')}
-            </button>
-          )}
+      <FilterBar>
+        <MultiSelectDropdown
+          options={districtOptions}
+          selected={selectedDistricts}
+          onChange={setSelectedDistricts}
+          placeholder={t('dashboard.filter.district')}
+        />
+        <MultiSelectDropdown
+          options={typeOptions}
+          selected={selectedTypes}
+          onChange={setSelectedTypes}
+          placeholder={t('dashboard.filter.facilityType')}
+        />
+        <MultiSelectDropdown
+          options={categoryOptions}
+          selected={selectedCategories}
+          onChange={setSelectedCategories}
+          placeholder={t('dashboard.filter.workCategory')}
+        />
+        <MultiSelectDropdown
+          options={contractorOptions}
+          selected={selectedContractors}
+          onChange={setSelectedContractors}
+          placeholder={t('dashboard.filter.contractor')}
+        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#64748B' }}>
+          <span>{t('dashboard.filter.from')}</span>
+          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12 }} />
+          <span>{t('dashboard.filter.to')}</span>
+          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12 }} />
         </div>
-        {hasFilters && (
-          <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-            {districtFilter !== 'All' && <FilterPill label={t('dashboard.filter.district')} value={districtFilter} onClear={() => setDistrictFilter('All')} />}
-            {typeFilter !== 'All' && <FilterPill label={t('dashboard.filter.facilityType')} value={typeFilter} onClear={() => setTypeFilter('All')} />}
-            {categoryFilter !== 'All' && <FilterPill label={t('dashboard.filter.workCategory')} value={categoryFilter} onClear={() => setCategoryFilter('All')} />}
-            {contractorFilter !== 'All' && <FilterPill label={t('dashboard.filter.contractor')} value={contractorFilter} onClear={() => setContractorFilter('All')} />}
-            {dateFrom && <FilterPill label={t('dashboard.filter.from')} value={dateFrom} onClear={() => setDateFrom('')} />}
-            {dateTo && <FilterPill label={t('dashboard.filter.to')} value={dateTo} onClear={() => setDateTo('')} />}
-          </div>
-        )}
-      </Card>
+      </FilterBar>
+
+      {/* Active filter chips */}
+      {hasFilters && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 4, alignItems: 'center', flexWrap: 'wrap' }}>
+          {activeFilters.map((f) => (
+            <span key={f.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, background: 'var(--info-bg)', color: 'var(--primary)', border: '1px solid rgba(37,99,235,0.2)' }}>
+              {f.label}
+              <button onClick={f.clear} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: 'var(--primary)' }}><X size={12} /></button>
+            </span>
+          ))}
+          <button onClick={clearFilters} style={{ fontSize: 12, color: '#64748B', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}>{t('dashboard.filter.clearAll')}</button>
+        </div>
+      )}
 
       {/* ── KPI ROW (Req 1) ─────────────────────────── */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -324,14 +341,14 @@ export default function Dashboard({ selectedCenter }) {
                 <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)' }}>HK$ {avgCost.toLocaleString()}</div>
               </div>
             </div>
-            {/* Spent vs Budget bar */}
+            {/* Committed vs Budget bar (real data) */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
-                <span style={{ fontWeight: 600, color: '#475569' }}>{t('dashboard.financial.spentVsBudget')}</span>
-                <span style={{ color: '#64748B' }}>HK$ {spentAmount.toLocaleString()} / HK$ {totalBudget.toLocaleString()}</span>
+                <span style={{ fontWeight: 600, color: '#475569' }}>{t('dashboard.financial.committedVsBudget')}</span>
+                <span style={{ color: '#64748B' }}>HK$ {committedCost.toLocaleString()} / HK$ {totalBudget.toLocaleString()}</span>
               </div>
               <div style={{ height: 12, borderRadius: 6, background: '#E2E8F0', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${Math.min(spentRatio * 100, 100)}%`, borderRadius: 6, background: spentRatio > 0.8 ? 'var(--critical)' : spentRatio > 0.6 ? '#F59E0B' : 'var(--success)', transition: 'width 0.5s' }} />
+                <div style={{ height: '100%', width: `${Math.min(committedRatio * 100, 100)}%`, borderRadius: 6, background: committedRatio > 0.8 ? 'var(--critical)' : committedRatio > 0.6 ? '#F59E0B' : 'var(--success)', transition: 'width 0.5s' }} />
               </div>
             </div>
             {/* Cost by type chart */}
@@ -414,7 +431,7 @@ export default function Dashboard({ selectedCenter }) {
                 <ResponsiveContainer width="100%" height={160}>
                   <BarChart data={facilityByDistrictData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748B' }} />
+                    <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#64748B' }} />
                     <YAxis tick={{ fontSize: 11, fill: '#64748B' }} allowDecimals={false} />
                     <Tooltip {...ChartTooltipStyle} />
                     <Bar dataKey="value" fill="#10B981" radius={[4, 4, 0, 0]} />
@@ -425,17 +442,21 @@ export default function Dashboard({ selectedCenter }) {
             {/* Aging Assets */}
             <div>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 8 }}>{t('dashboard.facility.agingBuildings')} <span style={{ fontWeight: 400, color: '#94A3B8' }}>({agingAssets.length} {t('dashboard.facility.over20yr')}, {over30.length} {t('dashboard.facility.over30yr')})</span></div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {agingAssets.map((a) => {
-                  const age = CURRENT_YEAR - a.installYear;
-                  return (
-                    <div key={a.id} style={{ padding: '6px 10px', borderRadius: 6, background: age >= 15 ? '#FEF2F2' : '#FFFBEB', border: `1px solid ${age >= 15 ? '#FECACA' : '#FDE68A'}`, fontSize: 11 }}>
-                      <span style={{ fontWeight: 600, color: 'var(--foreground)' }}>{a.name}</span>
-                      <span style={{ color: age >= 15 ? '#DC2626' : '#D97706', marginLeft: 4 }}>({age}yr)</span>
-                    </div>
-                  );
-                })}
-              </div>
+              {agingAssets.length > 0 ? (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {agingAssets.map((a) => {
+                    const age = CURRENT_YEAR - a.installYear;
+                    return (
+                      <div key={a.id} style={{ padding: '6px 10px', borderRadius: 6, background: age >= 30 ? '#FEF2F2' : '#FFFBEB', border: `1px solid ${age >= 30 ? '#FECACA' : '#FDE68A'}`, fontSize: 11 }}>
+                        <span style={{ fontWeight: 600, color: 'var(--foreground)' }}>{a.name}</span>
+                        <span style={{ color: age >= 30 ? '#DC2626' : '#D97706', marginLeft: 4 }}>({age}yr)</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{ fontSize: 12, color: '#94A3B8' }}>{t('dashboard.facility.noAgingBuildings')}</div>
+              )}
             </div>
             {/* Top Maintenance Facilities */}
             <div>
@@ -517,15 +538,19 @@ export default function Dashboard({ selectedCenter }) {
         {/* Monthly Trend */}
         <Card title={t('dashboard.pm.trend')} style={{ flex: 3, minWidth: 400 }}>
           <div style={{ padding: 20 }}>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={monthlyTrend} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748B' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#64748B' }} allowDecimals={false} />
-                <Tooltip {...ChartTooltipStyle} />
-                <Area type="monotone" dataKey="count" stroke="#6366F1" fill="#E0E7FF" strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
+            {monthlyTrend.length > 0 ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <AreaChart data={monthlyTrend} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748B' }} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748B' }} allowDecimals={false} />
+                  <Tooltip {...ChartTooltipStyle} />
+                  <Area type="monotone" dataKey="count" stroke="#6366F1" fill="#E0E7FF" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ textAlign: 'center', padding: 40, color: '#94A3B8', fontSize: 13 }}>{t('common.noData')}</div>
+            )}
           </div>
         </Card>
 

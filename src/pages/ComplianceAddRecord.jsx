@@ -230,39 +230,39 @@ export default function ComplianceAddRecord() {
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>{t('compliance.attach.title')}</div>
           <button onClick={addFile} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', color: '#475569', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-            <Plus size={13} /> Add File
+            <Plus size={13} /> {t('compliance.attach.addFile')}
           </button>
         </div>
         <div style={{ padding: 20 }}>
           {files.length === 0 && (
-            <div style={{ padding: 24, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>No files attached. Click "Add File" to attach supporting documents.</div>
+            <div style={{ padding: 24, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>{t('compliance.attach.noFiles')}</div>
           )}
           {files.map((f, idx) => (
             <div key={f.id} style={{ padding: 12, borderRadius: 8, border: '1px solid var(--border)', marginBottom: 8, background: '#FAFBFC' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#64748B' }}>File {idx + 1}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#64748B' }}>{t('compliance.attach.fileLabel', { n: idx + 1 })}</span>
                 <button onClick={() => removeFile(f.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626' }}><X size={14} /></button>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 8, alignItems: 'end' }}>
                 <div>
-                  <label style={{ ...labelStyle, fontSize: 11 }}>File</label>
+                  <label style={{ ...labelStyle, fontSize: 11 }}>{t('compliance.attach.file')}</label>
                   <button onClick={() => document.getElementById(`add-file-${f.id}`)?.click()} style={{ width: '100%', padding: '6px 10px', borderRadius: 6, border: '1px dashed #CBD5E1', background: '#fff', cursor: 'pointer', fontSize: 11, color: f.file ? '#334155' : '#94A3B8', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', boxSizing: 'border-box' }}>
-                    {f.file ? f.file.name : 'Choose file'}
+                    {f.file ? f.file.name : t('compliance.attach.chooseFile')}
                   </button>
                   <input id={`add-file-${f.id}`} type="file" style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) { updateFile(f.id, 'file', file); if (!f.name) updateFile(f.id, 'name', file.name); } }} />
                 </div>
                 <div>
-                  <label style={{ ...labelStyle, fontSize: 11 }}>Doc Type</label>
+                  <label style={{ ...labelStyle, fontSize: 11 }}>{t('compliance.attach.docType')}</label>
                   <select value={f.docType} onChange={(e) => updateFile(f.id, 'docType', e.target.value)} style={{ ...fieldStyle, padding: '6px 8px', fontSize: 11, appearance: 'auto' }}>
-                    <option value="">Select</option>
-                    <option value="Certificate">Certificate</option>
-                    <option value="Inspection Report">Inspection Report</option>
-                    <option value="Site Photo">Site Photo</option>
-                    <option value="Other">Other</option>
+                    <option value="">{t('compliance.attach.select')}</option>
+                    <option value="Certificate">{t('compliance.attach.typeCertificate')}</option>
+                    <option value="Inspection Report">{t('compliance.attach.typeInspection')}</option>
+                    <option value="Site Photo">{t('compliance.attach.typeSitePhoto')}</option>
+                    <option value="Other">{t('compliance.attach.typeOther')}</option>
                   </select>
                 </div>
                 <div>
-                  <label style={{ ...labelStyle, fontSize: 11 }}>Date</label>
+                  <label style={{ ...labelStyle, fontSize: 11 }}>{t('compliance.attach.date')}</label>
                   <input type="date" value={f.docDate} onChange={(e) => updateFile(f.id, 'docDate', e.target.value)} style={{ ...fieldStyle, padding: '6px 8px', fontSize: 11 }} />
                 </div>
               </div>
@@ -485,7 +485,7 @@ function AddRecordReminderForm({ docName, reminderName, onSave, onCancel, t }) {
                     <span style={{ color: '#94A3B8' }}>({u.label})</span>
                   </div>
                 ))}
-                {filteredUsers.length === 0 && <div style={{ padding: '8px 12px', fontSize: 11, color: '#94A3B8' }}>No users found</div>}
+                {filteredUsers.length === 0 && <div style={{ padding: '8px 12px', fontSize: 11, color: '#94A3B8' }}>{t('compliance.attach.noUsers')}</div>}
               </div>
             )}
           </div>

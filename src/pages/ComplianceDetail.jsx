@@ -369,7 +369,7 @@ export default function ComplianceDetail() {
                   {!expiryAttachment && (
                     <div style={{ marginTop: 8 }}>
                       <button onClick={() => setExpiryNoDoc(!expiryNoDoc)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 6, border: `1px solid ${expiryNoDoc ? '#B45309' : 'var(--border)'}`, background: expiryNoDoc ? '#FEF3C7' : '#fff', fontSize: 12, fontWeight: 600, color: expiryNoDoc ? '#92400E' : '#64748B', cursor: 'pointer' }}>
-                        <AlertTriangle size={12} /> No Supporting Document
+                        <AlertTriangle size={12} /> {t('compliance.noSupportingDoc')}
                       </button>
                       {expiryNoDoc && (
                         <div style={{ marginTop: 8 }}>

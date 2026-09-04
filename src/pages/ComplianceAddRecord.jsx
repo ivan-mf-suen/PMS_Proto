@@ -69,9 +69,9 @@ export default function ComplianceAddRecord({ selectedCenter }) {
 
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [files, setFiles] = useState([]);
-  const [reminder, setReminder] = useState(null);
-  const [reminderName, setReminderName] = useState('');
-  const [showReminder, setShowReminder] = useState(false);
+  const [reminders, setReminders] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [showReminderForm, setShowReminderForm] = useState(false);
   const [skipEffective, setSkipEffective] = useState(false);
 
   const isCentreLocked = !!selectedCenter && selectedCenter !== 'All';
@@ -89,7 +89,8 @@ export default function ComplianceAddRecord({ selectedCenter }) {
     const creatorUser = SYSTEM_USERS.find((u) => u.name === uploaderName) || SYSTEM_USERS.find((u) => u.label === uploaderName) || null;
     const baseEmail = uploaderName && uploaderName !== 'System' ? uploaderName.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9.]/g, '') : '';
     const creatorEmail = baseEmail ? `${baseEmail}@poleungkuk.org.hk` : '';
-    setReminder({
+    setReminders([{
+      id: `rem-default-${Date.now()}`,
       name: `${form.name || 'Document'} Reminder`,
       when: { type: 'before_expiry', daysBefore: 30 },
       channels: { inApp: true, email: true },
@@ -97,8 +98,8 @@ export default function ComplianceAddRecord({ selectedCenter }) {
       emailSubject: `Reminder: {docName} expiring on {expiryDate}`,
       messageTemplate: DEFAULT_REMINDER_MSG + `\n\n${t('compliance.reminder.systemGenerated')}`,
       messageStyle: { fontSize: '11px', color: '#334155' },
-    });
-    setShowReminder(false);
+    }]);
+    setShowReminderForm(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -170,18 +171,22 @@ export default function ComplianceAddRecord({ selectedCenter }) {
         uploadAttachment(newId, { file: f.file, name: f.name || f.file.name, docType: f.docType, docDate: f.docDate, expiryDate: f.expiryDate }, uploaderName);
       }
     });
-    if (reminder) {
-      const savedReminder = {
-        ...reminder,
-        name: `${form.name || 'Document'} Reminder`,
-        recipients: {
-          ...reminder.recipients,
-          userIds: (reminder.recipients?.userIds?.length ? reminder.recipients.userIds : [creatorIdForSave()]),
-          emails: (reminder.recipients?.emails?.length ? reminder.recipients.emails : [creatorEmailForSave()]),
-        },
-      };
-      const reminders = [{ ...savedReminder, id: `rem-${Date.now()}`, docId: newId, active: true, createdAt: new Date().toISOString() }];
-      try { localStorage.setItem(`cv-reminders-${newId}`, JSON.stringify(reminders)); } catch {}
+    if (reminders.length > 0) {
+      const now = new Date().toISOString();
+      const savedReminders = reminders.map((r, idx) => {
+        const withDefaults = idx === 0
+          ? {
+              ...r,
+              recipients: {
+                ...r.recipients,
+                userIds: (r.recipients?.userIds?.length ? r.recipients.userIds : [creatorIdForSave()]),
+                emails: (r.recipients?.emails?.length ? r.recipients.emails : [creatorEmailForSave()]),
+              },
+            }
+          : r;
+        return { ...withDefaults, id: r.id || `rem-${Date.now()}-${idx}`, docId: newId, active: true, createdAt: now };
+      });
+      try { localStorage.setItem(`cv-reminders-${newId}`, JSON.stringify(savedReminders)); } catch {}
     }
     navigate(`/compliance/${newId}`);
   };
@@ -363,46 +368,56 @@ export default function ComplianceAddRecord({ selectedCenter }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Bell size={15} color="#F59E0B" />
             <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>{t('compliance.reminder.title')}</span>
+            <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500 }}>({reminders.length})</span>
           </div>
-          {!reminder && (
-            <button onClick={() => { setReminder(null); setReminderName(`${form.name || 'Document'} Reminder`); setShowReminder(true); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: 'none', background: '#F59E0B', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-              <Plus size={13} /> {t('compliance.reminder.add')}
-            </button>
-          )}
+          <button onClick={() => { setEditingId(null); setShowReminderForm(true); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: 'none', background: '#F59E0B', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+            <Plus size={13} /> {t('compliance.reminder.add')}
+          </button>
         </div>
         <div style={{ padding: 20 }}>
-          {reminder ? (
-            <div style={{ padding: 12, borderRadius: 8, border: '1px solid var(--border)', background: '#FFFBEB' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{reminder.name}</div>
-                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
-                    {reminder.when?.type === 'before_expiry' ? `${t('compliance.reminder.beforeExpiry')}: ${reminder.when.daysBefore} days` : reminder.when?.specificDate || ''}
-                    {' · '}
-                    {reminder.channels?.inApp && reminder.channels?.email ? 'In-App + Email' : reminder.channels?.inApp ? 'In-App' : 'Email'}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <button onClick={() => { setShowReminder(true); }} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 11, fontWeight: 600, color: '#64748B', cursor: 'pointer' }}>{t('compliance.reminder.edit')}</button>
-                  <button onClick={() => { setReminder(null); setShowReminder(false); }} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 11, fontWeight: 600, color: '#DC2626', cursor: 'pointer' }}><Trash2 size={11} /> {t('compliance.reminder.delete')}</button>
-                </div>
-              </div>
-            </div>
-          ) : !showReminder ? (
+          {showReminderForm ? (
+            <AddRecordReminderForm
+              docName={form.name || 'Document'}
+              initial={editingId !== null ? (reminders.find((r) => r.id === editingId) || null) : null}
+              onSave={(r) => {
+                const newId = editingId ?? `rem-${Date.now()}`;
+                setReminders((prev) => {
+                  if (prev.some((x) => x.id === editingId)) {
+                    return prev.map((x) => x.id === editingId ? { ...r, id: editingId } : x);
+                  }
+                  return [...prev, { ...r, id: newId }];
+                });
+                setEditingId(null);
+                setShowReminderForm(false);
+              }}
+              onCancel={() => { setEditingId(null); setShowReminderForm(false); }}
+              t={t}
+            />
+          ) : reminders.length === 0 ? (
             <div style={{ padding: 24, textAlign: 'center', color: '#94A3B8' }}>
               <Bell size={24} color="#CBD5E1" style={{ marginBottom: 8 }} />
               <div style={{ fontSize: 13, fontWeight: 600 }}>{t('compliance.reminder.empty')}</div>
               <div style={{ fontSize: 12, color: '#CBD5E1', marginTop: 4 }}>{t('compliance.reminder.emptyHint')}</div>
             </div>
           ) : (
-            <AddRecordReminderForm
-              docName={form.name || 'Document'}
-              reminderName={reminderName}
-              initial={reminder}
-              onSave={(r) => { setReminder(r); setShowReminder(false); }}
-              onCancel={() => setShowReminder(false)}
-              t={t}
-            />
+            reminders.map((r) => (
+              <div key={r.id} style={{ padding: 12, borderRadius: 8, border: '1px solid var(--border)', background: '#FFFBEB', marginBottom: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{r.name}</div>
+                    <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+                      {r.when?.type === 'before_expiry' ? `${t('compliance.reminder.beforeExpiry')}: ${r.when.daysBefore} days` : r.when?.specificDate || ''}
+                      {' · '}
+                      {r.channels?.inApp && r.channels?.email ? 'In-App + Email' : r.channels?.inApp ? 'In-App' : 'Email'}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <button onClick={() => { setEditingId(r.id); setShowReminderForm(true); }} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 11, fontWeight: 600, color: '#64748B', cursor: 'pointer' }}>{t('compliance.reminder.edit')}</button>
+                    <button onClick={() => setReminders((prev) => prev.filter((x) => x.id !== r.id))} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 11, fontWeight: 600, color: '#DC2626', cursor: 'pointer' }}><Trash2 size={11} /> {t('compliance.reminder.delete')}</button>
+                  </div>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>
@@ -420,8 +435,8 @@ export default function ComplianceAddRecord({ selectedCenter }) {
 }
 
 // ── Add Record Reminder Form ──────────────────────────────
-function AddRecordReminderForm({ docName, reminderName, onSave, onCancel, t, initial }) {
-  const [name, setName] = useState(initial?.name || reminderName);
+function AddRecordReminderForm({ docName, onSave, onCancel, t, initial }) {
+  const [name, setName] = useState(initial?.name || '');
   const [whenType, setWhenType] = useState(initial?.when?.type || 'before_expiry');
   const [daysBefore, setDaysBefore] = useState(initial?.when?.daysBefore || 30);
   const [specificDate, setSpecificDate] = useState(initial?.when?.specificDate || '');

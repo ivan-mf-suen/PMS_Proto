@@ -20,7 +20,6 @@ export default function AssetForm() {
     room: editing?.room || '',
     category: editing?.category || EQUIPMENT_CATEGORIES[0],
     equipment: editing?.equipment || '',
-    qty: editing?.qty || 1,
     installYear: editing?.installYear || 2011,
     renovation: editing?.renovation || '',
     status: editing?.status || 'Operational',
@@ -46,7 +45,6 @@ export default function AssetForm() {
       room: form.room.trim(),
       category: form.category,
       equipment: form.category === '櫃' ? '櫃' : form.category === '煮食設備' ? '煮食設備' : '冷氣機/風扇/抽氣扇',
-      qty: Number(form.qty) || 1,
       installYear: Number(form.installYear) || 2011,
       renovation: form.renovation.trim(),
       status: form.status,
@@ -102,31 +100,27 @@ export default function AssetForm() {
               </select>
             </div>
             <div style={fieldStyle}>
-              <label style={labelStyle}>{t('assets.form.qty')}</label>
-              <input type="number" value={form.qty} onChange={(e) => update('qty', parseInt(e.target.value) || 1)} style={inputStyle} />
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div style={fieldStyle}>
               <label style={labelStyle}>{t('assets.form.installYear')}</label>
               <input type="number" value={form.installYear} onChange={(e) => update('installYear', parseInt(e.target.value) || 2011)} style={inputStyle} />
             </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div style={fieldStyle}>
               <label style={labelStyle}>{t('assets.form.status')}</label>
               <select value={form.status} onChange={(e) => update('status', e.target.value)} style={inputStyle}>
                 {ALL_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
+            <div style={fieldStyle}>
+              <label style={labelStyle}>{t('assets.form.condition')}</label>
+              <select value={form.condition} onChange={(e) => update('condition', e.target.value)} style={inputStyle}>
+                {CONDITIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
           </div>
           <div style={fieldStyle}>
             <label style={labelStyle}>{t('assets.form.renovation')}</label>
             <input value={form.renovation} onChange={(e) => update('renovation', e.target.value)} placeholder={t('assets.form.renovationPh')} style={inputStyle} />
-          </div>
-          <div style={fieldStyle}>
-            <label style={labelStyle}>{t('assets.form.condition')}</label>
-            <select value={form.condition} onChange={(e) => update('condition', e.target.value)} style={inputStyle}>
-              {CONDITIONS.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
           </div>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
             <button onClick={() => navigate(editing ? `/assets/${editing.id}` : '/assets')} style={{ padding: '10px 20px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, color: '#475569', cursor: 'pointer' }}>{t('assets.form.cancel')}</button>

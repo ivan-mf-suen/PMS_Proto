@@ -24,7 +24,6 @@ function AssetsTestUI() {
       floor: '4F',
       room: '測試室/999',
       category: '櫃',
-      qty: 3,
       installYear: 2020,
       status: 'Operational',
       condition: 'Good',
@@ -36,13 +35,13 @@ function AssetsTestUI() {
     <div>
       <span data-testid="total">{assets.length}</span>
       <span data-testid="first-id">{assets[0]?.id ?? 'none'}</span>
-      <span data-testid="first-qty">{assets[0]?.qty ?? 'none'}</span>
+      <span data-testid="first-year">{assets[0]?.installYear ?? 'none'}</span>
       <span data-testid="found">{getAsset(assets[0]?.id) ? 'yes' : 'no'}</span>
       <span data-testid="plots-4f">{getPlots('4F').length}</span>
       <span data-testid="plot-for-asset">{getPlotForAsset(window.__plotAssetId) ? 'yes' : 'no'}</span>
       <button onClick={handleAdd}>Add</button>
       <button onClick={() => removeAsset(assets[0]?.id)}>Remove</button>
-      <button onClick={() => updateAsset(assets[0]?.id, { qty: 9 })}>Update</button>
+      <button onClick={() => updateAsset(assets[0]?.id, { installYear: 2025 })}>Update</button>
       <button onClick={() => {
         const id = assets[0]?.id;
         window.__plotAssetId = id;
@@ -102,10 +101,10 @@ describe('AssetsContext', () => {
   it('updates an asset', async () => {
     const user = userEvent.setup();
     renderAssets();
-    const beforeQty = screen.getByTestId('first-qty').textContent;
+    const beforeYear = screen.getByTestId('first-year').textContent;
     await user.click(screen.getByRole('button', { name: /Update/i }));
-    expect(screen.getByTestId('first-qty').textContent).toBe('9');
-    expect(screen.getByTestId('first-qty').textContent).not.toBe(beforeQty);
+    expect(screen.getByTestId('first-year').textContent).toBe('2025');
+    expect(screen.getByTestId('first-year').textContent).not.toBe(beforeYear);
   });
 
   it('removes an asset', async () => {

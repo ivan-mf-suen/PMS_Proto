@@ -38,7 +38,7 @@ function FilterDropdown({ label, options, selected, onSelect }) {
 }
 
 export default function Assets() {
-  const { assets, property, removeAsset } = useAssets();
+  const { assets, removeAsset } = useAssets();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
@@ -71,8 +71,8 @@ export default function Assets() {
 
   const csvEscape = (v) => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s; };
   const exportCSV = () => {
-    const headers = ['ID', 'Property', 'Floor', 'Room', 'Category', 'Equipment', 'Qty', 'Install Year', 'Status', 'Renovation'];
-    const rows = filtered.map((a) => [a.id, a.propertyName, a.floor, a.room, a.category, a.equipment, a.qty, a.installYear, a.status, a.renovation || '']);
+    const headers = ['ID', 'Property', 'Floor', 'Room', 'Type', 'Equipment', 'Install Year', 'Status', 'Renovation'];
+    const rows = filtered.map((a) => [a.id, a.propertyCode, a.floor, a.room, a.category, a.equipment, a.installYear, a.status, a.renovation || '']);
     const csv = [headers.map(csvEscape).join(','), ...rows.map((r) => r.map(csvEscape).join(','))].join('\r\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -98,8 +98,6 @@ export default function Assets() {
     setConfirmDelete(null);
   };
 
-  const countByFloor = (floor) => assets.filter((a) => a.floor === floor).length;
-
   return (
     <div style={{ padding: 24, maxWidth: 1400 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
@@ -107,9 +105,6 @@ export default function Assets() {
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Building2 size={20} color="var(--info)" /> {t('assets.title')}
           </h1>
-          <p style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>
-            <strong>{property.unitCode}</strong> &middot; {property.name}
-          </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => navigate('/floor-plan')} style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, borderRadius: 8, border: '1px solid var(--border)', background: '#fff', color: '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -122,15 +117,6 @@ export default function Assets() {
             <Plus size={16} /> {t('assets.add')}
           </button>
         </div>
-      </div>
-
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-        {FLOORS.map((f) => (
-          <div key={f.key} style={{ flex: 1, minWidth: 120, background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', padding: '14px 16px' }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase' }}>{t('assets.floorLabel')} {f.key}</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', marginTop: 2 }}>{countByFloor(f.key)}</div>
-          </div>
-        ))}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
@@ -171,7 +157,7 @@ export default function Assets() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#F8FAFC' }}>
-              {[t('assets.col.id'), t('assets.col.floornroom'), t('assets.col.type'), t('assets.col.qty'), t('assets.col.installYear'), t('assets.col.status'), t('assets.col.renovation'), ''].map((h, i) => (
+              {[t('assets.col.id'), t('assets.col.type'), t('assets.col.floornroom'), t('assets.col.property'), t('assets.col.installYear'), t('assets.col.status'), t('assets.col.renovation'), ''].map((h, i) => (
                 <th key={i} style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: '#64748B', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
               ))}
             </tr>
@@ -182,12 +168,12 @@ export default function Assets() {
               return (
                 <tr key={asset.id} style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => navigate(`/assets/${asset.id}`)} onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
                   <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--info)', fontFamily: 'monospace' }}>{asset.id}</td>
+                  <td style={{ padding: '12px 16px' }}><span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: '#F1F5F9', color: '#475569' }}>{asset.category}</span></td>
                   <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>
                     <div>{asset.room}</div>
                     <div style={{ fontSize: 11, color: '#94A3B8' }}>{asset.floor}</div>
                   </td>
-                  <td style={{ padding: '12px 16px' }}><span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: '#F1F5F9', color: '#475569' }}>{asset.category}</span></td>
-                  <td style={{ padding: '12px 16px', fontSize: 13, color: '#64748B' }}>{asset.qty}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 13, color: '#64748B' }}>{asset.propertyCode}</td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: '#64748B' }}>{asset.installYear}</td>
                   <td style={{ padding: '12px 16px' }}><span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: sc.bg, color: sc.color }}>{asset.status}</span></td>
                   <td style={{ padding: '12px 16px', fontSize: 12, color: '#64748B', maxWidth: 180 }}>{asset.renovation || '—'}</td>

@@ -93,7 +93,6 @@ export default function AssetDetail() {
             <DetailField label={t('assetDetail.room')} value={asset.room} />
             <DetailField label={t('assetDetail.category')} value={asset.category} />
             <DetailField label={t('assetDetail.equipment')} value={asset.equipment} />
-            <DetailField label={t('assetDetail.qty')} value={`${asset.qty}`} />
             <DetailField label={t('assetDetail.installYear')} value={asset.installYear} />
             <DetailField label={t('assetDetail.renovation')} value={asset.renovation || 'N/A'} />
           </div>

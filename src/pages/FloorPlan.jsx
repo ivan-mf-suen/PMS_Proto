@@ -128,7 +128,7 @@ export default function FloorPlan() {
   const assetLabel = (id) => {
     const a = getAsset(id);
     if (!a) return '';
-    return `${a.room} · ${a.category} (${a.qty})`;
+    return `${a.room} · ${a.category}`;
   };
 
   const inputStyle = { width: '100%', padding: '8px 12px', fontSize: 13, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', outline: 'none', color: 'var(--foreground)' };
@@ -260,7 +260,7 @@ export default function FloorPlan() {
                     <div style={labelStyle}>{t('floorPlan.assetName')}</div>
                     <select value={pinAssetId} onChange={(e) => setPinAssetId(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
                       <option value="">{t('floorPlan.selectAsset')}</option>
-                      {floorAssets.map((a) => <option key={a.id} value={a.id}>{a.room} · {a.category} ({a.qty})</option>)}
+                      {floorAssets.map((a) => <option key={a.id} value={a.id}>{a.room} · {a.category}</option>)}
                     </select>
                   </div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
@@ -279,7 +279,7 @@ export default function FloorPlan() {
                   <div>
                     <div style={labelStyle}>{t('floorPlan.assetName')}</div>
                     <select value={editingPlot.assetId} onChange={(e) => setEditingPlot({ ...editingPlot, assetId: e.target.value })} style={{ ...inputStyle, cursor: 'pointer' }}>
-                      {floorAssets.map((a) => <option key={a.id} value={a.id}>{a.room} · {a.category} ({a.qty})</option>)}
+                      {floorAssets.map((a) => <option key={a.id} value={a.id}>{a.room} · {a.category}</option>)}
                     </select>
                   </div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
@@ -296,7 +296,7 @@ export default function FloorPlan() {
                     <div style={{ width: 40, height: 40, borderRadius: 10, background: plotColor(selectedPlot) + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: plotColor(selectedPlot) }}>{assetLabel(selectedPlot.assetId).slice(0, 1)}</div>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>{selectedAsset?.room || selectedPlot.assetId}</div>
-                      <div style={{ fontSize: 12, color: '#64748B' }}>{selectedAsset?.category} · {t('assets.col.qty')} {selectedAsset?.qty}</div>
+                      <div style={{ fontSize: 12, color: '#64748B' }}>{selectedAsset?.category}</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>

@@ -848,7 +848,7 @@ export default function WorkOrderDetail() {
                 {wo.assets.map((a, idx) => {
                   const isObj = typeof a === 'object' && a !== null;
                   const display = isObj ? `${a.room || a.name} — ${a.category || ''}` : t('workOrderDetail.assetTag', { tag: a });
-                  const sub = isObj ? `${a.floor || ''} · Qty ${a.qty || 1} · ${a.id}` : '';
+                  const sub = isObj ? `${a.floor || ''} · ${a.id}` : '';
                   const plot = isObj ? a.plot : null;
                   return (
                     <div key={idx} style={{ padding: '12px 16px', background: '#F8FAFC', borderRadius: 8, border: '1px solid var(--border)' }}>

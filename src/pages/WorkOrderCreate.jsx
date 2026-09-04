@@ -74,7 +74,6 @@ function mapAssetToSel(a, getPlotForAsset) {
     floor: a.floor,
     room: a.room,
     category: a.category,
-    qty: a.qty,
     installYear: a.installYear,
     plot: plot ? { floor: plot.floor, x: plot.x, y: plot.y } : null,
   };
@@ -660,7 +659,7 @@ export default function WorkOrderCreate() {
                           <Check size={14} color={alreadyAdded ? '#059669' : '#CBD5E1'} />
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>{a.room} — {a.category}</div>
-                            <div style={{ fontSize: 11, color: '#94A3B8' }}>{a.id} · {a.floor} · Qty {a.qty}</div>
+                            <div style={{ fontSize: 11, color: '#94A3B8' }}>{a.id} · {a.floor}</div>
                           </div>
                         </div>
                       );
@@ -703,7 +702,7 @@ export default function WorkOrderCreate() {
                               {asset.name}
                             </div>
                             <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
-                              {asset.floor} · Qty {asset.qty} · Install {asset.installYear}
+                              {asset.floor} · Install {asset.installYear}
                             </div>
                             <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2, fontFamily: 'monospace' }}>
                               {asset.id}

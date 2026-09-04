@@ -73,7 +73,6 @@ export default function ComplianceAddRecord({ selectedCenter }) {
   const [reminderName, setReminderName] = useState('');
   const [showReminder, setShowReminder] = useState(false);
   const [skipEffective, setSkipEffective] = useState(false);
-  const [skipExpiry, setSkipExpiry] = useState(false);
 
   const isCentreLocked = !!selectedCenter && selectedCenter !== 'All';
 
@@ -106,8 +105,8 @@ export default function ComplianceAddRecord({ selectedCenter }) {
   const effectiveDateFilled = !skipEffective && !!form.inspectionDate;
   const autoNext = effectiveDateFilled ? computeNextDue(form.inspectionDate, Number(form.cycleMonths) || 12) : '';
 
-  const expiryValue = effectiveDateFilled ? autoNext : (skipExpiry ? '' : form.expiry);
-  const expiryReadOnly = effectiveDateFilled || skipExpiry;
+  const expiryValue = effectiveDateFilled ? autoNext : form.expiry;
+  const expiryReadOnly = effectiveDateFilled;
 
   const hasEffectiveDate = effectiveDateFilled;
   const hasExpiry = !!expiryValue;
@@ -286,14 +285,7 @@ export default function ComplianceAddRecord({ selectedCenter }) {
             <div>
               <label style={labelStyle}>{t('compliance.detail.expiry')}{skipEffective ? ' *' : ''}</label>
               <input type="date" value={expiryValue} onChange={(e) => update('expiry', e.target.value)} disabled={expiryReadOnly} style={{ ...fieldStyle, opacity: expiryReadOnly ? 0.6 : 1 }} />
-              {effectiveDateFilled ? (
-                <div style={{ fontSize: 11, color: '#64748B', marginTop: 6 }}>{t('compliance.autoExpiryHint')}</div>
-              ) : (
-                <label style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 11, color: '#64748B', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={skipExpiry} onChange={() => { setSkipExpiry(!skipExpiry); if (!skipExpiry) update('expiry', ''); }} style={{ cursor: 'pointer' }} />
-                  {t('compliance.form.skip')}
-                </label>
-              )}
+              {effectiveDateFilled && <div style={{ fontSize: 11, color: '#64748B', marginTop: 6 }}>{t('compliance.autoExpiryHint')}</div>}
             </div>
           </div>
           {autoNext && effectiveDateFilled && (

@@ -5,7 +5,7 @@ import { useCompliance } from '../context/ComplianceContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { ROLES } from '../data/constants';
-import { uploadAttachment } from '../services/complianceFileService';
+import { uploadAttachment, DOC_TYPES } from '../services/complianceFileService';
 import ComboBox from '../components/ComboBox';
 import { computeNextDue } from '../utils/dateUtils';
 import {
@@ -69,6 +69,7 @@ export default function ComplianceAddRecord({ selectedCenter }) {
 
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [files, setFiles] = useState([]);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const [reminders, setReminders] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [showReminderForm, setShowReminderForm] = useState(false);
@@ -133,14 +134,6 @@ export default function ComplianceAddRecord({ selectedCenter }) {
   }));
 
   const propertyOptions = PROPERTIES.map((p) => ({ value: p.name, label: p.name }));
-
-  const addFile = () => {
-    setFiles((prev) => [...prev, { id: `f-${Date.now()}`, file: null, name: '', docType: '', docDate: '', expiryDate: '' }]);
-  };
-
-  const updateFile = (id, field, value) => {
-    setFiles((prev) => prev.map((f) => f.id === id ? { ...f, [field]: value } : f));
-  };
 
   const removeFile = (id) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
@@ -317,7 +310,7 @@ export default function ComplianceAddRecord({ selectedCenter }) {
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', marginBottom: 20 }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>{t('compliance.attach.title')}</div>
-          <button onClick={addFile} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', color: '#475569', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+          <button onClick={() => setUploadOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', color: '#475569', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
             <Plus size={13} /> {t('compliance.attach.addFile')}
           </button>
         </div>
@@ -327,41 +320,35 @@ export default function ComplianceAddRecord({ selectedCenter }) {
           )}
           {files.map((f, idx) => (
             <div key={f.id} style={{ padding: 12, borderRadius: 8, border: '1px solid var(--border)', marginBottom: 8, background: '#FAFBFC' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#64748B' }}>{t('compliance.attach.fileLabel', { n: idx + 1 })}</span>
-                <button onClick={() => removeFile(f.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626' }}><X size={14} /></button>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: 8, alignItems: 'end' }}>
-                <div>
-                  <label style={{ ...labelStyle, fontSize: 11 }}>{t('compliance.attach.file')}</label>
-                  <button onClick={() => document.getElementById(`add-file-${f.id}`)?.click()} style={{ width: '100%', padding: '6px 10px', borderRadius: 6, border: '1px dashed #CBD5E1', background: '#fff', cursor: 'pointer', fontSize: 11, color: f.file ? '#334155' : '#94A3B8', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', boxSizing: 'border-box' }}>
-                    {f.file ? f.file.name : t('compliance.attach.chooseFile')}
-                  </button>
-                  <input id={`add-file-${f.id}`} type="file" style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) { updateFile(f.id, 'file', file); if (!f.name) updateFile(f.id, 'name', file.name); } }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#475569', whiteSpace: 'nowrap' }}>{t('compliance.attach.fileLabel', { n: idx + 1 })}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name || f.file?.name || t('compliance.attach.file')}</div>
+                    <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+                      {f.docType ? t(`compliance.doctype.${f.docType}`) : ''}
+                      {f.docDate ? ` · ${f.docDate}` : ''}
+                      {f.expiryDate ? ` · ${t('compliance.attach.expiryDate')}: ${f.expiryDate}` : ''}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label style={{ ...labelStyle, fontSize: 11 }}>{t('compliance.attach.docType')}</label>
-                  <select value={f.docType} onChange={(e) => updateFile(f.id, 'docType', e.target.value)} style={{ ...fieldStyle, padding: '6px 8px', fontSize: 11, appearance: 'auto' }}>
-                    <option value="">{t('compliance.attach.select')}</option>
-                    <option value="Certificate">{t('compliance.attach.typeCertificate')}</option>
-                    <option value="Inspection Report">{t('compliance.attach.typeInspection')}</option>
-                    <option value="Site Photo">{t('compliance.attach.typeSitePhoto')}</option>
-                    <option value="Other">{t('compliance.attach.typeOther')}</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ ...labelStyle, fontSize: 11 }}>{t('compliance.attach.date')}</label>
-                  <input type="date" value={f.docDate} onChange={(e) => updateFile(f.id, 'docDate', e.target.value)} style={{ ...fieldStyle, padding: '6px 8px', fontSize: 11 }} />
-                </div>
-                <div>
-                  <label style={{ ...labelStyle, fontSize: 11 }}>{t('compliance.attach.expiryDate')}</label>
-                  <input type="date" value={f.expiryDate} onChange={(e) => updateFile(f.id, 'expiryDate', e.target.value)} style={{ ...fieldStyle, padding: '6px 8px', fontSize: 11 }} />
-                </div>
+                <button onClick={() => removeFile(f.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', flexShrink: 0 }} aria-label={t('common.delete') || 'Remove'}><X size={15} /></button>
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {uploadOpen && (
+        <UploadModal
+          onClose={() => setUploadOpen(false)}
+          onSubmit={(payload) => {
+            setFiles((prev) => [...prev, { id: `f-${Date.now()}`, ...payload }]);
+            setUploadOpen(false);
+          }}
+          t={t}
+        />
+      )}
 
       {/* Reminder Card */}
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', marginBottom: 20 }}>
@@ -718,6 +705,61 @@ function AddRecordReminderForm({ docName, onSave, onCancel, t, initial }) {
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
         <button onClick={onCancel} style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.reminder.form.cancel')}</button>
         <button onClick={handleSave} disabled={!name} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: '#F59E0B', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: name ? 1 : 0.5 }}>{t('compliance.reminder.form.save')}</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Upload Document Modal ────────────────────────────────
+function UploadModal({ onClose, onSubmit, t }) {
+  const [file, setFile] = useState(null);
+  const [name, setName] = useState('');
+  const [docType, setDocType] = useState('');
+  const [docDate, setDocDate] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+      <div style={{ background: '#fff', borderRadius: 12, width: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: 16, fontWeight: 700 }}>{t('compliance.upload.title')}</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}><X size={18} /></button>
+        </div>
+        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>{t('compliance.upload.file')}</label>
+            <button onClick={() => document.getElementById('cv-add-upload-input')?.click()} style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px dashed #CBD5E1', background: '#F8FAFC', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 13, color: file ? 'var(--foreground)' : '#94A3B8', fontWeight: file ? 600 : 500, boxSizing: 'border-box' }}>
+              {file ? file.name : t('compliance.upload.chooseFile')}
+            </button>
+            <input id="cv-add-upload-input" type="file" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) { setFile(f); if (!name) setName(f.name); } }} />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>{t('compliance.upload.name')}</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>{t('compliance.upload.type')}</label>
+              <select value={docType} onChange={(e) => setDocType(e.target.value)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, appearance: 'auto', boxSizing: 'border-box' }}>
+                <option value="">{t('compliance.form.selectCategory')}</option>
+                {DOC_TYPES.map((dt) => <option key={dt} value={dt}>{t(`compliance.doctype.${dt}`)}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>{t('compliance.upload.docDate')}</label>
+              <input type="date" value={docDate} onChange={(e) => setDocDate(e.target.value)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>{t('compliance.upload.expiry')}</label>
+            <input type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>{t('compliance.upload.expiryOptional')}</div>
+          </div>
+        </div>
+        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <button onClick={onClose} style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.form.cancel')}</button>
+          <button onClick={() => onSubmit({ file, name: name.trim() || file?.name || 'Untitled', docType, docDate, expiryDate: expiryDate || null })} disabled={!file} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: file ? 1 : 0.5 }}>{t('compliance.upload.submit')}</button>
+        </div>
       </div>
     </div>
   );

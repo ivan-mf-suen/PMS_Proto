@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PROPERTY, FLOORS, EQUIPMENT_CATEGORIES, TC01_ROOMS, TC01_ASSETS } from '../tc01Assets';
+import { PROPERTY, FLOORS, EQUIPMENT_CATEGORIES, TC01_ROOMS, TC01_ASSETS, IS_SAMPLE_DATA } from '../tc01SampleData';
 
 const byId = (pred) => TC01_ASSETS.some(pred);
 
@@ -8,6 +8,10 @@ describe('tc01Assets data', () => {
     expect(PROPERTY.unitCode).toBe('TC-01');
     expect(PROPERTY.name).toBe('保良局東涌護老院');
     expect(PROPERTY.unit).toBe('Elderly Home');
+  });
+
+  it('marks this module explicitly as sample/demo seed data', () => {
+    expect(IS_SAMPLE_DATA).toBe(true);
   });
 
   it('provides the 3F/4F/5F floors, with images for 4F and 5F', () => {

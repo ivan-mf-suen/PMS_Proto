@@ -1,7 +1,32 @@
 import { createContext, useContext, useState, useCallback } from 'react';
-import { TC01_ASSETS, FLOORS, PROPERTY } from '../data/tc01Assets';
+import { TC01_ASSETS, FLOORS, PROPERTY } from '../sample/tc01SampleData';
 
 const PLOTS_LS_PREFIX = 'pms_tc01_floor_plots_';
+const ASSETS_LS_KEY = 'pms_tc01_assets';
+
+// The sample seed is only a starting scaffold for the demo. Real assets are
+// entered by users via addAsset and persisted to localStorage; if stored
+// assets exist they take precedence over the sample seed.
+function readAssets() {
+  try {
+    const raw = localStorage.getItem(ASSETS_LS_KEY);
+    if (raw) {
+      const stored = JSON.parse(raw);
+      if (Array.isArray(stored) && stored.length > 0) return stored;
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return null;
+}
+
+function writeAssets(assets) {
+  try {
+    localStorage.setItem(ASSETS_LS_KEY, JSON.stringify(assets));
+  } catch {
+    // storage full/blocked — ignore
+  }
+}
 
 const AssetsContext = createContext({
   assets: [],
@@ -36,7 +61,7 @@ function writePlots(floor, plots) {
 }
 
 export function AssetsProvider({ children }) {
-  const [assets, setAssets] = useState(() => [...TC01_ASSETS]);
+  const [assets, setAssets] = useState(() => readAssets() || [...TC01_ASSETS]);
   const [plots, setPlots] = useState(() => {
     const init = {};
     FLOORS.forEach((f) => {
@@ -49,18 +74,30 @@ export function AssetsProvider({ children }) {
     (record) => {
       const id = record.id || `TC01-${Date.now()}`;
       const created = { ...record, id };
-      setAssets((prev) => [created, ...prev]);
+      setAssets((prev) => {
+        const next = [created, ...prev];
+        writeAssets(next);
+        return next;
+      });
       return created;
     },
     []
   );
 
   const updateAsset = useCallback((id, updates) => {
-    setAssets((prev) => prev.map((a) => (a.id === id ? { ...a, ...updates } : a)));
+    setAssets((prev) => {
+      const next = prev.map((a) => (a.id === id ? { ...a, ...updates } : a));
+      writeAssets(next);
+      return next;
+    });
   }, []);
 
   const removeAsset = useCallback((id) => {
-    setAssets((prev) => prev.filter((a) => a.id !== id));
+    setAssets((prev) => {
+      const next = prev.filter((a) => a.id !== id);
+      writeAssets(next);
+      return next;
+    });
     setPlots((prev) => {
       const next = {};
       Object.keys(prev).forEach((floor) => {

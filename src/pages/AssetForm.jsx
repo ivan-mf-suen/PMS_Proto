@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 import { useAssets } from '../context/AssetsContext';
-import { FLOORS, EQUIPMENT_CATEGORIES, TC01_ROOMS } from '../data/tc01Assets';
+import { FLOORS, EQUIPMENT_CATEGORIES, TC01_ROOMS } from '../sample/tc01SampleData';
 import { PROPERTIES } from '../data/constants';
 
 const ALL_STATUSES = ['Operational', 'Under Maintenance', 'Needs Inspection'];

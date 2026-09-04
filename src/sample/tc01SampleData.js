@@ -1,5 +1,22 @@
+// ---------------------------------------------------------------------------
+// SAMPLE / DEMO SEED DATA — 東涌護老院 (TC-01)
+// ---------------------------------------------------------------------------
+// This module contains the TC-01 elderly home asset registry used ONLY to
+// demo the application. It is sample/demo data, NOT production data.
+//
+// Real assets will be entered into the system by users (via the Add Asset
+// flow) and persisted in localStorage. The constants below merely seed the
+// demo asset list so reviewers can see the pages populated.
+//
+// Do not treat this as the source of truth for real inventories.
+// ---------------------------------------------------------------------------
+
 import floor4 from '../assets/floormaps/4F.jpg';
 import floor5 from '../assets/floormaps/5F.jpg';
+
+// Marker that this module is demo/sample scaffolding, not real data.
+export const IS_SAMPLE_DATA = true;
+export const SAMPLE_ASSET_SOURCE = 'demo-sample';
 
 export const PROPERTY = {
   id: 13,
@@ -17,6 +34,7 @@ export const FLOORS = [
 export const EQUIPMENT_CATEGORIES = ['櫃', '冷氣/風扇/抽氣扇', '煮食設備'];
 
 // Per-room inventory from 東涌護老院_房間及傢俱表.xlsx (機電及傢俱數量).
+// Sample data only — for demoing purposes.
 // Each room lists, per equipment category, the quantity and the install/purchase
 // year, plus the most recent renovation project and year (if any).
 // [n, year] means n units installed in `year`.
@@ -104,6 +122,7 @@ export const TC01_ROOMS = Object.entries(INVENTORY).flatMap(([floor, rooms]) =>
 
 // ---------------------------------------------------------------------------
 // Asset builders — each physical unit becomes its own asset row.
+// (Sample data expansion for the demo.)
 // ---------------------------------------------------------------------------
 
 let seq = 0;

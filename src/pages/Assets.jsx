@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import Pagination from '../components/Pagination';
 import FilterBar from '../components/FilterBar';
-import { FLOORS, EQUIPMENT_CATEGORIES } from '../data/tc01Assets';
+import { FLOORS, EQUIPMENT_CATEGORIES } from '../sample/tc01SampleData';
 
 const ALL_FLOORS = ['All', ...FLOORS.map((f) => f.key)];
 const ALL_CATEGORIES = ['All', ...EQUIPMENT_CATEGORIES];

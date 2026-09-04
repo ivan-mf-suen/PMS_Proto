@@ -92,7 +92,7 @@ export default function ComplianceDetail() {
   const { id } = useParams();
   const uploaderName = permissions?.name || 'System';
 
-  const doc = docs.find((d) => d.id === id);
+  const doc = docs.find((d) => String(d.id) === String(id));
 
   const [attachments, setAttachments] = useState(() => doc ? listAttachments(doc.id, doc) : []);
   const [previewing, setPreviewing] = useState(null);

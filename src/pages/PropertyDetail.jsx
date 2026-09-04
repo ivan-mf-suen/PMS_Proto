@@ -8,7 +8,7 @@ export default function PropertyDetail() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
-  const prop = PROPERTIES.find((p) => p.id === id);
+  const prop = PROPERTIES.find((p) => String(p.id) === String(id));
   const [expandedSection, setExpandedSection] = useState({ compliance: true, attachments: false, wo: false, assets: false });
 
   if (!prop) {

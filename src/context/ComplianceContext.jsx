@@ -20,8 +20,9 @@ export function ComplianceProvider({ children }) {
 
   const addDoc = useCallback((newDoc) => {
     setDocs((prev) => {
-      const maxId = Math.max(0, ...prev.map((d) => d.id));
-      const doc = { ...newDoc, id: maxId + 1, status: computeStatus(newDoc), removed: false };
+      const hasNumeric = prev.some((d) => typeof d.id === 'number');
+      const maxId = hasNumeric ? Math.max(0, ...prev.filter((d) => typeof d.id === 'number').map((d) => d.id)) : 0;
+      const doc = { ...newDoc, id: newDoc.id != null ? newDoc.id : maxId + 1, status: computeStatus(newDoc), removed: false };
       return [doc, ...prev];
     });
   }, []);

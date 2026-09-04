@@ -5,6 +5,7 @@ import { useCompliance } from '../context/ComplianceContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { listAttachments, getAttachmentUrl, isAttachmentActive } from '../services/complianceFileService';
 import ComboBox from '../components/ComboBox';
+import { computeNextDue } from '../utils/dateUtils';
 import {
   Search, CheckCircle, Clock, Bell, X, Eye, Trash2,
   ChevronDown, ChevronUp,
@@ -522,9 +523,7 @@ function DocModal({ title, form, formUpdate, onSave, onCancel, t, isNew }) {
               const val = e.target.value;
               formUpdate('inspectionDate', val);
               if (val && form.cycleMonths) {
-                const d = new Date(val);
-                d.setMonth(d.getMonth() + (form.cycleMonths || 12));
-                formUpdate('expiry', d.toISOString().slice(0, 10));
+                formUpdate('expiry', computeNextDue(val, form.cycleMonths));
               }
             }} style={fieldStyle} />
           </div>
@@ -534,9 +533,7 @@ function DocModal({ title, form, formUpdate, onSave, onCancel, t, isNew }) {
               const months = parseInt(e.target.value) || 12;
               formUpdate('cycleMonths', months);
               if (form.inspectionDate && months) {
-                const d = new Date(form.inspectionDate);
-                d.setMonth(d.getMonth() + months);
-                formUpdate('expiry', d.toISOString().slice(0, 10));
+                formUpdate('expiry', computeNextDue(form.inspectionDate, months));
               }
             }} min="1" style={fieldStyle} />
           </div>

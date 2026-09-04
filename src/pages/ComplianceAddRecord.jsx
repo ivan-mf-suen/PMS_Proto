@@ -7,8 +7,9 @@ import { useTranslation } from '../i18n/LanguageContext';
 import { ROLES } from '../data/constants';
 import { uploadAttachment } from '../services/complianceFileService';
 import ComboBox from '../components/ComboBox';
+import { computeNextDue } from '../utils/dateUtils';
 import {
-  ArrowLeft, Bell, Mail, Plus, X, ChevronDown,
+  ArrowLeft, Bell, Mail, Plus, X, ChevronDown, Trash2,
 } from 'lucide-react';
 
 const CATEGORY_KEY_MAP = {
@@ -59,7 +60,7 @@ Thank you.`;
 
 const EMPTY_FORM = { name: '', category: '', center: '', documentRef: '', issuedBy: '', inspectionDate: '', cycleMonths: 12, responsible: '', notes: '', expiry: '' };
 
-export default function ComplianceAddRecord() {
+export default function ComplianceAddRecord({ selectedCenter }) {
   const { t } = useTranslation();
   const { permissions } = useAuth();
   const { addDoc, docs } = useCompliance();
@@ -74,7 +75,16 @@ export default function ComplianceAddRecord() {
   const [skipEffective, setSkipEffective] = useState(false);
   const [skipExpiry, setSkipExpiry] = useState(false);
 
+  const isCentreLocked = !!selectedCenter && selectedCenter !== 'All';
+
   const update = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+
+  useEffect(() => {
+    if (isCentreLocked && form.center !== selectedCenter) {
+      setForm((prev) => ({ ...prev, center: selectedCenter }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCenter]);
 
   useEffect(() => {
     const creatorUser = SYSTEM_USERS.find((u) => u.name === uploaderName) || SYSTEM_USERS.find((u) => u.label === uploaderName) || null;
@@ -93,15 +103,23 @@ export default function ComplianceAddRecord() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const autoNext = (() => {
-    if (skipEffective || !form.inspectionDate) return '';
-    const d = new Date(form.inspectionDate + 'T00:00:00');
-    d.setMonth(d.getMonth() + (form.cycleMonths || 12));
-    d.setDate(d.getDate() - 1);
-    return d.toISOString().slice(0, 10);
-  })();
+  const effectiveDateFilled = !skipEffective && !!form.inspectionDate;
+  const autoNext = effectiveDateFilled ? computeNextDue(form.inspectionDate, Number(form.cycleMonths) || 12) : '';
 
-  const effectiveExpiry = skipExpiry ? '' : (form.expiry || autoNext);
+  const expiryValue = effectiveDateFilled ? autoNext : (skipExpiry ? '' : form.expiry);
+  const expiryReadOnly = effectiveDateFilled || skipExpiry;
+
+  const hasEffectiveDate = effectiveDateFilled;
+  const hasExpiry = !!expiryValue;
+  const canSave = !!form.name && !!form.category && !!form.center && (hasEffectiveDate || hasExpiry);
+
+  const toggleSkipEffective = () => {
+    setSkipEffective((prev) => !prev);
+    if (!skipEffective) {
+      update('inspectionDate', '');
+      update('expiry', '');
+    }
+  };
 
   const nameHistory = [...new Set(docs.map((d) => d.name).filter(Boolean))];
   const issuedByHistory = [...new Set(docs.map((d) => d.issuedBy).filter(Boolean))];
@@ -116,7 +134,7 @@ export default function ComplianceAddRecord() {
   const propertyOptions = PROPERTIES.map((p) => ({ value: p.name, label: p.name }));
 
   const addFile = () => {
-    setFiles((prev) => [...prev, { id: `f-${Date.now()}`, file: null, name: '', docType: '', docDate: '' }]);
+    setFiles((prev) => [...prev, { id: `f-${Date.now()}`, file: null, name: '', docType: '', docDate: '', expiryDate: '' }]);
   };
 
   const updateFile = (id, field, value) => {
@@ -128,19 +146,20 @@ export default function ComplianceAddRecord() {
   };
 
   const handleSave = () => {
-    if (!form.name || !form.category || !form.center) return;
+    if (!canSave) return;
     const newId = `DOC-${Date.now()}`;
+    const finalExpiry = hasEffectiveDate ? autoNext : form.expiry;
     const newDoc = {
       id: newId,
       name: form.name,
       category: form.category,
-      center: form.center,
+      center: isCentreLocked ? selectedCenter : form.center,
       documentRef: form.documentRef,
       issuedBy: form.issuedBy,
       inspectionDate: skipEffective ? '' : form.inspectionDate,
       effectiveDate: skipEffective ? '' : form.inspectionDate,
       cycleMonths: Number(form.cycleMonths),
-      expiry: effectiveExpiry,
+      expiry: finalExpiry,
       responsible: form.responsible,
       notes: form.notes,
       status: 'Valid',
@@ -149,16 +168,33 @@ export default function ComplianceAddRecord() {
     addDoc(newDoc);
     files.forEach((f) => {
       if (f.file) {
-        uploadAttachment(newId, { file: f.file, name: f.name || f.file.name, docType: f.docType, docDate: f.docDate }, uploaderName);
+        uploadAttachment(newId, { file: f.file, name: f.name || f.file.name, docType: f.docType, docDate: f.docDate, expiryDate: f.expiryDate }, uploaderName);
       }
     });
     if (reminder) {
-      const reminders = [{ ...reminder, id: `rem-${Date.now()}`, docId: newId, active: true, createdAt: new Date().toISOString() }];
+      const savedReminder = {
+        ...reminder,
+        name: `${form.name || 'Document'} Reminder`,
+        recipients: {
+          ...reminder.recipients,
+          userIds: (reminder.recipients?.userIds?.length ? reminder.recipients.userIds : [creatorIdForSave()]),
+          emails: (reminder.recipients?.emails?.length ? reminder.recipients.emails : [creatorEmailForSave()]),
+        },
+      };
+      const reminders = [{ ...savedReminder, id: `rem-${Date.now()}`, docId: newId, active: true, createdAt: new Date().toISOString() }];
       try { localStorage.setItem(`cv-reminders-${newId}`, JSON.stringify(reminders)); } catch {}
     }
     navigate(`/compliance/${newId}`);
   };
 
+  const creatorIdForSave = () => {
+    const cu = SYSTEM_USERS.find((u) => u.name === uploaderName) || SYSTEM_USERS.find((u) => u.label === uploaderName) || null;
+    return cu ? cu.id : '';
+  };
+  const creatorEmailForSave = () => {
+    const base = uploaderName && uploaderName !== 'System' ? uploaderName.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9.]/g, '') : '';
+    return base ? `${base}@poleungkuk.org.hk` : '';
+  };
 
   const fieldStyle = { width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12, background: '#fff', outline: 'none', boxSizing: 'border-box' };
   const labelStyle = { display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 };
@@ -209,7 +245,12 @@ export default function ComplianceAddRecord() {
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={labelStyle}>{t('compliance.detail.property')} *</label>
-            <ComboBox value={form.center} onChange={(v) => update('center', v)} options={propertyOptions} placeholder={t('compliance.form.selectProperty')} />
+            {isCentreLocked ? (
+              <input value={form.center} readOnly style={{ ...fieldStyle, background: '#F8FAFC', color: '#475569', cursor: 'not-allowed' }} />
+            ) : (
+              <ComboBox value={form.center} onChange={(v) => update('center', v)} options={propertyOptions} placeholder={t('compliance.form.selectProperty')} />
+            )}
+            {isCentreLocked && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>{t('compliance.propertyLocked')}</div>}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
             <div>
@@ -227,9 +268,9 @@ export default function ComplianceAddRecord() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 14 }}>
             <div>
               <label style={labelStyle}>{t('compliance.detail.effectiveDate')}</label>
-              <input type="date" value={form.inspectionDate} onChange={(e) => update('inspectionDate', e.target.value)} disabled={skipEffective} style={{ ...fieldStyle, opacity: skipEffective ? 0.5 : 1 }} />
+              <input type="date" value={skipEffective ? '' : form.inspectionDate} onChange={(e) => update('inspectionDate', e.target.value)} disabled={skipEffective} style={{ ...fieldStyle, opacity: skipEffective ? 0.5 : 1 }} />
               <label style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 11, color: '#64748B', cursor: 'pointer' }}>
-                <input type="checkbox" checked={skipEffective} onChange={() => setSkipEffective(!skipEffective)} style={{ cursor: 'pointer' }} />
+                <input type="checkbox" checked={skipEffective} onChange={toggleSkipEffective} style={{ cursor: 'pointer' }} />
                 {t('compliance.form.skip')}
               </label>
             </div>
@@ -243,15 +284,19 @@ export default function ComplianceAddRecord() {
               </select>
             </div>
             <div>
-              <label style={labelStyle}>{t('compliance.detail.expiry')}</label>
-              <input type="date" value={form.expiry} onChange={(e) => update('expiry', e.target.value)} disabled={skipExpiry} style={{ ...fieldStyle, opacity: skipExpiry ? 0.5 : 1 }} />
-              <label style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 11, color: '#64748B', cursor: 'pointer' }}>
-                <input type="checkbox" checked={skipExpiry} onChange={() => setSkipExpiry(!skipExpiry)} style={{ cursor: 'pointer' }} />
-                {t('compliance.form.skip')}
-              </label>
+              <label style={labelStyle}>{t('compliance.detail.expiry')}{skipEffective ? ' *' : ''}</label>
+              <input type="date" value={expiryValue} onChange={(e) => update('expiry', e.target.value)} disabled={expiryReadOnly} style={{ ...fieldStyle, opacity: expiryReadOnly ? 0.6 : 1 }} />
+              {effectiveDateFilled ? (
+                <div style={{ fontSize: 11, color: '#64748B', marginTop: 6 }}>{t('compliance.autoExpiryHint')}</div>
+              ) : (
+                <label style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 11, color: '#64748B', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={skipExpiry} onChange={() => { setSkipExpiry(!skipExpiry); if (!skipExpiry) update('expiry', ''); }} style={{ cursor: 'pointer' }} />
+                  {t('compliance.form.skip')}
+                </label>
+              )}
             </div>
           </div>
-          {autoNext && !skipExpiry && !form.expiry && (
+          {autoNext && effectiveDateFilled && (
             <div style={{ marginBottom: 14, padding: '8px 12px', borderRadius: 6, background: '#F0F9FF', fontSize: 12, color: '#0369A1' }}>
               <strong>{t('compliance.detail.nextDue')}:</strong> {autoNext}
             </div>
@@ -288,7 +333,7 @@ export default function ComplianceAddRecord() {
                 <span style={{ fontSize: 12, fontWeight: 600, color: '#64748B' }}>{t('compliance.attach.fileLabel', { n: idx + 1 })}</span>
                 <button onClick={() => removeFile(f.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626' }}><X size={14} /></button>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 8, alignItems: 'end' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: 8, alignItems: 'end' }}>
                 <div>
                   <label style={{ ...labelStyle, fontSize: 11 }}>{t('compliance.attach.file')}</label>
                   <button onClick={() => document.getElementById(`add-file-${f.id}`)?.click()} style={{ width: '100%', padding: '6px 10px', borderRadius: 6, border: '1px dashed #CBD5E1', background: '#fff', cursor: 'pointer', fontSize: 11, color: f.file ? '#334155' : '#94A3B8', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', boxSizing: 'border-box' }}>
@@ -310,6 +355,10 @@ export default function ComplianceAddRecord() {
                   <label style={{ ...labelStyle, fontSize: 11 }}>{t('compliance.attach.date')}</label>
                   <input type="date" value={f.docDate} onChange={(e) => updateFile(f.id, 'docDate', e.target.value)} style={{ ...fieldStyle, padding: '6px 8px', fontSize: 11 }} />
                 </div>
+                <div>
+                  <label style={{ ...labelStyle, fontSize: 11 }}>{t('compliance.attach.expiryDate')}</label>
+                  <input type="date" value={f.expiryDate} onChange={(e) => updateFile(f.id, 'expiryDate', e.target.value)} style={{ ...fieldStyle, padding: '6px 8px', fontSize: 11 }} />
+                </div>
               </div>
             </div>
           ))}
@@ -323,8 +372,8 @@ export default function ComplianceAddRecord() {
             <Bell size={15} color="#F59E0B" />
             <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>{t('compliance.reminder.title')}</span>
           </div>
-          {!showReminder && (
-            <button onClick={() => { setReminderName(`${form.name || 'Document'} Reminder`); setShowReminder(true); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: 'none', background: '#F59E0B', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+          {!reminder && (
+            <button onClick={() => { setReminder(null); setReminderName(`${form.name || 'Document'} Reminder`); setShowReminder(true); }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: 'none', background: '#F59E0B', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
               <Plus size={13} /> {t('compliance.reminder.add')}
             </button>
           )}
@@ -341,7 +390,10 @@ export default function ComplianceAddRecord() {
                     {reminder.channels?.inApp && reminder.channels?.email ? 'In-App + Email' : reminder.channels?.inApp ? 'In-App' : 'Email'}
                   </div>
                 </div>
-                <button onClick={() => { setShowReminder(true); }} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 11, fontWeight: 600, color: '#64748B', cursor: 'pointer' }}>{t('compliance.reminder.edit')}</button>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <button onClick={() => { setShowReminder(true); }} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 11, fontWeight: 600, color: '#64748B', cursor: 'pointer' }}>{t('compliance.reminder.edit')}</button>
+                  <button onClick={() => { setReminder(null); setShowReminder(false); }} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 11, fontWeight: 600, color: '#DC2626', cursor: 'pointer' }}><Trash2 size={11} /> {t('compliance.reminder.delete')}</button>
+                </div>
               </div>
             </div>
           ) : !showReminder ? (
@@ -364,9 +416,12 @@ export default function ComplianceAddRecord() {
       </div>
 
       {/* Save / Cancel Footer */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingBottom: 24, alignItems: 'center' }}>
+        {!canSave && (form.name && form.category && form.center) && (
+          <span style={{ fontSize: 12, color: '#B45309', marginRight: 'auto' }}>{t('compliance.form.dateRequired')}</span>
+        )}
         <button onClick={() => navigate('/compliance')} style={{ padding: '10px 24px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('compliance.reminder.form.cancel')}</button>
-        <button onClick={handleSave} disabled={!form.name || !form.category || !form.center} style={{ padding: '10px 24px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: (!form.name || !form.category || !form.center) ? 0.5 : 1 }}>{t('compliance.reminder.form.save')}</button>
+        <button onClick={handleSave} disabled={!canSave} style={{ padding: '10px 24px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: canSave ? 1 : 0.5 }}>{t('compliance.reminder.form.save')}</button>
       </div>
     </div>
   );

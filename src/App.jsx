@@ -47,7 +47,7 @@ function AppLayout() {
             <Route path="properties" element={<Properties selectedCenter={selectedCenter} />} />
             <Route path="properties/:id" element={<PropertyDetail />} />
             <Route path="compliance" element={<ComplianceVault selectedCenter={selectedCenter} />} />
-            <Route path="compliance/new" element={<ComplianceAddRecord />} />
+            <Route path="compliance/new" element={<ComplianceAddRecord selectedCenter={selectedCenter} />} />
             <Route path="compliance/:id" element={<ComplianceDetail />} />
             <Route path="work-orders" element={<WorkOrders selectedCenter={selectedCenter} />} />
             <Route path="work-orders/new" element={<WorkOrderCreate />} />

@@ -7,6 +7,7 @@ import { useTranslation } from '../i18n/LanguageContext';
 import { ROLES } from '../data/constants';
 import { listAttachments, uploadAttachment, deactivateAttachment, getAttachmentUrl, formatFileSize, formatTimestamp, isAttachmentActive, DOC_TYPES } from '../services/complianceFileService';
 import ComboBox from '../components/ComboBox';
+import { computeNextDue as computeNextDueUtil } from '../utils/dateUtils';
 import {
   ArrowLeft, Pencil, Upload, Download, Paperclip, FileText, FileImage, X, Trash2,
   Search, Bell, Mail, Plus, ChevronDown, AlertTriangle,
@@ -28,11 +29,7 @@ const STATUS_BG = { Valid: 'var(--success-bg)', Expiring: '#FEF3C7', Expired: '#
 const STATUS_CLR = { Valid: 'var(--success)', Expiring: '#B45309', Expired: '#DC2626' };
 
 function computeNextDue(effectiveDate, cycleMonths) {
-  if (!effectiveDate) return '';
-  const d = new Date(effectiveDate + 'T00:00:00');
-  d.setMonth(d.getMonth() + (cycleMonths || 12));
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
+  return computeNextDueUtil(effectiveDate, cycleMonths);
 }
 
 function getReminderStorageKey(docId) {

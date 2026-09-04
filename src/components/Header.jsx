@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import { CENTERS, NOTIFICATIONS } from '../data/constants';
@@ -9,8 +10,12 @@ const ALL_CENTERS_OPTION = 'All';
 export default function Header({ selectedCenter, onCenterChange }) {
   const { permissions } = useAuth();
   const { language, setLanguage, t } = useTranslation();
+  const location = useLocation();
   const [centerDropdownOpen, setCenterDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+
+  const isCreatePage = location.pathname === '/compliance/new';
+  const centreLocked = isCreatePage || permissions?.centerScope === 'ASSIGNED_ONLY';
 
   const displayLabel = selectedCenter === ALL_CENTERS_OPTION ? t('header.allCentres') : selectedCenter;
 
@@ -28,25 +33,25 @@ export default function Header({ selectedCenter, onCenterChange }) {
       {/* Center Selector */}
       <div style={{ position: 'relative' }}>
         <button
-          onClick={() => { if (permissions?.centerScope !== 'ASSIGNED_ONLY') setCenterDropdownOpen(!centerDropdownOpen); }}
+          onClick={() => { if (!centreLocked) setCenterDropdownOpen(!centerDropdownOpen); }}
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '6px 12px',
-            background: permissions?.centerScope === 'ASSIGNED_ONLY' ? '#F8FAFC' : 'var(--secondary)',
+            background: centreLocked ? '#F8FAFC' : 'var(--secondary)',
             border: '1px solid var(--border)', borderRadius: 6,
-            cursor: permissions?.centerScope === 'ASSIGNED_ONLY' ? 'default' : 'pointer',
-            color: permissions?.centerScope === 'ASSIGNED_ONLY' ? '#475569' : 'var(--foreground)',
-            opacity: permissions?.centerScope === 'ASSIGNED_ONLY' ? 0.8 : 1,
+            cursor: centreLocked ? 'default' : 'pointer',
+            color: centreLocked ? '#475569' : 'var(--foreground)',
+            opacity: centreLocked ? 0.8 : 1,
           }}
         >
-          <Building2 size={14} color={permissions?.centerScope === 'ASSIGNED_ONLY' ? '#64748B' : 'var(--info)'} />
+          <Building2 size={14} color={centreLocked ? '#64748B' : 'var(--info)'} />
           <span style={{ fontSize: 13, fontWeight: 600 }}>{displayLabel}</span>
-          {permissions?.centerScope !== 'ASSIGNED_ONLY' && <ChevronDown size={13} color="#64748B" />}
-          {permissions?.centerScope === 'ASSIGNED_ONLY' && (
+          {!centreLocked && <ChevronDown size={13} color="#64748B" />}
+          {centreLocked && (
             <span style={{ marginLeft: 6, fontSize: 10, padding: '2px 6px', backgroundColor: '#E2E8F0', color: '#475569', borderRadius: 4, fontWeight: 700 }}>{t('header.locked')}</span>
           )}
         </button>
-        {centerDropdownOpen && permissions?.centerScope !== 'ASSIGNED_ONLY' && (
+        {centerDropdownOpen && !centreLocked && (
           <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 16px rgba(15,23,42,0.1)', minWidth: 240, zIndex: 100, overflow: 'hidden' }}>
             <div style={{ padding: '6px 12px 4px', fontSize: 11, color: '#64748B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               {permissions?.centerScope === 'CLUSTER' ? t('header.clusterCentres') : t('header.allGlobalCentres')}

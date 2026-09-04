@@ -6,7 +6,7 @@ import { useTranslation } from '../i18n/LanguageContext';
 import {
   ArrowLeft, Paperclip, AlertTriangle, RotateCcw, Send, Info,
   CheckCircle, Circle, Download, Upload, FileText, X, Check,
-  CheckSquare, Plus, Trash2, MinusCircle,
+  CheckSquare, Plus, Trash2, MinusCircle, MapPin,
 } from 'lucide-react';
 import { WO_TYPE_KEY_MAP } from '../data/workOrders';
 
@@ -834,16 +834,39 @@ export default function WorkOrderDetail() {
 
           {/* Section 2: Selected Assets */}
           <DetailCard title={t('workOrderDetail.assetsSection', { count: wo.assets?.length || 0 })} number="2">
+            {wo.property && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: '#F8FAFC', borderRadius: 8, border: '1px solid var(--border)', marginBottom: 12 }}>
+                <MapPin size={16} color="var(--info)" />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>{wo.property.propertyCode} · {wo.property.propertyName}</div>
+                  <div style={{ fontSize: 11, color: '#94A3B8' }}>{t('workOrderDetail.property')}</div>
+                </div>
+              </div>
+            )}
             {wo.assets && wo.assets.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {wo.assets.map((tag, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#F8FAFC', borderRadius: 8, border: '1px solid var(--border)' }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--info-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <AlertTriangle size={18} color="var(--info)" />
+                {wo.assets.map((a, idx) => {
+                  const isObj = typeof a === 'object' && a !== null;
+                  const display = isObj ? `${a.room || a.name} — ${a.category || ''}` : t('workOrderDetail.assetTag', { tag: a });
+                  const sub = isObj ? `${a.floor || ''} · Qty ${a.qty || 1} · ${a.id}` : '';
+                  const plot = isObj ? a.plot : null;
+                  return (
+                    <div key={idx} style={{ padding: '12px 16px', background: '#F8FAFC', borderRadius: 8, border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--info-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <AlertTriangle size={18} color="var(--info)" />
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{display}</div>
+                        {plot && (
+                          <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: 'var(--success-bg)', color: 'var(--success)' }}>
+                            {t('workOrderDetail.floorPlanPlot')} {plot.floor} ({plot.x.toFixed(1)}%, {plot.y.toFixed(1)}%)
+                          </span>
+                        )}
+                      </div>
+                      {sub && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6, fontFamily: 'monospace' }}>{sub}</div>}
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{t('workOrderDetail.assetTag', { tag })}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div style={{ color: '#94A3B8', fontSize: 13 }}>{t('workOrderDetail.noAssets')}</div>

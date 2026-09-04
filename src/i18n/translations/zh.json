@@ -1,6 +1,5 @@
 {
   "app.title": "物業管理系統",
-
   "login.brandName": "物業管理系統 (PMS)",
   "login.ssoTitle": "單一登入門戶",
   "login.ssoSubtitle": "企業認證閘道",
@@ -9,11 +8,10 @@
   "login.corpId": "登入編號",
   "login.corpIdPlaceholder": "輸入您的登入編號",
   "login.password": "密碼",
-  "login.passwordPlaceholder": "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022",
+  "login.passwordPlaceholder": "••••••••",
   "login.ssoButton": "透過企業 SSO 登入",
   "login.quickTitle": "演示快速登入（選擇角色）",
   "login.disabled": "已停用",
-
   "sidebar.dashboard": "控制面板",
   "sidebar.properties": "物業",
   "sidebar.complianceVault": "合規文件庫",
@@ -22,7 +20,6 @@
   "sidebar.floorPlan": "樓層平面圖",
   "sidebar.reports": "報告",
   "sidebar.settings": "設定",
-
   "header.allCentres": "全部中心",
   "header.clusterCentres": "群組中心",
   "header.allGlobalCentres": "所有全球中心",
@@ -30,7 +27,6 @@
   "header.notifications": "通知",
   "header.new": "則新通知",
   "header.viewAll": "查看所有通知",
-
   "dashboard.allCentres": "全部中心",
   "dashboard.kpi.openWO": "待處理工單",
   "dashboard.kpi.completed": "已完成",
@@ -56,7 +52,6 @@
   "dashboard.col.priority": "優先級",
   "dashboard.col.status": "狀態",
   "dashboard.col.due": "到期日",
-
   "dashboard.filter.district": "區域",
   "dashboard.filter.facilityType": "設施類型",
   "dashboard.filter.workCategory": "工程類別",
@@ -65,7 +60,6 @@
   "dashboard.filter.clearAll": "清除篩選",
   "dashboard.filter.from": "開始日期",
   "dashboard.filter.to": "結束日期",
-
   "dashboard.overview.activeWO": "活躍工單",
   "dashboard.overview.pendingApproval": "待審批",
   "dashboard.overview.underPWD": "PWD 評估中",
@@ -74,10 +68,8 @@
   "dashboard.overview.completed": "已完成",
   "dashboard.overview.contractsAwarded": "已批出合約",
   "dashboard.overview.totalContractSum": "合約總金額",
-
   "dashboard.pipeline.title": "工單流程追蹤",
   "dashboard.pipeline.byStatus": "按狀態分佈",
-
   "dashboard.financial.title": "財務概覽",
   "dashboard.financial.totalCommitted": "已承擔成本",
   "dashboard.financial.totalBudget": "總預算",
@@ -86,7 +78,6 @@
   "dashboard.financial.costByType": "按工程類別成本",
   "dashboard.financial.buildersWorks": "建築工程",
   "dashboard.financial.buildingServices": "建築設備",
-
   "dashboard.facility.title": "設施與資產概況",
   "dashboard.facility.byType": "按設施類型",
   "dashboard.facility.byDistrict": "按區域分佈",
@@ -95,13 +86,11 @@
   "dashboard.facility.over30yr": "超過 30 年",
   "dashboard.facility.topMaintenance": "維修需求最多的設施",
   "dashboard.facility.woCount": "張工單",
-
   "dashboard.compliance.upcoming": "即將進行的檢查（3 個月內）",
   "dashboard.compliance.overdue": "逾期檢查",
   "dashboard.compliance.equipmentEOL": "接近使用壽命的設備",
   "dashboard.compliance.installYear": "安裝年份",
   "dashboard.compliance.yearsOld": "年",
-
   "dashboard.contracts.title": "合約包裝概覽",
   "dashboard.contracts.beingFormed": "組建中",
   "dashboard.contracts.activeContracts": "活躍合約",
@@ -112,14 +101,12 @@
   "dashboard.contracts.awardedDate": "批出日期",
   "dashboard.contracts.noContractor": "待定",
   "dashboard.contracts.facilityCount": "{count} 個設施",
-
   "dashboard.pm.title": "預防性維護分析",
   "dashboard.pm.trend": "工單類別趨勢（過去 12 個月）",
   "dashboard.pm.repeatFailures": "重複故障",
   "dashboard.pm.highCost": "高成本設施",
   "dashboard.pm.noRepeatFailures": "未偵測到重複故障",
   "dashboard.pm.month": "月份",
-
   "workOrders.title": "工單",
   "workOrders.create": "建立工單",
   "workOrders.searchPlaceholder": "按編號、標題、負責人搜尋...",
@@ -150,7 +137,6 @@
   "workOrders.previewAssignee": "負責人",
   "workOrders.previewDue": "到期日",
   "workOrders.allStatuses": "所有狀態",
-
   "woDetail.back": "返回工單列表",
   "woDetail.title": "工單詳情",
   "woDetail.currentStatus": "目前狀態：",
@@ -170,7 +156,6 @@
   "woDetail.startProgress": "開始進行",
   "woDetail.markCompleted": "標記為已完成",
   "woDetail.confirmComplete": "確定要將此工單標記為已完成嗎？",
-
   "woCreate.title": "建立工單",
   "woCreate.back": "返回",
   "woCreate.centre": "中心",
@@ -193,7 +178,6 @@
   "woCreate.pwdWithout": "無 PWD 參與",
   "woCreate.submit": "建立工單",
   "woCreate.cancel": "取消",
-
   "properties.title": "物業",
   "properties.managed": "個管理物業",
   "properties.add": "新增物業",
@@ -209,7 +193,6 @@
   "properties.col.unit": "單位",
   "properties.col.lsgNlsg": "LSG/NLSG",
   "properties.col.contact": "聯絡人",
-
   "propertyDetail.back": "返回物業列表",
   "propertyDetail.information": "物業資料",
   "propertyDetail.address": "地址",
@@ -230,7 +213,6 @@
   "propertyDetail.relatedWOs": "相關工單",
   "propertyDetail.relatedAssets": "相關資產",
   "propertyDetail.noData": "暫無資料",
-
   "compliance.title": "合規文件庫",
   "compliance.subtitle": "追蹤及管理所有物業的合規文件、證書及檢查記錄",
   "compliance.documents": "份文件",
@@ -263,12 +245,10 @@
   "compliance.edit": "編輯",
   "compliance.remove": "移除",
   "compliance.clearAll": "清除全部",
-
   "compliance.col.cycle": "週期",
   "compliance.col.lastInspect": "生效日期",
   "compliance.col.responsible": "負責人",
   "compliance.col.notes": "備註",
-
   "compliance.viewTitle": "合規文件詳情",
   "compliance.editTitle": "編輯合規文件",
   "compliance.addTitle": "新增合規提醒",
@@ -320,7 +300,6 @@
   "compliance.detail.responsible": "負責人",
   "compliance.detail.status": "狀態",
   "compliance.detail.notes": "備註",
-
   "compliance.attach.title": "文件紀錄",
   "compliance.attach.upload": "上傳文件",
   "compliance.attach.col.name": "文件名稱",
@@ -436,7 +415,6 @@
   "compliance.prev": "上一頁",
   "compliance.next": "下一頁",
   "compliance.ofPages": "共 {total} 頁",
-
   "compliance.cat.FireSafety": "消防安全",
   "compliance.cat.Electrical": "電力",
   "compliance.cat.Gas": "氣體",
@@ -453,7 +431,6 @@
   "compliance.cat.Lease": "租約",
   "compliance.filter.expiryFrom": "到期日從",
   "compliance.filter.expiryTo": "到期日至",
-
   "wo.group.buildersWorks": "維修/保養建築工程",
   "wo.group.buildingServices": "建築設備工程",
   "wo.type.concreteRepair": "混凝土修繕",
@@ -471,7 +448,6 @@
   "wo.type.pdSystem": "增設/更換PD系統",
   "wo.type.elvSystem": "增設/更換ELV系統（對講機、PA系統等）",
   "wo.type.gasSystem": "增設/更換氣體系統",
-
   "assets.title": "資產",
   "assets.count": "項資產遍佈所有中心",
   "assets.add": "新增資產",
@@ -486,7 +462,6 @@
   "assets.col.lastService": "上次保養",
   "assets.col.nextService": "下次保養",
   "assets.clearAll": "清除全部",
-
   "floorPlan.title": "樓層平面圖",
   "floorPlan.assetDetails": "資產詳情",
   "floorPlan.allAssets": "所有資產",
@@ -540,7 +515,6 @@
   "floorPlan.server": "伺服器機房",
   "floorPlan.storage": "儲物室",
   "floorPlan.workshop": "工場",
-
   "reports.title": "報告",
   "reports.subtitle": "分析與報告控制面板",
   "reports.quickCards": "快速報告",
@@ -557,13 +531,11 @@
   "reports.col.name": "報告名稱",
   "reports.col.date": "日期",
   "reports.col.status": "狀態",
-
   "settings.profile": "個人資料",
   "settings.roles": "角色與權限",
   "settings.notifications": "通知設定",
   "settings.localization": "地區設定",
   "settings.settings": "設定",
-
   "settings.profile.title": "個人資料設定",
   "settings.profile.personalInfo": "個人訊息",
   "settings.profile.preferences": "偏好設定",
@@ -578,7 +550,6 @@
   "settings.profile.save": "儲存變更",
   "settings.profile.ssoNote": "由企業 SSO 管理 — 請聯絡資訊科技部更新",
   "settings.profile.uploadAvatar": "上載照片",
-
   "settings.roles.title": "角色與權限",
   "settings.roles.currentRole": "目前角色：",
   "settings.roles.addRole": "新增角色",
@@ -614,7 +585,6 @@
   "settings.perm.manageRoles": "管理角色",
   "settings.perm.manage": "管理",
   "settings.perm.all": "全部",
-
   "settings.notif.title": "通知偏好設定",
   "settings.notif.email": "電郵",
   "settings.notif.inApp": "應用程式內",
@@ -638,7 +608,6 @@
   "settings.notif.digestDaily": "每日摘要",
   "settings.notif.digestWeekly": "每週摘要",
   "settings.notif.save": "儲存偏好設定",
-
   "settings.loc.title": "地區設定",
   "settings.loc.preferredLanguage": "偏好語言",
   "settings.loc.languageHelper": "變更選單、按鈕及導覽標籤",
@@ -662,7 +631,6 @@
   "settings.loc.sampleTime": "時間",
   "settings.loc.sampleBudget": "預算",
   "settings.loc.sampleNumber": "數字",
-
   "common.save": "儲存",
   "common.cancel": "取消",
   "common.delete": "刪除",
@@ -680,5 +648,73 @@
   "common.active": "活躍",
   "common.inactive": "已停用",
   "common.yes": "是",
-  "common.no": "否"
+  "common.no": "否",
+  "assets.actions.edit": "編輯",
+  "assets.actions.delete": "刪除",
+  "assets.cancel": "取消",
+  "assets.col.floornroom": "房間 / 樓層",
+  "assets.col.qty": "數量",
+  "assets.col.installYear": "安裝年份",
+  "assets.col.renovation": "翻新",
+  "assets.delete": "刪除",
+  "assets.delete.title": "刪除資產",
+  "assets.delete.confirm": "確定要刪除此資產嗎？此操作無法復原。",
+  "assets.delete.undo": "復原",
+  "assets.export": "匯出 CSV",
+  "assets.floorLabel": "樓層",
+  "assets.form.addAsset": "新增資產",
+  "assets.form.addTitle": "新增資產",
+  "assets.form.back": "返回資產列表",
+  "assets.form.cancel": "取消",
+  "assets.form.category": "類別",
+  "assets.form.condition": "狀況",
+  "assets.form.editTitle": "編輯資產",
+  "assets.form.floor": "樓層",
+  "assets.form.installYear": "安裝年份",
+  "assets.form.qty": "數量",
+  "assets.form.renovation": "翻新",
+  "assets.form.renovationPh": "例如：更換廚房爐具設備 2022",
+  "assets.form.room": "房間",
+  "assets.form.saveChanges": "儲存變更",
+  "assets.form.selectRoom": "揀選房間",
+  "assets.form.status": "狀態",
+  "assets.searchLabel": "搜尋",
+  "assets.summ.total": "資產總數",
+  "assets.summ.operational": "運作中",
+  "assets.summ.maintenance": "維修中",
+  "assets.viewMap": "於平面圖查看",
+  "assetDetail.assetInfo": "資產資料",
+  "assetDetail.back": "返回資產列表",
+  "assetDetail.category": "類別",
+  "assetDetail.colContractor": "承辦商",
+  "assetDetail.colDate": "日期",
+  "assetDetail.colDesc": "描述",
+  "assetDetail.colType": "類型",
+  "assetDetail.condition": "狀況",
+  "assetDetail.createWO": "建立工作單",
+  "assetDetail.edit": "編輯資產",
+  "assetDetail.equipment": "設備",
+  "assetDetail.floorPlanPlot": "平面圖",
+  "assetDetail.installYear": "安裝年份",
+  "assetDetail.lastService": "上次維修",
+  "assetDetail.maintenance": "保養",
+  "assetDetail.nextService": "下次維修",
+  "assetDetail.noHistory": "沒有維修記錄。",
+  "assetDetail.notFound": "找不到資產。",
+  "assetDetail.notPlotted": "未於平面圖上標示",
+  "assetDetail.property": "物業",
+  "assetDetail.qty": "數量",
+  "assetDetail.records": "項記錄",
+  "assetDetail.renovation": "翻新",
+  "assetDetail.room": "房間",
+  "assetDetail.serviceHistory": "維修記錄",
+  "assetDetail.status": "狀態",
+  "assetDetail.viewOnMap": "於平面圖查看",
+  "floorPlan.noMapImage": "此樓層暫無平面圖。",
+  "floorPlan.notPlotted": "未標示",
+  "floorPlan.plotted": "已標示",
+  "floorPlan.selectAsset": "揀選資產",
+  "common.download": "下載",
+  "workOrderDetail.property": "物業",
+  "workOrderDetail.floorPlanPlot": "平面圖"
 }

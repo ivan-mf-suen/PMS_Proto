@@ -2,6 +2,7 @@ import { render } from '@testing-library/react';
 import { AuthProvider } from '../context/AuthContext';
 import { WorkOrderProvider } from '../context/WorkOrderContext';
 import { ComplianceProvider } from '../context/ComplianceContext';
+import { AssetsProvider } from '../context/AssetsContext';
 import { LanguageProvider } from '../i18n/LanguageContext';
 
 export function renderWithProviders(ui, { ...renderOptions } = {}) {
@@ -11,7 +12,9 @@ export function renderWithProviders(ui, { ...renderOptions } = {}) {
         <AuthProvider>
           <WorkOrderProvider>
             <ComplianceProvider>
-              {children}
+              <AssetsProvider>
+                {children}
+              </AssetsProvider>
             </ComplianceProvider>
           </WorkOrderProvider>
         </AuthProvider>

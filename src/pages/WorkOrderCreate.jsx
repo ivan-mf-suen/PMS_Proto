@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useWorkOrders } from '../context/WorkOrderContext';
+import { useAssets } from '../context/AssetsContext';
 import { useTranslation } from '../i18n/LanguageContext';
 import {
   ArrowLeft, Save, X, MapPin, Plus, Pencil, Image, Paperclip, Trash2,
-  ChevronDown, Map, AlertTriangle, Send, Zap,
+  ChevronDown, Map, AlertTriangle, Send, Zap, Check,
 } from 'lucide-react';
 
 const PRIORITY_OPTIONS = [
@@ -63,23 +64,31 @@ const WO_TYPE_KEY_MAP = {
   'Gas System Addition/Replacement': 'wo.type.gasSystem',
 };
 
-const MOCK_ASSETS = [
-  {
-    id: 1,
-    name: '惠而浦 10KG 前置式洗衣機',
-    tag: 'DS56-A-2020-006',
-    location: 'Laundry Area',
-    attachment: 'laundry_setup.jpg',
-    remarks: 'test',
-  },
-];
+function mapAssetToSel(a, getPlotForAsset) {
+  const plot = getPlotForAsset(a.id);
+  return {
+    id: a.id,
+    name: `${a.room} — ${a.category}`,
+    propertyCode: a.propertyCode,
+    propertyName: a.propertyName,
+    floor: a.floor,
+    room: a.room,
+    category: a.category,
+    qty: a.qty,
+    installYear: a.installYear,
+    plot: plot ? { floor: plot.floor, x: plot.x, y: plot.y } : null,
+  };
+}
 
 export default function WorkOrderCreate() {
   const { addWorkOrder, getNextWoId } = useWorkOrders();
+  const { assets: allAssets, property: appProperty, getPlotForAsset } = useAssets();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const queryProperty = searchParams.get('property');
   const today = 'Tuesday, 18 August 2026';
-  const portfolio = 'PLK Shek Kip Mei Community Services Centre';
+  const portfolio = queryProperty || appProperty.unitCode;
 
   const [form, setForm] = useState({
     title: '',
@@ -93,12 +102,22 @@ export default function WorkOrderCreate() {
     pwdInvolvement: 'without',
   });
 
-  const [assets] = useState(MOCK_ASSETS);
+  const [assets, setAssets] = useState(searchParams.get('asset')
+    ? allAssets.filter((a) => a.id === searchParams.get('asset')).map((a) => mapAssetToSel(a, getPlotForAsset))
+    : []);
+
+  const [assetPickerOpen, setAssetPickerOpen] = useState(false);
+  const [assetSearch, setAssetSearch] = useState('');
   const [editingTask, setEditingTask] = useState(null);
   const [priorityOpen, setPriorityOpen] = useState(false);
   const [fundingOpen, setFundingOpen] = useState(false);
   const [section1Open, setSection1Open] = useState(true);
   const [section2Open, setSection2Open] = useState(true);
+
+  const filteredPickerAssets = useMemo(() => {
+    const q = assetSearch.toLowerCase();
+    return allAssets.filter((a) => !q || a.room.toLowerCase().includes(q) || a.category.toLowerCase().includes(q) || a.floor.toLowerCase().includes(q));
+  }, [allAssets, assetSearch]);
 
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -131,7 +150,11 @@ export default function WorkOrderCreate() {
       description: `Work order: ${form.title || 'Untitled'}. Priority: ${form.priority}. Budget: $${form.budget || 0}.`,
       fundingSource: FUNDING_SOURCES[form.fundingSource],
       pwdInvolvement: form.pwdInvolvement,
-      assets: assets.map((a) => a.tag),
+      property: {
+        propertyCode: appProperty.unitCode,
+        propertyName: appProperty.name,
+      },
+      assets: assets,
       attachments: [],
       comments: [],
     };
@@ -566,17 +589,30 @@ export default function WorkOrderCreate() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 {section2Open && (
-                  <button
-                    onClick={(e) => e.stopPropagation()}
-                    style={{
-                      padding: '7px 14px', borderRadius: 6,
-                      border: '1px dashed var(--info)', background: 'var(--info-bg)',
-                      fontSize: 12, fontWeight: 600, color: 'var(--info)', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', gap: 6,
-                    }}
-                  >
-                    <Plus size={14} /> Add Asset / Item via Floor Plan Map
-                  </button>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setAssetPickerOpen((v) => !v); }}
+                      style={{
+                        padding: '7px 14px', borderRadius: 6,
+                        border: '1px dashed var(--info)', background: assetPickerOpen ? '#EFF6FF' : 'var(--info-bg)',
+                        fontSize: 12, fontWeight: 600, color: 'var(--info)', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: 6,
+                      }}
+                    >
+                      <Plus size={14} /> Add Asset / Item
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigate(`/floor-plan?property=TC-01`); }}
+                      style={{
+                        padding: '7px 14px', borderRadius: 6,
+                        border: '1px solid var(--info)', background: '#fff',
+                        fontSize: 12, fontWeight: 600, color: 'var(--info)', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: 6,
+                      }}
+                    >
+                      <Map size={14} /> via Floor Plan Map
+                    </button>
+                  </div>
                 )}
                 {!section2Open && (
                   <span style={{ fontSize: 11, color: '#94A3B8' }}>Click to expand</span>
@@ -588,6 +624,52 @@ export default function WorkOrderCreate() {
               </div>
             </div>
 
+            {/* Asset Picker */}
+            {section2Open && assetPickerOpen && (
+              <div style={{ padding: '0 20px' }}>
+                <div style={{
+                  marginBottom: 16, padding: 16, borderRadius: 10,
+                  border: '1px solid var(--info)', background: '#F8FAFC',
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <MapPin size={14} color="var(--info)" /> {appProperty.unitCode} · {appProperty.name} — Select Asset
+                  </div>
+                  <input
+                    value={assetSearch}
+                    onChange={(e) => setAssetSearch(e.target.value)}
+                    placeholder="Search by room / category / floor..."
+                    style={{
+                      width: '100%', padding: '8px 12px', borderRadius: 6,
+                      border: '1px solid var(--border)', fontSize: 12,
+                      outline: 'none', background: '#fff', marginBottom: 10,
+                    }}
+                  />
+                  <div style={{ maxHeight: 240, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {filteredPickerAssets.map((a) => {
+                      const alreadyAdded = assets.some((sel) => sel.id === a.id);
+                      return (
+                        <div key={a.id} onClick={() => {
+                          if (alreadyAdded) return;
+                          setAssets((prev) => [...prev, mapAssetToSel(a, getPlotForAsset)]);
+                        }} style={{
+                          display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px',
+                          borderRadius: 6, cursor: alreadyAdded ? 'not-allowed' : 'pointer',
+                          background: alreadyAdded ? '#F1F5F9' : '#fff',
+                          border: '1px solid var(--border)', opacity: alreadyAdded ? 0.6 : 1,
+                        }}>
+                          <Check size={14} color={alreadyAdded ? '#059669' : '#CBD5E1'} />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>{a.room} — {a.category}</div>
+                            <div style={{ fontSize: 11, color: '#94A3B8' }}>{a.id} · {a.floor} · Qty {a.qty}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Asset Cards */}
             {section2Open && (<div style={{ padding: 20 }}>
               {assets.length === 0 ? (
@@ -596,7 +678,7 @@ export default function WorkOrderCreate() {
                   border: '2px dashed var(--border)', borderRadius: 8,
                 }}>
                   <Map size={32} color="#CBD5E1" style={{ marginBottom: 8 }} />
-                  <div>No assets selected yet. Use the floor plan to add assets.</div>
+                  <div>No assets selected yet. Use Add Asset or the floor plan to add assets.</div>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -621,7 +703,24 @@ export default function WorkOrderCreate() {
                               {asset.name}
                             </div>
                             <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
-                              Tag: {asset.tag}
+                              {asset.floor} · Qty {asset.qty} · Install {asset.installYear}
+                            </div>
+                            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2, fontFamily: 'monospace' }}>
+                              {asset.id}
+                            </div>
+                            <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                              {asset.plot ? (
+                                <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10, background: 'var(--success-bg)', color: 'var(--success)' }}>
+                                  Floor {asset.plot.floor} ({asset.plot.x.toFixed(1)}%, {asset.plot.y.toFixed(1)}%)
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => navigate(`/floor-plan?floor=${asset.floor}&asset=${asset.id}`)}
+                                  style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10, border: '1px dashed var(--info)', background: '#fff', color: 'var(--info)', cursor: 'pointer' }}
+                                >
+                                  <MapPin size={10} /> Plot on Floor Plan
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -633,7 +732,7 @@ export default function WorkOrderCreate() {
                           marginBottom: 12,
                         }}>
                           <MapPin size={14} color="#64748B" />
-                          <span style={{ fontSize: 12, color: '#475569', fontWeight: 500 }}>{asset.location}</span>
+                          <span style={{ fontSize: 12, color: '#475569', fontWeight: 500 }}>{asset.propertyCode} · {asset.propertyName} · Floor {asset.floor} · {asset.room}</span>
                         </div>
 
                         {/* Attachment */}
@@ -673,9 +772,9 @@ export default function WorkOrderCreate() {
                           <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 3 }}>
                             Remarks
                           </div>
-                          <div style={{ fontSize: 13, color: 'var(--foreground)' }}>
-                            {asset.remarks || 'No remarks'}
-                          </div>
+                            <div style={{ fontSize: 13, color: 'var(--foreground)' }}>
+                              {asset.category} · Installed {asset.installYear}
+                            </div>
                         </div>
                       </div>
 
@@ -696,7 +795,7 @@ export default function WorkOrderCreate() {
                           <Pencil size={13} /> Edit Task Details
                         </button>
                         <div style={{ flex: 1 }} />
-                        <button style={{
+                        <button onClick={() => setAssets((prev) => prev.filter((s) => s.id !== asset.id))} style={{
                           padding: '6px 10px', borderRadius: 6,
                           border: '1px solid var(--border)', background: '#fff',
                           cursor: 'pointer', display: 'flex', alignItems: 'center',

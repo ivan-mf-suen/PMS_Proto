@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-ro
 import { AuthProvider } from './context/AuthContext';
 import { WorkOrderProvider } from './context/WorkOrderContext';
 import { ComplianceProvider } from './context/ComplianceContext';
+import { AssetsProvider } from './context/AssetsContext';
 import { LanguageProvider } from './i18n/LanguageContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -14,6 +15,8 @@ import FloorPlan from './pages/FloorPlan';
 import Properties from './pages/Properties';
 import PropertyDetail from './pages/PropertyDetail';
 import Assets from './pages/Assets';
+import AssetDetail from './pages/AssetDetail';
+import AssetForm from './pages/AssetForm';
 import ComplianceVault from './pages/ComplianceVault';
 import ComplianceDetail from './pages/ComplianceDetail';
 import ComplianceAddRecord from './pages/ComplianceAddRecord';
@@ -53,6 +56,9 @@ function AppLayout() {
             <Route path="work-orders/new" element={<WorkOrderCreate />} />
             <Route path="work-orders/:id" element={<WorkOrderDetail />} />
             <Route path="assets" element={<Assets />} />
+            <Route path="assets/new" element={<AssetForm />} />
+            <Route path="assets/:id" element={<AssetDetail />} />
+            <Route path="assets/:id/edit" element={<AssetForm />} />
             <Route path="floor-plan" element={<FloorPlan />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
@@ -69,11 +75,13 @@ export default function App() {
       <AuthProvider>
         <WorkOrderProvider>
           <ComplianceProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/*" element={<AppLayout />} />
-              </Routes>
-            </BrowserRouter>
+            <AssetsProvider>
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/*" element={<AppLayout />} />
+                </Routes>
+              </BrowserRouter>
+            </AssetsProvider>
           </ComplianceProvider>
         </WorkOrderProvider>
       </AuthProvider>

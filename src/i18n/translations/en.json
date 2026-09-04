@@ -1,6 +1,5 @@
 {
   "app.title": "PMS",
-
   "login.brandName": "Property Management System (PMS)",
   "login.ssoTitle": "Single Sign-On Portal",
   "login.ssoSubtitle": "Corporate Authentication Gateway",
@@ -9,11 +8,10 @@
   "login.corpId": "Login ID",
   "login.corpIdPlaceholder": "Enter your Login ID",
   "login.password": "Password",
-  "login.passwordPlaceholder": "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022",
+  "login.passwordPlaceholder": "••••••••",
   "login.ssoButton": "Authenticate with Corporate SSO",
   "login.quickTitle": "Presentation Quick-Login (Select Role)",
   "login.disabled": "Disabled",
-
   "sidebar.dashboard": "Dashboard",
   "sidebar.properties": "Properties",
   "sidebar.complianceVault": "Compliance Vault",
@@ -22,7 +20,6 @@
   "sidebar.floorPlan": "Floor Plan",
   "sidebar.reports": "Reports",
   "sidebar.settings": "Settings",
-
   "header.allCentres": "All Centres",
   "header.clusterCentres": "Cluster Centres",
   "header.allGlobalCentres": "All Global Centres",
@@ -30,7 +27,6 @@
   "header.notifications": "Notifications",
   "header.new": "new",
   "header.viewAll": "View All Notifications",
-
   "dashboard.allCentres": "All Centres",
   "dashboard.kpi.openWO": "Open Work Orders",
   "dashboard.kpi.completed": "completed",
@@ -56,7 +52,6 @@
   "dashboard.col.priority": "Priority",
   "dashboard.col.status": "Status",
   "dashboard.col.due": "Due",
-
   "dashboard.filter.district": "District",
   "dashboard.filter.facilityType": "Facility Type",
   "dashboard.filter.workCategory": "Work Category",
@@ -65,7 +60,6 @@
   "dashboard.filter.clearAll": "Clear Filters",
   "dashboard.filter.from": "From",
   "dashboard.filter.to": "To",
-
   "dashboard.overview.activeWO": "Active Work Orders",
   "dashboard.overview.pendingApproval": "Pending Approval",
   "dashboard.overview.underPWD": "Under PWD Assessment",
@@ -74,10 +68,8 @@
   "dashboard.overview.completed": "Completed",
   "dashboard.overview.contractsAwarded": "Contracts Awarded",
   "dashboard.overview.totalContractSum": "Total Contract Sum",
-
   "dashboard.pipeline.title": "Work Order Pipeline",
   "dashboard.pipeline.byStatus": "Work Orders by Status",
-
   "dashboard.financial.title": "Financial Overview",
   "dashboard.financial.totalCommitted": "Total Committed Cost",
   "dashboard.financial.totalBudget": "Total Budget",
@@ -86,7 +78,6 @@
   "dashboard.financial.costByType": "Cost by Work Type",
   "dashboard.financial.buildersWorks": "Builder's Works",
   "dashboard.financial.buildingServices": "Building Services",
-
   "dashboard.facility.title": "Facility & Asset Snapshot",
   "dashboard.facility.byType": "Facilities by Service Type",
   "dashboard.facility.byDistrict": "Facilities by District",
@@ -95,13 +86,11 @@
   "dashboard.facility.over30yr": "Over 30 years",
   "dashboard.facility.topMaintenance": "Top Facilities by Maintenance Requests",
   "dashboard.facility.woCount": "work orders",
-
   "dashboard.compliance.upcoming": "Upcoming Inspections (3 months)",
   "dashboard.compliance.overdue": "Overdue Inspections",
   "dashboard.compliance.equipmentEOL": "Equipment Nearing End-of-Life",
   "dashboard.compliance.installYear": "Installed",
   "dashboard.compliance.yearsOld": "years ago",
-
   "dashboard.contracts.title": "Contract Packaging Overview",
   "dashboard.contracts.beingFormed": "Being Formed",
   "dashboard.contracts.activeContracts": "Active Contracts",
@@ -112,14 +101,12 @@
   "dashboard.contracts.awardedDate": "Awarded",
   "dashboard.contracts.noContractor": "TBD",
   "dashboard.contracts.facilityCount": "{count} facilities",
-
   "dashboard.pm.title": "Preventive Maintenance Insights",
   "dashboard.pm.trend": "Work Orders by Type (Last 12 Months)",
   "dashboard.pm.repeatFailures": "Repeat Failures",
   "dashboard.pm.highCost": "High-Cost Facilities",
   "dashboard.pm.noRepeatFailures": "No repeat failures detected",
   "dashboard.pm.month": "Month",
-
   "workOrders.title": "Work Orders",
   "workOrders.create": "Create Work Order",
   "workOrders.searchPlaceholder": "Search by ID, title, assignee...",
@@ -150,7 +137,6 @@
   "workOrders.previewAssignee": "Assignee",
   "workOrders.previewDue": "Due Date",
   "workOrders.allStatuses": "All Statuses",
-
   "woDetail.back": "Back to Work Orders",
   "woDetail.title": "Work Order Details",
   "woDetail.currentStatus": "Current Status:",
@@ -170,7 +156,6 @@
   "woDetail.startProgress": "Start In Progress",
   "woDetail.markCompleted": "Mark as Completed",
   "woDetail.confirmComplete": "Are you sure you want to mark this work order as completed?",
-
   "woCreate.title": "Create Work Order",
   "woCreate.back": "Back",
   "woCreate.centre": "Centre",
@@ -193,7 +178,6 @@
   "woCreate.pwdWithout": "Without PWD",
   "woCreate.submit": "Create Work Order",
   "woCreate.cancel": "Cancel",
-
   "properties.title": "Properties",
   "properties.managed": "properties managed",
   "properties.add": "Add Property",
@@ -209,7 +193,6 @@
   "properties.col.unit": "Unit",
   "properties.col.lsgNlsg": "LSG/NLSG",
   "properties.col.contact": "Contact",
-
   "propertyDetail.back": "Back to Properties",
   "propertyDetail.information": "Property Information",
   "propertyDetail.address": "Address",
@@ -230,7 +213,6 @@
   "propertyDetail.relatedWOs": "Related Work Orders",
   "propertyDetail.relatedAssets": "Related Assets",
   "propertyDetail.noData": "No data available",
-
   "compliance.title": "Compliance Vault",
   "compliance.subtitle": "Track and manage all compliance documents, certificates, and inspections across properties",
   "compliance.documents": "documents",
@@ -263,12 +245,10 @@
   "compliance.edit": "Edit",
   "compliance.remove": "Remove",
   "compliance.clearAll": "Clear all",
-
   "compliance.col.cycle": "Cycle",
   "compliance.col.lastInspect": "Effective",
   "compliance.col.responsible": "Responsible",
   "compliance.col.notes": "Notes",
-
   "compliance.viewTitle": "Compliance Document Details",
   "compliance.editTitle": "Edit Compliance Document",
   "compliance.addTitle": "Add Compliance Alert",
@@ -320,7 +300,6 @@
   "compliance.detail.responsible": "Responsible Person",
   "compliance.detail.status": "Status",
   "compliance.detail.notes": "Notes",
-
   "compliance.attach.title": "Document History",
   "compliance.attach.upload": "Upload Document",
   "compliance.attach.col.name": "Document Name",
@@ -436,7 +415,6 @@
   "compliance.prev": "Previous",
   "compliance.next": "Next",
   "compliance.ofPages": "of {total}",
-
   "compliance.cat.FireSafety": "Fire Safety",
   "compliance.cat.Electrical": "Electrical",
   "compliance.cat.Gas": "Gas",
@@ -453,7 +431,6 @@
   "compliance.cat.Lease": "Lease",
   "compliance.filter.expiryFrom": "Expiry from",
   "compliance.filter.expiryTo": "Expiry to",
-
   "wo.group.buildersWorks": "Repair/Maintenance Builder's Works",
   "wo.group.buildingServices": "Building Services Works",
   "wo.type.concreteRepair": "Concrete Repair",
@@ -471,7 +448,6 @@
   "wo.type.pdSystem": "PD System Addition/Replacement",
   "wo.type.elvSystem": "ELV System (Call Bell, PA, etc.) Addition/Replacement",
   "wo.type.gasSystem": "Gas System Addition/Replacement",
-
   "assets.title": "Assets",
   "assets.count": "assets across all centres",
   "assets.add": "Add Asset",
@@ -486,7 +462,6 @@
   "assets.col.lastService": "Last Service",
   "assets.col.nextService": "Next Service",
   "assets.clearAll": "Clear all",
-
   "floorPlan.title": "Floor Plan",
   "floorPlan.assetDetails": "Asset Details",
   "floorPlan.allAssets": "All Assets",
@@ -540,7 +515,6 @@
   "floorPlan.server": "Server",
   "floorPlan.storage": "Storage",
   "floorPlan.workshop": "Workshop",
-
   "reports.title": "Reports",
   "reports.subtitle": "Analytics and reporting dashboard",
   "reports.quickCards": "Quick Reports",
@@ -557,13 +531,11 @@
   "reports.col.name": "Report Name",
   "reports.col.date": "Date",
   "reports.col.status": "Status",
-
   "settings.profile": "Profile",
   "settings.roles": "Role & Permissions",
   "settings.notifications": "Notifications",
   "settings.localization": "Localization",
   "settings.settings": "Settings",
-
   "settings.profile.title": "Profile Settings",
   "settings.profile.personalInfo": "Personal Information",
   "settings.profile.preferences": "Preferences",
@@ -578,7 +550,6 @@
   "settings.profile.save": "Save Changes",
   "settings.profile.ssoNote": "Managed by corporate SSO — contact IT to update",
   "settings.profile.uploadAvatar": "Upload Photo",
-
   "settings.roles.title": "Role & Permissions",
   "settings.roles.currentRole": "Current Role:",
   "settings.roles.addRole": "Add Role",
@@ -614,7 +585,6 @@
   "settings.perm.manageRoles": "Manage Roles",
   "settings.perm.manage": "Manage",
   "settings.perm.all": "All",
-
   "settings.notif.title": "Notification Preferences",
   "settings.notif.email": "Email",
   "settings.notif.inApp": "In-App",
@@ -638,7 +608,6 @@
   "settings.notif.digestDaily": "Daily Digest",
   "settings.notif.digestWeekly": "Weekly Digest",
   "settings.notif.save": "Save Preferences",
-
   "settings.loc.title": "Localization",
   "settings.loc.preferredLanguage": "Preferred Language",
   "settings.loc.languageHelper": "Changes menus, buttons, and navigation labels",
@@ -662,7 +631,6 @@
   "settings.loc.sampleTime": "Time",
   "settings.loc.sampleBudget": "Budget",
   "settings.loc.sampleNumber": "Number",
-
   "common.save": "Save",
   "common.cancel": "Cancel",
   "common.delete": "Delete",
@@ -680,5 +648,73 @@
   "common.active": "Active",
   "common.inactive": "Inactive",
   "common.yes": "Yes",
-  "common.no": "No"
+  "common.no": "No",
+  "assets.actions.edit": "Edit",
+  "assets.actions.delete": "Delete",
+  "assets.cancel": "Cancel",
+  "assets.col.floornroom": "Room / Floor",
+  "assets.col.qty": "Qty",
+  "assets.col.installYear": "Install Year",
+  "assets.col.renovation": "Renovation",
+  "assets.delete": "Delete",
+  "assets.delete.title": "Delete Asset",
+  "assets.delete.confirm": "Are you sure you want to delete this asset? This action cannot be undone.",
+  "assets.delete.undo": "Undo",
+  "assets.export": "Export CSV",
+  "assets.floorLabel": "Floor",
+  "assets.form.addAsset": "Add Asset",
+  "assets.form.addTitle": "Add New Asset",
+  "assets.form.back": "Back to Assets",
+  "assets.form.cancel": "Cancel",
+  "assets.form.category": "Category",
+  "assets.form.condition": "Condition",
+  "assets.form.editTitle": "Edit Asset",
+  "assets.form.floor": "Floor",
+  "assets.form.installYear": "Install Year",
+  "assets.form.qty": "Quantity",
+  "assets.form.renovation": "Renovation",
+  "assets.form.renovationPh": "e.g. Replacement of kitchen equipment 2022",
+  "assets.form.room": "Room",
+  "assets.form.saveChanges": "Save Changes",
+  "assets.form.selectRoom": "Select a room",
+  "assets.form.status": "Status",
+  "assets.searchLabel": "Search",
+  "assets.summ.total": "Total Assets",
+  "assets.summ.operational": "Operational",
+  "assets.summ.maintenance": "Under Maintenance",
+  "assets.viewMap": "View on Floor Plan",
+  "assetDetail.assetInfo": "Asset Information",
+  "assetDetail.back": "Back to Assets",
+  "assetDetail.category": "Category",
+  "assetDetail.colContractor": "Contractor",
+  "assetDetail.colDate": "Date",
+  "assetDetail.colDesc": "Description",
+  "assetDetail.colType": "Type",
+  "assetDetail.condition": "Condition",
+  "assetDetail.createWO": "Create Work Order",
+  "assetDetail.edit": "Edit Asset",
+  "assetDetail.equipment": "Equipment",
+  "assetDetail.floorPlanPlot": "Floor Plan",
+  "assetDetail.installYear": "Install Year",
+  "assetDetail.lastService": "Last Service",
+  "assetDetail.maintenance": "Maintenance",
+  "assetDetail.nextService": "Next Service",
+  "assetDetail.noHistory": "No service history records.",
+  "assetDetail.notFound": "Asset not found.",
+  "assetDetail.notPlotted": "Not plotted on floor plan",
+  "assetDetail.property": "Property",
+  "assetDetail.qty": "Quantity",
+  "assetDetail.records": "records",
+  "assetDetail.renovation": "Renovation",
+  "assetDetail.room": "Room",
+  "assetDetail.serviceHistory": "Service History",
+  "assetDetail.status": "Status",
+  "assetDetail.viewOnMap": "View on Floor Plan",
+  "floorPlan.noMapImage": "No floor plan image available for this floor.",
+  "floorPlan.notPlotted": "Not plotted",
+  "floorPlan.plotted": "Plotted",
+  "floorPlan.selectAsset": "Select an asset",
+  "common.download": "Download",
+  "workOrderDetail.property": "Property",
+  "workOrderDetail.floorPlanPlot": "Floor plan"
 }

@@ -57,12 +57,12 @@ Cycle: {cycle}
 
 Thank you.`;
 
-const EMPTY_FORM = { name: '', category: '', center: '', documentRef: '', issuedBy: '', inspectionDate: '', cycleMonths: 12, responsible: '', notes: '' };
+const EMPTY_FORM = { name: '', category: '', center: '', documentRef: '', issuedBy: '', inspectionDate: '', cycleMonths: 12, responsible: '', notes: '', expiry: '' };
 
 export default function ComplianceAddRecord() {
   const { t } = useTranslation();
   const { permissions } = useAuth();
-  const { addDoc } = useCompliance();
+  const { addDoc, docs } = useCompliance();
   const navigate = useNavigate();
   const uploaderName = permissions?.name || 'System';
 
@@ -71,16 +71,42 @@ export default function ComplianceAddRecord() {
   const [reminder, setReminder] = useState(null);
   const [reminderName, setReminderName] = useState('');
   const [showReminder, setShowReminder] = useState(false);
+  const [skipEffective, setSkipEffective] = useState(false);
+  const [skipExpiry, setSkipExpiry] = useState(false);
 
   const update = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
-  const nextDue = (() => {
-    if (!form.inspectionDate) return '';
+  useEffect(() => {
+    const creatorUser = SYSTEM_USERS.find((u) => u.name === uploaderName) || SYSTEM_USERS.find((u) => u.label === uploaderName) || null;
+    const baseEmail = uploaderName && uploaderName !== 'System' ? uploaderName.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9.]/g, '') : '';
+    const creatorEmail = baseEmail ? `${baseEmail}@poleungkuk.org.hk` : '';
+    setReminder({
+      name: `${form.name || 'Document'} Reminder`,
+      when: { type: 'before_expiry', daysBefore: 30 },
+      channels: { inApp: true, email: true },
+      recipients: { userIds: creatorUser ? [creatorUser.id] : [], emails: creatorEmail ? [creatorEmail] : [] },
+      emailSubject: `Reminder: {docName} expiring on {expiryDate}`,
+      messageTemplate: DEFAULT_REMINDER_MSG + `\n\n${t('compliance.reminder.systemGenerated')}`,
+      messageStyle: { fontSize: '11px', color: '#334155' },
+    });
+    setShowReminder(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const autoNext = (() => {
+    if (skipEffective || !form.inspectionDate) return '';
     const d = new Date(form.inspectionDate + 'T00:00:00');
     d.setMonth(d.getMonth() + (form.cycleMonths || 12));
     d.setDate(d.getDate() - 1);
     return d.toISOString().slice(0, 10);
   })();
+
+  const effectiveExpiry = skipExpiry ? '' : (form.expiry || autoNext);
+
+  const nameHistory = [...new Set(docs.map((d) => d.name).filter(Boolean))];
+  const issuedByHistory = [...new Set(docs.map((d) => d.issuedBy).filter(Boolean))];
+  const responsibleHistory = [...new Set(docs.map((d) => d.responsible).filter(Boolean))];
+  const filteredNameHistory = form.category ? nameHistory.filter((n) => docs.some((d) => d.name === n && d.category === form.category)) : nameHistory;
 
   const categoryOptions = COMPLIANCE_CATEGORIES.map((c) => ({
     value: c,
@@ -111,10 +137,10 @@ export default function ComplianceAddRecord() {
       center: form.center,
       documentRef: form.documentRef,
       issuedBy: form.issuedBy,
-      inspectionDate: form.inspectionDate,
-      effectiveDate: form.inspectionDate,
+      inspectionDate: skipEffective ? '' : form.inspectionDate,
+      effectiveDate: skipEffective ? '' : form.inspectionDate,
       cycleMonths: Number(form.cycleMonths),
-      expiry: nextDue,
+      expiry: effectiveExpiry,
       responsible: form.responsible,
       notes: form.notes,
       status: 'Valid',
@@ -156,33 +182,34 @@ export default function ComplianceAddRecord() {
         </div>
         <div style={{ padding: 20 }}>
           <div style={{ marginBottom: 14 }}>
-            <label style={labelStyle}>{t('compliance.detail.name')} *</label>
-            <input value={form.name} onChange={(e) => update('name', e.target.value)} style={fieldStyle} />
+            <label style={labelStyle}>{t('compliance.detail.category')} *</label>
+            <ComboBox value={form.category} onChange={(v) => {
+              const updated = { ...form, category: v };
+              const cfg = CATEGORY_CONFIG[v];
+              if (cfg?.defaultCycle) updated.cycleMonths = cfg.defaultCycle;
+              setForm(updated);
+            }} options={categoryOptions} placeholder={t('compliance.form.selectCategory')}
+              renderOption={(o) => {
+                const cfg = CATEGORY_CONFIG[o.value];
+                const Icon = cfg ? CATEGORY_ICON[o.value] : null;
+                return (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {Icon && <Icon size={13} color={cfg.color} />}
+                    {o.label}
+                  </span>
+                );
+              }} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-            <div>
-              <label style={labelStyle}>{t('compliance.detail.category')} *</label>
-              <ComboBox value={form.category} onChange={(v) => {
-                const updated = { ...form, category: v };
-                const cfg = CATEGORY_CONFIG[v];
-                if (cfg?.defaultCycle) updated.cycleMonths = cfg.defaultCycle;
-                setForm(updated);
-              }} options={categoryOptions} placeholder={t('compliance.form.selectCategory')}
-                renderOption={(o) => {
-                  const cfg = CATEGORY_CONFIG[o.value];
-                  const Icon = cfg ? CATEGORY_ICON[o.value] : null;
-                  return (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      {Icon && <Icon size={13} color={cfg.color} />}
-                      {o.label}
-                    </span>
-                  );
-                }} />
-            </div>
-            <div>
-              <label style={labelStyle}>{t('compliance.detail.property')} *</label>
-              <ComboBox value={form.center} onChange={(v) => update('center', v)} options={propertyOptions} placeholder={t('compliance.filter.property')} />
-            </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>{t('compliance.detail.name')} *</label>
+            <input list="add-name-history" value={form.name} onChange={(e) => update('name', e.target.value)} style={fieldStyle} />
+            <datalist id="add-name-history">
+              {filteredNameHistory.map((n) => <option key={n} value={n} />)}
+            </datalist>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>{t('compliance.detail.property')} *</label>
+            <ComboBox value={form.center} onChange={(v) => update('center', v)} options={propertyOptions} placeholder={t('compliance.form.selectProperty')} />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
             <div>
@@ -191,13 +218,20 @@ export default function ComplianceAddRecord() {
             </div>
             <div>
               <label style={labelStyle}>{t('compliance.detail.issuedBy')}</label>
-              <input value={form.issuedBy} onChange={(e) => update('issuedBy', e.target.value)} style={fieldStyle} />
+              <input list="add-issuedby-history" value={form.issuedBy} onChange={(e) => update('issuedBy', e.target.value)} style={fieldStyle} />
+              <datalist id="add-issuedby-history">
+                {issuedByHistory.map((v) => <option key={v} value={v} />)}
+              </datalist>
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 14 }}>
             <div>
               <label style={labelStyle}>{t('compliance.detail.effectiveDate')}</label>
-              <input type="date" value={form.inspectionDate} onChange={(e) => update('inspectionDate', e.target.value)} style={fieldStyle} />
+              <input type="date" value={form.inspectionDate} onChange={(e) => update('inspectionDate', e.target.value)} disabled={skipEffective} style={{ ...fieldStyle, opacity: skipEffective ? 0.5 : 1 }} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 11, color: '#64748B', cursor: 'pointer' }}>
+                <input type="checkbox" checked={skipEffective} onChange={() => setSkipEffective(!skipEffective)} style={{ cursor: 'pointer' }} />
+                {t('compliance.form.skip')}
+              </label>
             </div>
             <div>
               <label style={labelStyle}>{t('compliance.detail.cycle')}</label>
@@ -208,15 +242,26 @@ export default function ComplianceAddRecord() {
                 <option value={36}>3 yr</option>
               </select>
             </div>
+            <div>
+              <label style={labelStyle}>{t('compliance.detail.expiry')}</label>
+              <input type="date" value={form.expiry} onChange={(e) => update('expiry', e.target.value)} disabled={skipExpiry} style={{ ...fieldStyle, opacity: skipExpiry ? 0.5 : 1 }} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 11, color: '#64748B', cursor: 'pointer' }}>
+                <input type="checkbox" checked={skipExpiry} onChange={() => setSkipExpiry(!skipExpiry)} style={{ cursor: 'pointer' }} />
+                {t('compliance.form.skip')}
+              </label>
+            </div>
           </div>
-          {nextDue && (
+          {autoNext && !skipExpiry && !form.expiry && (
             <div style={{ marginBottom: 14, padding: '8px 12px', borderRadius: 6, background: '#F0F9FF', fontSize: 12, color: '#0369A1' }}>
-              <strong>{t('compliance.detail.nextDue')}:</strong> {nextDue}
+              <strong>{t('compliance.detail.nextDue')}:</strong> {autoNext}
             </div>
           )}
           <div style={{ marginBottom: 14 }}>
             <label style={labelStyle}>{t('compliance.detail.responsible')}</label>
-            <input value={form.responsible} onChange={(e) => update('responsible', e.target.value)} style={fieldStyle} />
+            <input list="add-responsible-history" value={form.responsible} onChange={(e) => update('responsible', e.target.value)} style={fieldStyle} />
+            <datalist id="add-responsible-history">
+              {responsibleHistory.map((v) => <option key={v} value={v} />)}
+            </datalist>
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={labelStyle}>{t('compliance.detail.notes')}</label>
@@ -296,7 +341,7 @@ export default function ComplianceAddRecord() {
                     {reminder.channels?.inApp && reminder.channels?.email ? 'In-App + Email' : reminder.channels?.inApp ? 'In-App' : 'Email'}
                   </div>
                 </div>
-                <button onClick={() => { setReminder(null); setShowReminder(true); }} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 11, fontWeight: 600, color: '#64748B', cursor: 'pointer' }}>{t('compliance.reminder.edit')}</button>
+                <button onClick={() => { setShowReminder(true); }} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 11, fontWeight: 600, color: '#64748B', cursor: 'pointer' }}>{t('compliance.reminder.edit')}</button>
               </div>
             </div>
           ) : !showReminder ? (
@@ -309,6 +354,7 @@ export default function ComplianceAddRecord() {
             <AddRecordReminderForm
               docName={form.name || 'Document'}
               reminderName={reminderName}
+              initial={reminder}
               onSave={(r) => { setReminder(r); setShowReminder(false); }}
               onCancel={() => setShowReminder(false)}
               t={t}
@@ -327,23 +373,23 @@ export default function ComplianceAddRecord() {
 }
 
 // ── Add Record Reminder Form ──────────────────────────────
-function AddRecordReminderForm({ docName, reminderName, onSave, onCancel, t }) {
-  const [name, setName] = useState(reminderName);
-  const [whenType, setWhenType] = useState('before_expiry');
-  const [daysBefore, setDaysBefore] = useState(30);
-  const [specificDate, setSpecificDate] = useState('');
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [frequency, setFrequency] = useState('monthly');
-  const [startDate, setStartDate] = useState('');
-  const [inApp, setInApp] = useState(true);
-  const [email, setEmail] = useState(true);
-  const [selectedUsers, setSelectedUsers] = useState([]);
-  const [customEmails, setCustomEmails] = useState([]);
+function AddRecordReminderForm({ docName, reminderName, onSave, onCancel, t, initial }) {
+  const [name, setName] = useState(initial?.name || reminderName);
+  const [whenType, setWhenType] = useState(initial?.when?.type || 'before_expiry');
+  const [daysBefore, setDaysBefore] = useState(initial?.when?.daysBefore || 30);
+  const [specificDate, setSpecificDate] = useState(initial?.when?.specificDate || '');
+  const [isRecurring, setIsRecurring] = useState(initial?.when?.recurring || false);
+  const [frequency, setFrequency] = useState(initial?.when?.frequency || 'monthly');
+  const [startDate, setStartDate] = useState(initial?.when?.startDate || '');
+  const [inApp, setInApp] = useState(initial?.channels?.inApp ?? true);
+  const [email, setEmail] = useState(initial?.channels?.email ?? true);
+  const [selectedUsers, setSelectedUsers] = useState(initial?.recipients?.userIds || []);
+  const [customEmails, setCustomEmails] = useState(initial?.recipients?.emails || []);
   const [emailInput, setEmailInput] = useState('');
-  const [emailSubject, setEmailSubject] = useState(`Reminder: ${docName} expiring on {expiryDate}`);
-  const [message, setMessage] = useState(DEFAULT_REMINDER_MSG);
-  const [msgFontSize, setMsgFontSize] = useState('11px');
-  const [msgColor, setMsgColor] = useState('#334155');
+  const [emailSubject, setEmailSubject] = useState(initial?.emailSubject || `Reminder: ${docName} expiring on {expiryDate}`);
+  const [message, setMessage] = useState(initial?.messageTemplate || DEFAULT_REMINDER_MSG + `\n\n${t('compliance.reminder.systemGenerated')}`);
+  const [msgFontSize, setMsgFontSize] = useState(initial?.messageStyle?.fontSize || '11px');
+  const [msgColor, setMsgColor] = useState(initial?.messageStyle?.color || '#334155');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [userFilter, setUserFilter] = useState('');
   const [showVarDropdown, setShowVarDropdown] = useState(false);

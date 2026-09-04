@@ -9,7 +9,7 @@ import { uploadAttachment } from '../services/complianceFileService';
 import ComboBox from '../components/ComboBox';
 import { computeNextDue } from '../utils/dateUtils';
 import {
-  ArrowLeft, Bell, Mail, Plus, X, ChevronDown, Trash2,
+  ArrowLeft, Bell, Mail, Plus, X, ChevronDown, ChevronRight, Trash2,
 } from 'lucide-react';
 
 const CATEGORY_KEY_MAP = {
@@ -72,6 +72,7 @@ export default function ComplianceAddRecord({ selectedCenter }) {
   const [reminders, setReminders] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [showReminderForm, setShowReminderForm] = useState(false);
+  const [expandedIds, setExpandedIds] = useState(new Set());
   const [skipEffective, setSkipEffective] = useState(false);
 
   const isCentreLocked = !!selectedCenter && selectedCenter !== 'All';
@@ -375,49 +376,98 @@ export default function ComplianceAddRecord({ selectedCenter }) {
           </button>
         </div>
         <div style={{ padding: 20 }}>
-          {showReminderForm ? (
-            <AddRecordReminderForm
-              docName={form.name || 'Document'}
-              initial={editingId !== null ? (reminders.find((r) => r.id === editingId) || null) : null}
-              onSave={(r) => {
-                const newId = editingId ?? `rem-${Date.now()}`;
-                setReminders((prev) => {
-                  if (prev.some((x) => x.id === editingId)) {
-                    return prev.map((x) => x.id === editingId ? { ...r, id: editingId } : x);
-                  }
-                  return [...prev, { ...r, id: newId }];
-                });
-                setEditingId(null);
-                setShowReminderForm(false);
-              }}
-              onCancel={() => { setEditingId(null); setShowReminderForm(false); }}
-              t={t}
-            />
-          ) : reminders.length === 0 ? (
+          {showReminderForm && (
+            <div style={{ marginBottom: reminders.length ? 16 : 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                <Plus size={13} color="#F59E0B" />
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#475569' }}>{editingId !== null ? t('compliance.reminder.edit') : t('compliance.reminder.add')}</span>
+              </div>
+              <AddRecordReminderForm
+                docName={form.name || 'Document'}
+                initial={editingId !== null ? (reminders.find((r) => r.id === editingId) || null) : null}
+                onSave={(r) => {
+                  const newId = editingId ?? `rem-${Date.now()}`;
+                  setReminders((prev) => {
+                    if (prev.some((x) => x.id === editingId)) {
+                      return prev.map((x) => x.id === editingId ? { ...r, id: editingId } : x);
+                    }
+                    return [...prev, { ...r, id: newId }];
+                  });
+                  setExpandedIds((prev) => {
+                    const next = new Set(prev);
+                    next.add(editingId ?? newId);
+                    return next;
+                  });
+                  setEditingId(null);
+                  setShowReminderForm(false);
+                }}
+                onCancel={() => { setEditingId(null); setShowReminderForm(false); }}
+                t={t}
+              />
+            </div>
+          )}
+
+          {reminders.length === 0 && !showReminderForm ? (
             <div style={{ padding: 24, textAlign: 'center', color: '#94A3B8' }}>
               <Bell size={24} color="#CBD5E1" style={{ marginBottom: 8 }} />
               <div style={{ fontSize: 13, fontWeight: 600 }}>{t('compliance.reminder.empty')}</div>
               <div style={{ fontSize: 12, color: '#CBD5E1', marginTop: 4 }}>{t('compliance.reminder.emptyHint')}</div>
             </div>
           ) : (
-            reminders.map((r) => (
-              <div key={r.id} style={{ padding: 12, borderRadius: 8, border: '1px solid var(--border)', background: '#FFFBEB', marginBottom: 8 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{r.name}</div>
-                    <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
-                      {r.when?.type === 'before_expiry' ? `${t('compliance.reminder.beforeExpiry')}: ${r.when.daysBefore} days` : r.when?.specificDate || ''}
-                      {' · '}
-                      {r.channels?.inApp && r.channels?.email ? 'In-App + Email' : r.channels?.inApp ? 'In-App' : 'Email'}
+            reminders.map((r) => {
+              const isOpen = expandedIds.has(r.id);
+              const hasRecipients = (r.recipients?.userIds?.length || 0) || (r.recipients?.emails?.length || 0);
+              return (
+                <div key={r.id} style={{ padding: 12, borderRadius: 8, border: '1px solid var(--border)', background: '#FFFBEB', marginBottom: 8 }}>
+                  <div
+                    onClick={() => setExpandedIds((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(r.id)) next.delete(r.id); else next.add(r.id);
+                      return next;
+                    })}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {isOpen ? <ChevronDown size={14} color="#94A3B8" /> : <ChevronRight size={14} color="#94A3B8" />}
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>{r.name}</div>
+                        <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+                          {r.when?.type === 'before_expiry' ? `${t('compliance.reminder.beforeExpiry')}: ${r.when.daysBefore} days` : r.when?.specificDate || ''}
+                          {' · '}
+                          {r.channels?.inApp && r.channels?.email ? 'In-App + Email' : r.channels?.inApp ? 'In-App' : 'Email'}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => { setEditingId(r.id); setShowReminderForm(true); }} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 11, fontWeight: 600, color: '#64748B', cursor: 'pointer' }}>{t('compliance.reminder.edit')}</button>
+                      <button onClick={() => setReminders((prev) => prev.filter((x) => x.id !== r.id))} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 11, fontWeight: 600, color: '#DC2626', cursor: 'pointer' }}><Trash2 size={11} /> {t('compliance.reminder.delete')}</button>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <button onClick={() => { setEditingId(r.id); setShowReminderForm(true); }} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 11, fontWeight: 600, color: '#64748B', cursor: 'pointer' }}>{t('compliance.reminder.edit')}</button>
-                    <button onClick={() => setReminders((prev) => prev.filter((x) => x.id !== r.id))} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: '#fff', fontSize: 11, fontWeight: 600, color: '#DC2626', cursor: 'pointer' }}><Trash2 size={11} /> {t('compliance.reminder.delete')}</button>
-                  </div>
+
+                  {isOpen && (
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--border)', fontSize: 12, color: '#475569', display: 'grid', gap: 8 }}>
+                      <div>
+                        <span style={{ fontWeight: 600 }}>{t('compliance.reminder.form.recipients')}: </span>
+                        {hasRecipients ? (
+                          <span>
+                            {r.recipients?.userIds?.length ? `${r.recipients.userIds.length} ${t('compliance.reminder.form.usersSelected')}` : ''}
+                            {r.recipients?.userIds?.length && r.recipients?.emails?.length ? ' · ' : ''}
+                            {r.recipients?.emails?.length ? r.recipients.emails.join(', ') : ''}
+                          </span>
+                        ) : '—'}
+                      </div>
+                      {r.emailSubject && <div><span style={{ fontWeight: 600 }}>{t('compliance.reminder.form.emailSubject')}: </span>{r.emailSubject}</div>}
+                      {r.messageTemplate && (
+                        <div>
+                          <div style={{ fontWeight: 600, marginBottom: 2 }}>{t('compliance.reminder.form.message')}</div>
+                          <div style={{ whiteSpace: 'pre-wrap', color: '#64748B', fontSize: 11 }}>{r.messageTemplate}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

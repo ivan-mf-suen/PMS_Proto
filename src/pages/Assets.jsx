@@ -71,8 +71,8 @@ export default function Assets() {
 
   const csvEscape = (v) => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s; };
   const exportCSV = () => {
-    const headers = ['ID', 'Property', 'Floor', 'Room', 'Type', 'Equipment', 'Install Year', 'Status', 'Renovation'];
-    const rows = filtered.map((a) => [a.id, a.propertyName, a.floor, a.room, a.category, a.equipment, a.installYear, a.status, a.renovation || '']);
+    const headers = ['ID', 'Property', 'Floor', 'Room', 'Type', 'Equipment', 'Install Year', 'Status'];
+    const rows = filtered.map((a) => [a.id, a.propertyName, a.floor, a.room, a.category, a.equipment, a.installYear, a.status]);
     const csv = [headers.map(csvEscape).join(','), ...rows.map((r) => r.map(csvEscape).join(','))].join('\r\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -157,7 +157,7 @@ export default function Assets() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#F8FAFC' }}>
-              {[t('assets.col.id'), t('assets.col.type'), t('assets.col.property'), t('assets.col.floornroom'), t('assets.col.installYear'), t('assets.col.status'), t('assets.col.renovation'), ''].map((h, i) => (
+              {[t('assets.col.id'), t('assets.col.type'), t('assets.col.property'), t('assets.col.floornroom'), t('assets.col.installYear'), t('assets.col.status'), ''].map((h, i) => (
                 <th key={i} style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: '#64748B', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
               ))}
             </tr>
@@ -176,7 +176,6 @@ export default function Assets() {
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: '#64748B' }}>{asset.installYear}</td>
                   <td style={{ padding: '12px 16px' }}><span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: sc.bg, color: sc.color }}>{asset.status}</span></td>
-                  <td style={{ padding: '12px 16px', fontSize: 12, color: '#64748B', maxWidth: 180 }}>{asset.renovation || '—'}</td>
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', gap: 4 }} onClick={(e) => e.stopPropagation()}>
                       <button onClick={() => navigate(`/assets/${asset.id}/edit`)} title={t('assets.actions.edit')} style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Pencil size={13} color="#64748B" /></button>

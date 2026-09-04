@@ -133,7 +133,7 @@ function nextId(floor, roomName, category) {
   return `TC01-${floor}-${roomNum}-${catCode}${String(seq).padStart(2, '0')}`;
 }
 
-function buildAsset({ floor, room, category, installYear, renovation }) {
+function buildAsset({ floor, room, category, installYear }) {
   return {
     id: nextId(floor, room, category),
     propertyId: PROPERTY.id,
@@ -144,7 +144,6 @@ function buildAsset({ floor, room, category, installYear, renovation }) {
     category,
     equipment: category === '櫃' ? '櫃' : category === '煮食設備' ? '煮食設備' : '冷氣機/風扇/抽氣扇',
     installYear,
-    renovation,
     status: 'Operational',
     condition: 'Good',
     lastService: '',
@@ -155,8 +154,7 @@ function buildAsset({ floor, room, category, installYear, renovation }) {
 
 export const TC01_ASSETS = [];
 Object.entries(INVENTORY).forEach(([floor, rooms]) => {
-  rooms.forEach(({ room, 櫃, 冷氣, 煮食, project, projectYear }) => {
-    const renovation = project ? `${project} ${projectYear}` : '';
+  rooms.forEach(({ room, 櫃, 冷氣, 煮食 }) => {
     const groups = [
       [櫃, '櫃'],
       [冷氣, '冷氣/風扇/抽氣扇'],
@@ -164,8 +162,37 @@ Object.entries(INVENTORY).forEach(([floor, rooms]) => {
     ];
     groups.forEach(([[count, year], category]) => {
       for (let i = 0; i < count; i += 1) {
-        TC01_ASSETS.push(buildAsset({ floor, room, category, installYear: year, renovation }));
+        TC01_ASSETS.push(buildAsset({ floor, room, category, installYear: year }));
       }
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Migrated renovation work orders (reference only)
+// ---------------------------------------------------------------------------
+// The room renovation history (project + year) in the Excel sample was migrated
+// into the system as work orders for REFERENCE / PLANNING only. These records:
+//   - were NOT created by a user,
+//   - did NOT go through the normal work-order system process,
+//   - are flagged `source: 'data-migration'` so the UI can label them clearly.
+// Users use them to plan future renovations under the policy that a room cannot
+// be renovated again within 5 years of its last renovation.
+let migSeq = 0;
+export const MIGRATED_RENOVATIONS = [];
+Object.entries(INVENTORY).forEach(([floor, rooms]) => {
+  rooms.forEach(({ room, project, projectYear }) => {
+    if (!project || !projectYear) return;
+    migSeq += 1;
+    MIGRATED_RENOVATIONS.push({
+      id: `MIG-TC01-${floor}-${String(migSeq).padStart(2, '0')}`,
+      propertyCode: PROPERTY.unitCode,
+      propertyName: PROPERTY.name,
+      floor,
+      room,
+      title: project,
+      year: projectYear,
+      source: 'data-migration',
     });
   });
 });

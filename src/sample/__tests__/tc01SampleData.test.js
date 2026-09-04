@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PROPERTY, FLOORS, EQUIPMENT_CATEGORIES, TC01_ROOMS, TC01_ASSETS, IS_SAMPLE_DATA } from '../tc01SampleData';
-
-const byId = (pred) => TC01_ASSETS.some(pred);
+import { PROPERTY, FLOORS, EQUIPMENT_CATEGORIES, TC01_ROOMS, TC01_ASSETS, MIGRATED_RENOVATIONS, IS_SAMPLE_DATA } from '../tc01SampleData';
 
 describe('tc01Assets data', () => {
   it('defines the 東涌護老院 property as TC-01', () => {
@@ -58,21 +56,34 @@ describe('tc01Assets data', () => {
     }
   });
 
-  it('廚房 has 1 冷氣 (2018) and 1 煮食 equipment (2011) with renovation project', () => {
+  it('廚房 has 1 冷氣 (2018) and 1 煮食 equipment (2011)', () => {
     const kitchenAc = TC01_ASSETS.filter((a) => a.room === '廚房' && a.category === '冷氣/風扇/抽氣扇');
     const kitchenCook = TC01_ASSETS.filter((a) => a.room === '廚房' && a.category === '煮食設備');
     expect(kitchenAc).toHaveLength(1);
     expect(kitchenCook).toHaveLength(1);
     expect(kitchenAc[0].installYear).toBe(2018);
     expect(kitchenCook[0].installYear).toBe(2011);
-    expect(kitchenAc[0].renovation).toBe('更換廚房爐具設備 2022');
-    expect(kitchenCook[0].renovation).toBe('更換廚房爐具設備 2022');
   });
 
-  it('applies the room renovation project and year to assets in renovated rooms', () => {
-    expect(byId((a) => a.room === '長者房間/401' && a.renovation === '更換地𥱊 2022')).toBe(true);
-    expect(byId((a) => a.room === '治療室/315' && a.renovation === '更換地𥱊、冷氣、油漆 2022')).toBe(true);
-    expect(byId((a) => a.room === '女廁/303' && a.renovation === '')).toBe(true);
+  it('assets do not carry room renovation data (renovation is room-level, not asset-level)', () => {
+    for (const a of TC01_ASSETS) {
+      expect(a.renovation).toBeUndefined();
+    }
+  });
+
+  it('builds migrated renovation work orders (reference only) from room data', () => {
+    expect(MIGRATED_RENOVATIONS.length).toBeGreaterThan(0);
+    const kitchen = MIGRATED_RENOVATIONS.find((m) => m.room === '廚房');
+    expect(kitchen).toBeTruthy();
+    expect(kitchen.title).toBe('更換廚房爐具設備');
+    expect(kitchen.year).toBe(2022);
+    expect(kitchen.source).toBe('data-migration');
+    expect(kitchen.propertyCode).toBe('TC-01');
+  });
+
+  it('does not create migrated records for rooms without a renovation project', () => {
+    expect(MIGRATED_RENOVATIONS.some((m) => m.room === '女廁/303')).toBe(false);
+    expect(MIGRATED_RENOVATIONS.some((m) => m.room === '洗衣房')).toBe(false);
   });
 
   it('honours per-group install years (面談室/322 櫃 installed 2024, 冷氣 2011)', () => {

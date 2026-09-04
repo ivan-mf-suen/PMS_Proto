@@ -94,7 +94,6 @@ export default function AssetDetail() {
             <DetailField label={t('assetDetail.category')} value={asset.category} />
             <DetailField label={t('assetDetail.equipment')} value={asset.equipment} />
             <DetailField label={t('assetDetail.installYear')} value={asset.installYear} />
-            <DetailField label={t('assetDetail.renovation')} value={asset.renovation || 'N/A'} />
           </div>
         </div>
         <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', padding: 20 }}>

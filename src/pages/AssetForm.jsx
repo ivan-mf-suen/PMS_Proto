@@ -4,9 +4,12 @@ import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 import { useAssets } from '../context/AssetsContext';
 import { FLOORS, EQUIPMENT_CATEGORIES, TC01_ROOMS } from '../data/tc01Assets';
+import { PROPERTIES } from '../data/constants';
 
 const ALL_STATUSES = ['Operational', 'Under Maintenance', 'Needs Inspection'];
 const CONDITIONS = ['Good', 'Fair', 'Poor'];
+
+const DEFAULT_PROPERTY = PROPERTIES.find((p) => p.unitCode === 'TC-01') || PROPERTIES[0];
 
 export default function AssetForm() {
   const { t } = useTranslation();
@@ -16,6 +19,9 @@ export default function AssetForm() {
   const editing = assets.find((a) => a.id === id) || null;
 
   const [form, setForm] = useState({
+    propertyId: editing?.propertyId ?? DEFAULT_PROPERTY.id,
+    propertyCode: editing?.propertyCode ?? DEFAULT_PROPERTY.unitCode,
+    propertyName: editing?.propertyName ?? DEFAULT_PROPERTY.name,
     floor: editing?.floor || '4F',
     room: editing?.room || '',
     category: editing?.category || EQUIPMENT_CATEGORIES[0],
@@ -25,6 +31,19 @@ export default function AssetForm() {
     status: editing?.status || 'Operational',
     condition: editing?.condition || 'Good',
   });
+
+  const handlePropertyChange = (id) => {
+    const selected = PROPERTIES.find((p) => p.id === Number(id));
+    if (!selected) return;
+    setForm((prev) => ({
+      ...prev,
+      propertyId: selected.id,
+      propertyCode: selected.unitCode,
+      propertyName: selected.name,
+      floor: '4F',
+      room: '',
+    }));
+  };
 
   const roomsForFloor = useMemo(
     () => TC01_ROOMS.filter((r) => r.floor === form.floor).map((r) => r.name),
@@ -38,9 +57,9 @@ export default function AssetForm() {
   const handleSave = () => {
     if (!canSave) return;
     const record = {
-      propertyId: 13,
-      propertyCode: 'TC-01',
-      propertyName: '保良局東涌護老院',
+      propertyId: form.propertyId,
+      propertyCode: form.propertyCode,
+      propertyName: form.propertyName,
       floor: form.floor,
       room: form.room.trim(),
       category: form.category,
@@ -79,11 +98,19 @@ export default function AssetForm() {
         <div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div style={fieldStyle}>
+              <label style={labelStyle}>{t('assets.form.property')} <span style={{ color: 'var(--critical)' }}>*</span></label>
+              <select value={form.propertyId} onChange={(e) => handlePropertyChange(e.target.value)} style={inputStyle}>
+                {PROPERTIES.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+            <div style={fieldStyle}>
               <label style={labelStyle}>{t('assets.form.floor')} <span style={{ color: 'var(--critical)' }}>*</span></label>
               <select value={form.floor} onChange={(e) => { update('floor', e.target.value); update('room', ''); }} style={inputStyle}>
                 {FLOORS.map((f) => <option key={f.key} value={f.key}>{f.key}</option>)}
               </select>
             </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div style={fieldStyle}>
               <label style={labelStyle}>{t('assets.form.room')} <span style={{ color: 'var(--critical)' }}>*</span></label>
               <select value={form.room} onChange={(e) => update('room', e.target.value)} style={inputStyle}>
@@ -91,36 +118,36 @@ export default function AssetForm() {
                 {roomsForFloor.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div style={fieldStyle}>
               <label style={labelStyle}>{t('assets.form.category')} <span style={{ color: 'var(--critical)' }}>*</span></label>
               <select value={form.category} onChange={(e) => update('category', e.target.value)} style={inputStyle}>
                 {EQUIPMENT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div style={fieldStyle}>
               <label style={labelStyle}>{t('assets.form.installYear')}</label>
               <input type="number" value={form.installYear} onChange={(e) => update('installYear', parseInt(e.target.value) || 2011)} style={inputStyle} />
             </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div style={fieldStyle}>
               <label style={labelStyle}>{t('assets.form.status')}</label>
               <select value={form.status} onChange={(e) => update('status', e.target.value)} style={inputStyle}>
                 {ALL_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div style={fieldStyle}>
               <label style={labelStyle}>{t('assets.form.condition')}</label>
               <select value={form.condition} onChange={(e) => update('condition', e.target.value)} style={inputStyle}>
                 {CONDITIONS.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-          </div>
-          <div style={fieldStyle}>
-            <label style={labelStyle}>{t('assets.form.renovation')}</label>
-            <input value={form.renovation} onChange={(e) => update('renovation', e.target.value)} placeholder={t('assets.form.renovationPh')} style={inputStyle} />
+            <div style={fieldStyle}>
+              <label style={labelStyle}>{t('assets.form.renovation')}</label>
+              <input value={form.renovation} onChange={(e) => update('renovation', e.target.value)} placeholder={t('assets.form.renovationPh')} style={inputStyle} />
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
             <button onClick={() => navigate(editing ? `/assets/${editing.id}` : '/assets')} style={{ padding: '10px 20px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, color: '#475569', cursor: 'pointer' }}>{t('assets.form.cancel')}</button>

@@ -72,7 +72,7 @@ export default function Assets() {
   const csvEscape = (v) => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s; };
   const exportCSV = () => {
     const headers = ['ID', 'Property', 'Floor', 'Room', 'Type', 'Equipment', 'Install Year', 'Status', 'Renovation'];
-    const rows = filtered.map((a) => [a.id, a.propertyCode, a.floor, a.room, a.category, a.equipment, a.installYear, a.status, a.renovation || '']);
+    const rows = filtered.map((a) => [a.id, a.propertyName, a.floor, a.room, a.category, a.equipment, a.installYear, a.status, a.renovation || '']);
     const csv = [headers.map(csvEscape).join(','), ...rows.map((r) => r.map(csvEscape).join(','))].join('\r\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -157,7 +157,7 @@ export default function Assets() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#F8FAFC' }}>
-              {[t('assets.col.id'), t('assets.col.type'), t('assets.col.floornroom'), t('assets.col.property'), t('assets.col.installYear'), t('assets.col.status'), t('assets.col.renovation'), ''].map((h, i) => (
+              {[t('assets.col.id'), t('assets.col.type'), t('assets.col.property'), t('assets.col.floornroom'), t('assets.col.installYear'), t('assets.col.status'), t('assets.col.renovation'), ''].map((h, i) => (
                 <th key={i} style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: '#64748B', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
               ))}
             </tr>
@@ -169,11 +169,11 @@ export default function Assets() {
                 <tr key={asset.id} style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => navigate(`/assets/${asset.id}`)} onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
                   <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--info)', fontFamily: 'monospace' }}>{asset.id}</td>
                   <td style={{ padding: '12px 16px' }}><span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: '#F1F5F9', color: '#475569' }}>{asset.category}</span></td>
+                  <td style={{ padding: '12px 16px', fontSize: 13, color: '#64748B', maxWidth: 220 }}>{asset.propertyName}</td>
                   <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 500, color: 'var(--foreground)' }}>
                     <div>{asset.room}</div>
                     <div style={{ fontSize: 11, color: '#94A3B8' }}>{asset.floor}</div>
                   </td>
-                  <td style={{ padding: '12px 16px', fontSize: 13, color: '#64748B' }}>{asset.propertyCode}</td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: '#64748B' }}>{asset.installYear}</td>
                   <td style={{ padding: '12px 16px' }}><span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: sc.bg, color: sc.color }}>{asset.status}</span></td>
                   <td style={{ padding: '12px 16px', fontSize: 12, color: '#64748B', maxWidth: 180 }}>{asset.renovation || '—'}</td>

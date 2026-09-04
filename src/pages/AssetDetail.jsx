@@ -53,7 +53,7 @@ export default function AssetDetail() {
             <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.02em' }}>{asset.room} — {asset.category}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 10, background: '#F1F5F9', color: '#475569', fontFamily: 'monospace' }}>{asset.id}</span>
-              <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 10, background: '#F1F5F9', color: '#475569' }}>{asset.propertyCode} · {asset.propertyName}</span>
+              <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 10, background: '#F1F5F9', color: '#475569' }}>{asset.propertyName}</span>
               <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 10, background: sc.bg, color: sc.color }}>{asset.status}</span>
               <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 10, background: cc.bg, color: cc.color }}>{asset.condition}</span>
             </div>
@@ -88,7 +88,7 @@ export default function AssetDetail() {
         <div style={{ background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', padding: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', marginBottom: 16 }}>{t('assetDetail.assetInfo')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <DetailField label={t('assetDetail.property')} value={`${asset.propertyCode} · ${asset.propertyName}`} />
+            <DetailField label={t('assetDetail.property')} value={asset.propertyName} />
             <DetailField label={t('assets.floorLabel')} value={asset.floor} />
             <DetailField label={t('assetDetail.room')} value={asset.room} />
             <DetailField label={t('assetDetail.category')} value={asset.category} />

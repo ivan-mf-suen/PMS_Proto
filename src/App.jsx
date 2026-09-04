@@ -59,7 +59,7 @@ function AppLayout() {
             <Route path="assets/new" element={<AssetForm />} />
             <Route path="assets/:id" element={<AssetDetail />} />
             <Route path="assets/:id/edit" element={<AssetForm />} />
-            <Route path="floor-plan" element={<FloorPlan />} />
+            <Route path="floor-plan" element={<FloorPlan selectedCenter={selectedCenter} />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
           </Routes>

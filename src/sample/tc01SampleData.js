@@ -25,13 +25,19 @@ export const PROPERTY = {
   unit: 'Elderly Home',
 };
 
+// Seed floor plans for the TC-01 demo. These are treated like any other
+// user-entered floor once seeded: they are stored in localStorage and the
+// user can add, edit, or delete floors through the Floor Plan page. The 3F/4F/5F
+// floors and all TC-01 assets are kept (mapped together) — nothing is deleted.
 export const FLOORS = [
-  { key: '3F', label: '3F' },
-  { key: '4F', label: '4F', image: floor4 },
-  { key: '5F', label: '5F', image: floor5 },
+  { key: '3F', label: '3F', propertyCode: PROPERTY.unitCode },
+  { key: '4F', label: '4F', propertyCode: PROPERTY.unitCode, image: floor4 },
+  { key: '5F', label: '5F', propertyCode: PROPERTY.unitCode, image: floor5 },
 ];
 
-export const EQUIPMENT_CATEGORIES = ['櫃', '冷氣/風扇/抽氣扇', '煮食設備'];
+// 冷氣/風扇/抽氣扇 is not stored in PMS anymore, so it is no longer a valid
+// equipment category. Only equipment that PMS tracks is exposed.
+export const EQUIPMENT_CATEGORIES = ['櫃', '煮食設備'];
 
 // Per-room inventory from 東涌護老院_房間及傢俱表.xlsx (機電及傢俱數量).
 // Sample data only — for demoing purposes.
@@ -129,7 +135,7 @@ let seq = 0;
 function nextId(floor, roomName, category) {
   seq += 1;
   const roomNum = roomName.replace(/\D/g, '') || '00';
-  const catCode = category === '櫃' ? 'CP' : category === '煮食設備' ? 'CK' : 'AC';
+  const catCode = category === '櫃' ? 'CP' : 'CK';
   return `TC01-${floor}-${roomNum}-${catCode}${String(seq).padStart(2, '0')}`;
 }
 
@@ -142,7 +148,7 @@ function buildAsset({ floor, room, category, installYear }) {
     floor,
     room,
     category,
-    equipment: category === '櫃' ? '櫃' : category === '煮食設備' ? '煮食設備' : '冷氣機/風扇/抽氣扇',
+    equipment: category,
     installYear,
     status: 'Operational',
     condition: 'Good',
@@ -154,10 +160,9 @@ function buildAsset({ floor, room, category, installYear }) {
 
 export const TC01_ASSETS = [];
 Object.entries(INVENTORY).forEach(([floor, rooms]) => {
-  rooms.forEach(({ room, 櫃, 冷氣, 煮食 }) => {
+  rooms.forEach(({ room, 櫃, 煮食 }) => {
     const groups = [
       [櫃, '櫃'],
-      [冷氣, '冷氣/風扇/抽氣扇'],
       [煮食, '煮食設備'],
     ];
     groups.forEach(([[count, year], category]) => {

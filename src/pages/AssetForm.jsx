@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 import { useAssets } from '../context/AssetsContext';
-import { FLOORS, EQUIPMENT_CATEGORIES, TC01_ROOMS } from '../sample/tc01SampleData';
+import { EQUIPMENT_CATEGORIES, TC01_ROOMS } from '../sample/tc01SampleData';
 import { PROPERTIES } from '../data/constants';
 
 const ALL_STATUSES = ['Operational', 'Under Maintenance', 'Needs Inspection'];
@@ -15,14 +15,15 @@ export default function AssetForm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
-  const { assets, addAsset, updateAsset } = useAssets();
+  const { assets, floors, addAsset, updateAsset } = useAssets();
   const editing = assets.find((a) => a.id === id) || null;
 
+  const initialFloor = editing?.floor || floors[0]?.name || '4F';
   const [form, setForm] = useState({
     propertyId: editing?.propertyId ?? DEFAULT_PROPERTY.id,
     propertyCode: editing?.propertyCode ?? DEFAULT_PROPERTY.unitCode,
     propertyName: editing?.propertyName ?? DEFAULT_PROPERTY.name,
-    floor: editing?.floor || '4F',
+    floor: initialFloor,
     room: editing?.room || '',
     category: editing?.category || EQUIPMENT_CATEGORIES[0],
     equipment: editing?.equipment || '',
@@ -39,7 +40,7 @@ export default function AssetForm() {
       propertyId: selected.id,
       propertyCode: selected.unitCode,
       propertyName: selected.name,
-      floor: '4F',
+      floor: floors[0]?.name || '',
       room: '',
     }));
   };
@@ -62,7 +63,7 @@ export default function AssetForm() {
       floor: form.floor,
       room: form.room.trim(),
       category: form.category,
-      equipment: form.category === '櫃' ? '櫃' : form.category === '煮食設備' ? '煮食設備' : '冷氣機/風扇/抽氣扇',
+      equipment: form.category,
       installYear: Number(form.installYear) || 2011,
       status: form.status,
       condition: form.condition,
@@ -104,17 +105,21 @@ export default function AssetForm() {
             <div style={fieldStyle}>
               <label style={labelStyle}>{t('assets.form.floor')} <span style={{ color: 'var(--critical)' }}>*</span></label>
               <select value={form.floor} onChange={(e) => { update('floor', e.target.value); update('room', ''); }} style={inputStyle}>
-                {FLOORS.map((f) => <option key={f.key} value={f.key}>{f.key}</option>)}
+                {floors.map((f) => <option key={f.id} value={f.name}>{f.name}</option>)}
               </select>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div style={fieldStyle}>
               <label style={labelStyle}>{t('assets.form.room')} <span style={{ color: 'var(--critical)' }}>*</span></label>
-              <select value={form.room} onChange={(e) => update('room', e.target.value)} style={inputStyle}>
-                <option value="">{t('assets.form.selectRoom')}</option>
-                {roomsForFloor.map((r) => <option key={r} value={r}>{r}</option>)}
-              </select>
+              {roomsForFloor.length > 0 ? (
+                <select value={form.room} onChange={(e) => update('room', e.target.value)} style={inputStyle}>
+                  <option value="">{t('assets.form.selectRoom')}</option>
+                  {roomsForFloor.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              ) : (
+                <input value={form.room} onChange={(e) => update('room', e.target.value)} placeholder={t('assets.form.roomPh')} style={inputStyle} />
+              )}
             </div>
             <div style={fieldStyle}>
               <label style={labelStyle}>{t('assets.form.category')} <span style={{ color: 'var(--critical)' }}>*</span></label>

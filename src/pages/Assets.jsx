@@ -8,9 +8,8 @@ import {
 } from 'lucide-react';
 import Pagination from '../components/Pagination';
 import FilterBar from '../components/FilterBar';
-import { FLOORS, EQUIPMENT_CATEGORIES } from '../sample/tc01SampleData';
+import { EQUIPMENT_CATEGORIES } from '../sample/tc01SampleData';
 
-const ALL_FLOORS = ['All', ...FLOORS.map((f) => f.key)];
 const ALL_CATEGORIES = ['All', ...EQUIPMENT_CATEGORIES];
 const ALL_STATUSES = ['All', 'Operational', 'Under Maintenance', 'Needs Inspection'];
 
@@ -38,9 +37,10 @@ function FilterDropdown({ label, options, selected, onSelect }) {
 }
 
 export default function Assets() {
-  const { assets, removeAsset } = useAssets();
+  const { assets, floors, removeAsset } = useAssets();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const ALL_FLOORS = ['All', ...floors.map((f) => f.name)];
   const [search, setSearch] = useState('');
   const [floorFilter, setFloorFilter] = useState('All');
   const [categoryFilter, setCategoryFilter] = useState('All');

@@ -21,8 +21,9 @@ describe('tc01Assets data', () => {
     expect(byKey['5F'].image).toBeTruthy();
   });
 
-  it('exposes the three equipment categories', () => {
-    expect(EQUIPMENT_CATEGORIES).toEqual(['櫃', '冷氣/風扇/抽氣扇', '煮食設備']);
+  it('exposes only the equipment categories that PMS tracks (冷氣/風扇/抽氣扇 removed)', () => {
+    expect(EQUIPMENT_CATEGORIES).toEqual(['櫃', '煮食設備']);
+    expect(EQUIPMENT_CATEGORIES).not.toContain('冷氣/風扇/抽氣扇');
   });
 
   it('catalogs rooms for every floor', () => {
@@ -31,14 +32,19 @@ describe('tc01Assets data', () => {
     }
   });
 
-  it('expands each unit into its own row, all belonging to TC-01', () => {
+  it('expands each unit into its own row, all belonging to TC-01, with no 冷氣/風扇/抽氣扇', () => {
     expect(TC01_ASSETS.length).toBeGreaterThan(0);
     for (const a of TC01_ASSETS) {
       expect(a.propertyCode).toBe('TC-01');
       expect(['3F', '4F', '5F']).toContain(a.floor);
       expect(EQUIPMENT_CATEGORIES).toContain(a.category);
+      expect(a.category).not.toBe('冷氣/風扇/抽氣扇');
       expect(typeof a.installYear).toBe('number');
     }
+  });
+
+  it('stores no 冷氣/風扇/抽氣扇 assets in PMS at all', () => {
+    expect(TC01_ASSETS.some((a) => a.category === '冷氣/風扇/抽氣扇')).toBe(false);
   });
 
   it('assigns unique asset ids to every unit', () => {
@@ -46,22 +52,21 @@ describe('tc01Assets data', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('splits quantities into one row per item (洗衣房: 3 櫃 + 6 冷氣, all 2011)', () => {
+  it('splits quantities into one row per item (洗衣房: 3 櫃, all 2011; no 冷氣 stored)', () => {
     const laundryCupboards = TC01_ASSETS.filter((a) => a.room === '洗衣房' && a.category === '櫃');
     const laundryAc = TC01_ASSETS.filter((a) => a.room === '洗衣房' && a.category === '冷氣/風扇/抽氣扇');
     expect(laundryCupboards).toHaveLength(3);
-    expect(laundryAc).toHaveLength(6);
-    for (const a of [...laundryCupboards, ...laundryAc]) {
+    expect(laundryAc).toHaveLength(0);
+    for (const a of laundryCupboards) {
       expect(a.installYear).toBe(2011);
     }
   });
 
-  it('廚房 has 1 冷氣 (2018) and 1 煮食 equipment (2011)', () => {
+  it('廚房 has 1 煮食 equipment (2011); its 冷氣 is not stored', () => {
     const kitchenAc = TC01_ASSETS.filter((a) => a.room === '廚房' && a.category === '冷氣/風扇/抽氣扇');
     const kitchenCook = TC01_ASSETS.filter((a) => a.room === '廚房' && a.category === '煮食設備');
-    expect(kitchenAc).toHaveLength(1);
+    expect(kitchenAc).toHaveLength(0);
     expect(kitchenCook).toHaveLength(1);
-    expect(kitchenAc[0].installYear).toBe(2018);
     expect(kitchenCook[0].installYear).toBe(2011);
   });
 
@@ -86,12 +91,11 @@ describe('tc01Assets data', () => {
     expect(MIGRATED_RENOVATIONS.some((m) => m.room === '洗衣房')).toBe(false);
   });
 
-  it('honours per-group install years (面談室/322 櫃 installed 2024, 冷氣 2011)', () => {
+  it('honours per-group install years (面談室/322 櫃 installed 2024, and its 冷氣 is not stored)', () => {
     const rm322Cupboards = TC01_ASSETS.filter((a) => a.room === '面談室/322' && a.category === '櫃');
     const rm322Ac = TC01_ASSETS.filter((a) => a.room === '面談室/322' && a.category === '冷氣/風扇/抽氣扇');
     expect(rm322Cupboards.length).toBeGreaterThan(0);
-    expect(rm322Ac.length).toBeGreaterThan(0);
+    expect(rm322Ac.length).toBe(0);
     for (const a of rm322Cupboards) expect(a.installYear).toBe(2024);
-    for (const a of rm322Ac) expect(a.installYear).toBe(2011);
   });
 });

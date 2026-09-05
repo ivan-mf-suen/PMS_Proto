@@ -757,6 +757,7 @@
   "floorPlan.openPdf": "Open PDF",
   "floorPlan.noAssetsOnFloor": "No assets on this floor yet.",
   "floorPlan.valid": "Valid",
+  "floorPlan.loadingFloor": "Select a floor to view its plan.",
   "common.download": "Download",
   "workOrderDetail.property": "Property",
   "workOrderDetail.floorPlanPlot": "Floor plan"

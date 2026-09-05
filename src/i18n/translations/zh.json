@@ -756,6 +756,7 @@
   "floorPlan.openPdf": "開啟 PDF",
   "floorPlan.noAssetsOnFloor": "此樓層暫無資產。",
   "floorPlan.valid": "有效",
+  "floorPlan.loadingFloor": "請揀選樓層以查看平面圖。",
   "common.download": "下載",
   "workOrderDetail.property": "物業",
   "workOrderDetail.floorPlanPlot": "平面圖"

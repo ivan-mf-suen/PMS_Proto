@@ -41,7 +41,11 @@ export default function FloorPlan({ selectedCenter }) {
   // ── Floor selection ────────────────────────────────────────────
   const queryFloor = searchParams.get('floor');
   const queryAsset = searchParams.get('asset');
-  const [activeFloorId, setActiveFloorId] = useState(null);
+  const [activeFloorId, setActiveFloorId] = useState(() => {
+    if (floors.length === 0) return null;
+    const named = queryFloor && floors.find((f) => f.name === queryFloor);
+    return named ? named.id : floors[0].id;
+  });
 
   // Auto-select: a single floor is shown directly; otherwise select the first
   // (or the one requested via ?floor=).
@@ -353,7 +357,11 @@ export default function FloorPlan({ selectedCenter }) {
 
       <div style={{ display: 'flex', gap: 16, height: 'calc(100% - 140px)' }}>
         <div ref={mapRef} onContextMenu={handleMapContextMenu} style={{ flex: 1, background: '#fff', borderRadius: 12, border: '1px solid var(--border)', boxShadow: 'var(--card-shadow)', position: 'relative', overflow: 'hidden' }}>
-          {activeFloor && activeFloor.type === 'pdf' ? (
+          {!activeFloor ? (
+            <div style={{ width: '100%', height: '100%', borderRadius: 8, border: '1px solid #E2E8F0', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ textAlign: 'center', color: '#94A3B8', fontSize: 13, padding: 24 }}>{t('floorPlan.loadingFloor')}</div>
+            </div>
+          ) : activeFloor.type === 'pdf' ? (
             <div style={{ width: '100%', height: '100%', borderRadius: 8, border: '1px solid #E2E8F0', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{ textAlign: 'center', color: '#94A3B8', fontSize: 13, padding: 24 }}>
                 <FileText size={40} color="#94A3B8" style={{ margin: '0 auto 12px' }} />
